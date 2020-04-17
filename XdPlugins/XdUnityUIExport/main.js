@@ -2248,7 +2248,7 @@ function addBoundsCM(json, boundsCm) {
 /**
  *
  * @param json
- * @param {SceneNode} node
+ * @param {SceneNodeClass} node
  * @param root
  * @param outputFolder
  * @param renditions
@@ -2347,6 +2347,9 @@ async function addImage(json, node, root, outputFolder, renditions) {
     })
   }
 
+  /**
+   * @type {SceneNodeClass}
+   */
   let renditionNode = node
   let renditionScale = globalScale
 
@@ -3614,11 +3617,17 @@ async function exportXdUnityUI(roots, outputFolder) {
     let subFolder
     // アートボード毎にフォルダを作成する
     if (!optionChangeContentOnly && !optionImageNoExport && outputFolder) {
-      // TODO:他にやりかたはないだろうか
-      try {
-        subFolder = await outputFolder.getEntry(subFolderName)
-      } catch (e) {
+      let entries = await outputFolder.getEntries()
+      subFolder = entries.find(entry => {
+        console.log(entry.name)
+        return entry.name == subFolderName
+      })
+      if (!subFolder) {
+        console.log('create folder.')
         subFolder = await outputFolder.createFolder(subFolderName)
+      }
+      if (subFolder.isFile) {
+        throw 'can not create output folder.'
       }
     }
 
