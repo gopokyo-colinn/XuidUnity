@@ -104,32 +104,44 @@ namespace XdUnityUI.Editor
             newPath = fi.FullName;
 
             var hashStr = pngHash.ToString();
+
+            // ハッシュが同じテクスチャがある Shareする
             if (imageHashMap.ContainsKey(hashStr))
             {
                 var name = imageHashMap[hashStr];
                 // Debug.Log("shared texture " + Path.GetFileName(newPath) + "==" + Path.GetFileName(name));
                 imagePathMap[newPath] = name;
-                return "shared texture";
-            }
-            else
-            {
-                imageHashMap[hashStr] = newPath;
-                imagePathMap[newPath] = newPath;
+                return "shared other path texture";
             }
 
+            // ハッシュからのパスを登録
+            imageHashMap[hashStr] = newPath;
+            // 置き換え対象のパスを登録
+            imagePathMap[newPath] = newPath;
+
+            // 同じファイル名のテクスチャがある（前の変換時に生成されたテクスチャ）
             if (File.Exists(newPath))
             {
                 var oldPngData = File.ReadAllBytes(newPath);
+                // 中身をチェックする
                 if (oldPngData.Length == pngData.Length && pngData.SequenceEqual(oldPngData))
                 {
-                    return "same texture";
+                    // 全く同じだった場合、書き込まないでそのまま利用する
+                    // UnityのDB更新を防ぐ
+                    return "Same texture existed";
                 }
             }
 
             File.WriteAllBytes(newPath, pngData);
-            return "new texture";
+            return "create new texture";
         }
 
+        /// <summary>
+        /// アセットのイメージをスライスする
+        /// 戻り地は、変換リザルトメッセージ
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <returns></returns>
         public static string SliceSprite(string assetPath)
         {
             var directoryName = Path.GetFileName(Path.GetDirectoryName(assetPath));

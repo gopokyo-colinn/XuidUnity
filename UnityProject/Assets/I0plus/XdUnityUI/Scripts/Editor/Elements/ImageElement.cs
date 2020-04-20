@@ -10,24 +10,17 @@ namespace XdUnityUI.Editor
     /// </summary>
     public class ImageElement : Element
     {
-        private string spriteName;
+        //private string spriteName;
 
         //private Vector2? canvasPosition;
         //private Vector2? sizeDelta;
-        private float? opacity;
         public Dictionary<string, object> component;
         public Dictionary<string, object> imageJson;
 
         public ImageElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            if (json.ContainsKey("image"))
-            {
-                spriteName = json.Get("image");
-            }
-
             //canvasPosition = json.GetVector2("x", "y");
             //sizeDelta = json.GetVector2("w", "h");
-            opacity = json.GetFloat("opacity");
             component = json.GetDic("component");
             imageJson = json.GetDic("image");
         }
@@ -44,10 +37,11 @@ namespace XdUnityUI.Editor
             }
 
             var image = go.AddComponent<Image>();
-            if (spriteName != null)
-                image.sprite = renderContext.GetSprite(spriteName);
+            var sourceImage = imageJson.Get("source_image");
+            if (sourceImage != null)
+                image.sprite = renderContext.GetSprite(sourceImage);
             
-            image.color = new Color(1.0f, 1.0f, 1.0f, opacity != null ? opacity.Value / 100.0f : 0);
+            image.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
             var raycastTarget = imageJson.GetBool("raycast_target");
             if (raycastTarget != null)
                 image.raycastTarget = raycastTarget.Value;
