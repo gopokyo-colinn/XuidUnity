@@ -82,7 +82,7 @@ namespace XdUnityUI.Editor
             if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
             if (font == null)
             {
-                Debug.LogError(string.Format($"[XdUnityUI] font {fontName}.ttf/.otf is not found"));
+                Debug.LogError(string.Format($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found"));
             }
 
             return font;

@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.UI;
 #if UNITY_2019_1_OR_NEWER
 using UnityEditor.U2D;
 using UnityEngine.U2D;
@@ -55,6 +57,7 @@ namespace XdUnityUI.Editor
 
         private const string FolderLookMenuPath = "Assets/XdUnityUI/Auto Import Enable";
         private static bool _autoEnableFlag = false; // デフォルトがチェック済みの時には true にする
+
         [MenuItem(FolderLookMenuPath)]
         public static void SampleMenu()
         {
@@ -69,6 +72,13 @@ namespace XdUnityUI.Editor
             return true;
         }
 
+        /// <summary>
+        /// 自動インポート
+        /// </summary>
+        /// <param name="importedAssets"></param>
+        /// <param name="deletedAssets"></param>
+        /// <param name="movedAssets"></param>
+        /// <param name="movedFromAssetPaths"></param>
         public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets,
             string[] movedFromAssetPaths)
         {
@@ -76,6 +86,9 @@ namespace XdUnityUI.Editor
                 Import(importedAssets, movedAssets);
         }
 
+        /// <summary>
+        /// メニューから起動し、Importフォルダ内にあるファイルを消去する
+        /// </summary>
         [MenuItem("Assets/XdUnityUI/Import")]
         public static void MenuImport()
         {
@@ -103,12 +116,25 @@ namespace XdUnityUI.Editor
                 importedAssets.Add(EditorUtil.ToUnityPath(dir));
             }
 
-            Import(importedAssets, new List<string>());
+            Import(importedAssets, null, true);
         }
 
         private static bool IsDirectory(string path)
         {
-            return File.GetAttributes(path).HasFlag(FileAttributes.Directory);
+            try
+            {
+                return File.GetAttributes(path).HasFlag(FileAttributes.Directory);
+            }
+            catch (Exception exception)
+            {
+            }
+
+            return false;
+        }
+
+        private static void DeleteEntry(string path)
+        {
+            File.Delete(path);
         }
 
 
@@ -117,11 +143,14 @@ namespace XdUnityUI.Editor
         /// </summary>
         /// <param name="importedAssets"></param>
         /// <param name="movedAssets"></param>
-        private static void Import(IReadOnlyCollection<string> importedAssets, IReadOnlyCollection<string> movedAssets)
+        /// <param name="deleteImportEntries"></param>
+        private static void Import(IReadOnlyCollection<string> importedAssets, IReadOnlyCollection<string> movedAssets,
+            bool deleteImportEntries = false)
         {
             var importDirectoryPath = EditorUtil.ToUnityPath(EditorUtil.GetImportDirectoryPath());
 
-            progressTotal = importedAssets.Count + movedAssets.Count;
+            progressTotal = importedAssets.Count;
+            if (movedAssets != null) progressCount += movedAssets.Count;
             if (progressTotal == 0) return;
             progressCount = 0;
 
@@ -132,15 +161,14 @@ namespace XdUnityUI.Editor
             {
                 // 入力アセットがインポートフォルダ内あるか
                 if (!importedAsset.Contains(importDirectoryPath)) continue;
-                // 拡張子をもっているかどうかでディレクトリインポートかどうかを判定する
                 if (!IsDirectory(importedAsset)) continue;
-                // ディレクトリ
+                // ディレクトリであった場合
                 var exportPath = EditorUtil.GetBaumSpritesFullPath(importedAsset);
                 var importPath = Path.GetFullPath(importedAsset);
                 if (Directory.Exists(exportPath))
                 {
-                    // すでにあるフォルダ　インポートファイルと比較して、多い分を削除する
-                    // ダブっている分は上書きするようにする
+                    // すでにあるフォルダ　インポートファイルと比較して、出力先にある必要のないファイルを削除する
+                    // ダブっている分は比較し、異なっている場合に上書きするようにする
                     var exportInfo = new DirectoryInfo(exportPath);
                     var importInfo = new DirectoryInfo(importPath);
 
@@ -151,18 +179,24 @@ namespace XdUnityUI.Editor
                     // 注意：
                     // 　-no-slice -9slice付きのファイルなどは、イメージ名が変更されexportフォルダに入るので
                     // 　差分としてでる
-                    var list3 = list1.Except(list2, new FileInfoComparer());
-
-                    foreach (var fileInfo in list3)
+                    if (deleteImportEntries)
                     {
-                        var deleteFileName = fileInfo.FullName;
-                        fileInfo.Delete();
-                        File.Delete(deleteFileName + ".meta");
-                        changed = true;
+                        var deleteEntries = list1.Except(list2, new FileInfoComparer());
+
+                        foreach (var fileInfo in deleteEntries)
+                        {
+                            var deleteFileName = fileInfo.FullName;
+                            //fileInfo.Delete();
+                            DeleteEntry(fileInfo.FullName);
+                            //File.Delete(deleteFileName + ".meta");
+                            DeleteEntry(deleteFileName + ".meta");
+                            changed = true;
+                        }
                     }
                 }
                 else
                 {
+                    VerticalLayoutGroup a;
                     CreateSpritesDirectory(importedAsset);
                     changed = true;
                 }
@@ -175,7 +209,7 @@ namespace XdUnityUI.Editor
                 changed = false;
             }
 
-            // フォルダが作成され、そこに画像を作成する場合
+            // フォルダが作成され、そこに画像を出力する場合
             // Refresh後、DelayCallで画像生成することで、処理が安定した
             EditorApplication.delayCall += () =>
             {
@@ -184,6 +218,7 @@ namespace XdUnityUI.Editor
                 // 全スライス処理が走る前、最初にClearImageMapをする
                 var clearedImageMap = false;
                 // 画像コンバート　スライス処理
+                var messageCounter = new Dictionary<string, int>();
                 foreach (var importedAsset in importedAssets)
                 {
                     if (!importedAsset.Contains(importDirectoryPath)) continue;
@@ -198,12 +233,31 @@ namespace XdUnityUI.Editor
                     // スライス処理
                     var message = TextureUtil.SliceSprite(importedAsset);
                     // 元画像を削除する
-                    File.Delete(Path.GetFullPath(importedAsset));
-                    File.Delete(Path.GetFullPath(importedAsset) + ".meta");
-                    // AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
-                    changed = true;
+                    if (deleteImportEntries)
+                    {
+                        File.Delete(Path.GetFullPath(importedAsset));
+                        File.Delete(Path.GetFullPath(importedAsset) + ".meta");
+                        // AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
+                        changed = true;
+                    }
+
                     progressCount += 1;
                     UpdateDisplayProgressBar(message);
+
+                    // 出力されたログをカウントする
+                    if (messageCounter.ContainsKey(message))
+                    {
+                        messageCounter[message] = messageCounter[message] + 1;
+                    }
+                    else
+                    {
+                        messageCounter.Add(message, 1);
+                    }
+                }
+
+                foreach (var keyValuePair in messageCounter)
+                {
+                    Debug.Log($"[XdUnityUI] {keyValuePair.Key}:{keyValuePair.Value}");
                 }
 
                 if (changed)
@@ -218,7 +272,6 @@ namespace XdUnityUI.Editor
                     foreach (var asset in importedAssets)
                     {
                         if (!asset.Contains(importDirectoryPath)) continue;
-                        // 拡張子がなければ、ディレクトリと判定する
                         if (!IsDirectory(asset)) continue;
                         var fullPath = Path.GetFullPath(asset);
                         // ディレクトリが空っぽかどうか調べる　コンバート用PNGファイルがはいっていた場合、
@@ -249,7 +302,7 @@ namespace XdUnityUI.Editor
                         {
 #if UNITY_2018_3_OR_NEWER
                             var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, savePath);
-                            Debug.Log("[XdUnityUI] Create Prefab: " + savePath, savedAsset);
+                            Debug.Log("[XdUnityUI] Created prefab: " + savePath, savedAsset);
 #else
                             Object originalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(savePath);
                             if (originalPrefab == null) originalPrefab = PrefabUtility.CreateEmptyPrefab(savePath);
