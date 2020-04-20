@@ -179,7 +179,8 @@ namespace XdUnityUI.Editor
             }
 
             //SetStretch(go, renderer);
-            SetAnchor(go, renderContext);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
+
             return go;
         }
 

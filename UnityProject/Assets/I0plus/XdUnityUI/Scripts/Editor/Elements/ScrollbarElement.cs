@@ -28,7 +28,7 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
 
-            SetAnchor(go, renderContext);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
 
             var children = RenderChildren(renderContext, go);
             ElementUtil.SetupChildImageComponent(go, children);

@@ -94,7 +94,7 @@ namespace XdUnityUI.Editor
             }
 
             ElementUtil.SetupLayoutElement(go, LayoutElementParam);
-            SetAnchor(go, renderContext);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
 
             return go;
         }

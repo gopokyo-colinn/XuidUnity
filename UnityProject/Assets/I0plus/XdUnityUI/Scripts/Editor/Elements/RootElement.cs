@@ -20,8 +20,8 @@ namespace XdUnityUI.Editor
             var go = CreateUIGameObject(renderContext);
 
             var rect = go.GetComponent<RectTransform>();
-            SetAnchor(go, renderContext);
-            SetLayer(go, layer);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetLayer(go, layer);
             SetMaskImage(renderContext, go);
             return go;
         }

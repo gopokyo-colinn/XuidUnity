@@ -14,12 +14,10 @@ namespace XdUnityUI.Editor
         protected bool? active;
         protected string layer;
         protected List<object> parsedNames;
-        protected string pivot;
-        protected Vector2? anchorMin;
-        protected Vector2? anchorMax;
-        protected Vector2? offsetMin;
-        protected Vector2? offsetMax;
         protected Element parent;
+
+        protected Dictionary<string, object> rectTransformJson;
+        protected Dictionary<string, object> LayoutElementParam;
 
         public abstract GameObject Render(RenderContext renderContext, GameObject parentObject);
 
@@ -37,11 +35,8 @@ namespace XdUnityUI.Editor
             layer = json.Get("layer");
             parsedNames = json.Get<List<object>>("parsed_names");
 
-            pivot = json.Get("pivot");
-            anchorMin = json.GetDic("anchor_min").GetVector2("x", "y");
-            anchorMax = json.GetDic("anchor_max").GetVector2("x", "y");
-            offsetMin = json.GetDic("offset_min").GetVector2("x", "y");
-            offsetMax = json.GetDic("offset_max").GetVector2("x", "y");
+            rectTransformJson = json.GetDic("rect_transform");
+            LayoutElementParam = json.GetDic("layout_element");
         }
 
         public bool HasParsedName(string parsedName)
@@ -55,36 +50,13 @@ namespace XdUnityUI.Editor
         {
             var go = new GameObject(name);
             go.AddComponent<RectTransform>();
-            SetLayer(go, layer);
+            ElementUtil.SetLayer(go, layer);
             if (active != null)
             {
                 go.SetActive(active.Value);
             }
 
             return go;
-        }
-
-        protected void SetAnchor(GameObject root, RenderContext renderContext)
-        {
-            if (string.IsNullOrEmpty(pivot)) pivot = "none";
-            var rect = root.GetComponent<RectTransform>();
-            if (anchorMin != null) rect.anchorMin = anchorMin.Value;
-            if (anchorMax != null) rect.anchorMax = anchorMax.Value;
-            if (offsetMin != null) rect.offsetMin = offsetMin.Value;
-            if (offsetMax != null) rect.offsetMax = offsetMax.Value;
-        }
-
-        protected void SetLayer(GameObject go, string layerName)
-        {
-            switch (layerName)
-            {
-                case "Default":
-                    go.layer = 0;
-                    break;
-                case "UI":
-                    go.layer = 5;
-                    break;
-            }
         }
     }
 }
