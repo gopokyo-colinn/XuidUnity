@@ -198,19 +198,19 @@
   component: true;
 }
 
-[tag-name='image'], [tag-name$='-image'], .image, [class$="-image"] {
+.image, [tag-name='image'], [tag-name$='-image'], [class$="-image"], [tag-name$='_image'], [class$="_image"] {
   image: true;
 }
 
-[tag-name='text'], [tag-name$='-text'], .text, [class$="-text"] {
+.text, [tag-name='text'], [tag-name$='-text'], [class$="-text"], [tag-name$='_text'], [class$="_text"] {
   text: true;
 }
 
-[tag-name='textmp'], [tag-name$='-textmp'], .textmp, [class$="-textmp"] {
+.textmp, [tag-name='textmp'], [tag-name$='-textmp'], [class$="-textmp"], [tag-name$='_textmp'], [class$="_textmp"] {
   textmp: true;
 }
 
-[tag-name='button'], [tag-name$='-button'], .button, [class$="-button"] {
+.button, [tag-name='button'], [tag-name$='-button'], [class$="-button"], [tag-name$='_button'], [class$="_button"] {
   button: true;
   button-transition: color-tint;
   button-transition-target-graphic-name: ".target-image";
@@ -220,7 +220,7 @@
   button-transition-disabled-sprite-name: ".disabled-image";
 }
 
-[tag-name$="toggle"], [tag-name$="-toggle"], .toggle, [class$="-toggle"] {
+.toggle, [tag-name$="toggle"], [tag-name$="-toggle"], [class$="-toggle"], [tag-name$="_toggle"], [class$="_toggle"] {
   toggle: true;
   toggle-transition: color-tint;
   toggle-transition-target-graphic-name: ".target-image";
@@ -241,7 +241,7 @@
 }
 
 
-[tag-name$="input"], [tag-name$="-input"], .input, [class$="-input"] {
+.input, [tag-name$="input"], [tag-name$="-input"], [class$="-input"], [tag-name$="_input"], [class$="_input"] {
   input: true;
   input-transition: color-tint;
   input-transition-target-graphic-name: ".target-image";
