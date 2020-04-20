@@ -106,7 +106,7 @@ const STYLE_MARGIN_FIX = 'margin-fix'
 const STYLE_IMAGE = 'image'
 const STYLE_IMAGE_SCALE = 'image-scale'
 const STYLE_IMAGE_SLICE = 'image-slice' // 9スライス ドット数を指定する
-const STYLE_IMAGE_TYPE = 'image-type' // sliced tiled simple filled
+const STYLE_IMAGE_TYPE = 'image-type' // sliced/tiled/simple/filled
 const STYLE_LAYER = 'layer'
 const STYLE_LAYOUT_ELEMENT = 'layout-element'
 const STYLE_LAYOUT_GROUP = 'layout-group' //子供を自動的にどうならべるかのオプション
@@ -2256,6 +2256,7 @@ function addBoundsCM(json, boundsCm) {
  */
 async function addImage(json, node, root, outputFolder, renditions) {
   let { node_name, style } = getNodeNameAndStyle(node)
+  console.log(`addImage ${node.name} ${style.first(STYLE_IMAGE_TYPE)}`)
 
   // 今回出力するためのユニークな名前をつける
   const parentName = getNodeName(node.parent)
@@ -2282,7 +2283,7 @@ async function addImage(json, node, root, outputFolder, renditions) {
     fileExtension = '-noslice.png'
   }
   const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
-  if (image9SliceValues && image9SliceValues.length > 1) {
+  if (image9SliceValues && image9SliceValues.length > 0) {
     if (node.rotation !== 0) {
       console.log(
         'warning*** 回転しているノードの9スライス指定は無効になります',
@@ -2377,7 +2378,7 @@ async function addImage(json, node, root, outputFolder, renditions) {
         // 元のサイズにして出力対象にする
         child.resize(child.fill.naturalWidth, child.fill.naturalHeight)
         renditionNode = child
-        return true
+        return true // 見つけたので終了
       }
     })
   }
@@ -2390,8 +2391,8 @@ async function addImage(json, node, root, outputFolder, renditions) {
   }
 
   if (!checkBool(style.first(STYLE_BLANK))) {
-    Object.assign(json, {
-      image: fileName,
+    Object.assign(imageJson, {
+      source_image: fileName,
     })
     if (outputFolder && !optionImageNoExport) {
       // 画像出力登録
@@ -2679,6 +2680,7 @@ async function createContent(style, json, node, funcForEachChild, root) {
     // マスクが利用されたViewportである場合､マスクを取得する
     if (!maskNode) {
       console.log('***error viewport:マスクがみつかりませんでした')
+      maskNode = node
     }
     let calcContentBounds = new CalcBounds()
     await funcForEachChild(null, child => {
@@ -3568,12 +3570,11 @@ async function nodeRoot(renditions, outputFolder, root) {
  * @returns {string}
  * @constructor
  */
-function nodeToFilename(node) {
+function nodeToFolderName(node) {
   let nodeNameAndStyle = getNodeNameAndStyle(node)
-  let subFolderName = nodeNameAndStyle.node_name
+  let nodeName = nodeNameAndStyle.node_name
   // フォルダ名に使えない文字を'_'に変換
-  subFolderName = convertToFileName(subFolderName, false)
-  return subFolderName
+  return convertToFileName(nodeName, true)
 }
 
 /**
@@ -3612,7 +3613,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     globalResponsiveBounds = makeResponsiveBounds(root)
 
     // フォルダ名に使えない文字を'_'に変換
-    let subFolderName = nodeToFilename(root)
+    let subFolderName = nodeToFolderName(root)
 
     let subFolder
     // アートボード毎にフォルダを作成する
