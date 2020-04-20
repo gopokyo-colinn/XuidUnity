@@ -128,7 +128,7 @@ namespace XdUnityUI.Editor
                 button.targetGraphic = image;
             }
 
-            SetAnchor(go, renderContext);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
             ElementUtil.SetupLayoutElement(go, _layoutElement);
             ElementUtil.SetupComponents(go, componentsJson);
             return go;

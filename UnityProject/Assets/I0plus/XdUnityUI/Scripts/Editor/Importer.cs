@@ -89,8 +89,19 @@ namespace XdUnityUI.Editor
         /// <summary>
         /// メニューから起動し、Importフォルダ内にあるファイルを消去する
         /// </summary>
+        [MenuItem("Assets/XdUnityUI/Import(delete import assets)")]
+        public static void MenuImportDeleteAssets()
+        {
+            MenuImport(true);
+        }
+        
         [MenuItem("Assets/XdUnityUI/Import")]
-        public static void MenuImport()
+        public static void MenuImportNoDeleteAssets()
+        {
+            MenuImport(false);
+        }
+
+        public static void MenuImport( bool deleteAssetsFlag)
         {
             var importedAssets = new List<string>();
 
@@ -116,7 +127,7 @@ namespace XdUnityUI.Editor
                 importedAssets.Add(EditorUtil.ToUnityPath(dir));
             }
 
-            Import(importedAssets, null, true);
+            Import(importedAssets, null, deleteAssetsFlag);
         }
 
         private static bool IsDirectory(string path)
@@ -143,9 +154,9 @@ namespace XdUnityUI.Editor
         /// </summary>
         /// <param name="importedAssets"></param>
         /// <param name="movedAssets"></param>
-        /// <param name="deleteImportEntries"></param>
+        /// <param name="deleteImportEntriesFlag"></param>
         private static void Import(IReadOnlyCollection<string> importedAssets, IReadOnlyCollection<string> movedAssets,
-            bool deleteImportEntries = false)
+            bool deleteImportEntriesFlag = false)
         {
             var importDirectoryPath = EditorUtil.ToUnityPath(EditorUtil.GetImportDirectoryPath());
 
@@ -179,7 +190,7 @@ namespace XdUnityUI.Editor
                     // 注意：
                     // 　-no-slice -9slice付きのファイルなどは、イメージ名が変更されexportフォルダに入るので
                     // 　差分としてでる
-                    if (deleteImportEntries)
+                    if (deleteImportEntriesFlag)
                     {
                         var deleteEntries = list1.Except(list2, new FileInfoComparer());
 
@@ -233,7 +244,7 @@ namespace XdUnityUI.Editor
                     // スライス処理
                     var message = TextureUtil.SliceSprite(importedAsset);
                     // 元画像を削除する
-                    if (deleteImportEntries)
+                    if (deleteImportEntriesFlag)
                     {
                         File.Delete(Path.GetFullPath(importedAsset));
                         File.Delete(Path.GetFullPath(importedAsset) + ".meta");
@@ -319,10 +330,12 @@ namespace XdUnityUI.Editor
 
                         // 作成に成功した
                         Object.DestroyImmediate(go);
-                        // layout.jsonを削除する
-                        AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
+                        if (deleteImportEntriesFlag)
+                        {
+                            // layout.jsonを削除する
+                            AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
+                        }
                     }
-
                     EditorUtility.ClearProgressBar();
                 };
             };

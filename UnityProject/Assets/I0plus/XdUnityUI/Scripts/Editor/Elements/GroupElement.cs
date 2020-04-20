@@ -18,7 +18,6 @@ namespace XdUnityUI.Editor
         private Dictionary<string, object> _canvasGroupParam;
         protected Dictionary<string, object> LayoutParam;
         protected Dictionary<string, object> ContentSizeFitterParam;
-        protected Dictionary<string, object> LayoutElementParam;
         protected Dictionary<string, object> MaskParam;
         protected bool? RectMask2DParam;
         protected string FillColorParam;
@@ -42,7 +41,6 @@ namespace XdUnityUI.Editor
             _canvasGroupParam = json.GetDic("canvas_group");
             LayoutParam = json.GetDic("layout");
             ContentSizeFitterParam = json.GetDic("content_size_fitter");
-            LayoutElementParam = json.GetDic("layout_element");
             MaskParam = json.GetDic("mask");
             RectMask2DParam = json.GetBool("rect_mask_2d");
             FillColorParam = json.Get("fill_color");
@@ -73,7 +71,8 @@ namespace XdUnityUI.Editor
             ElementUtil.SetupComponents(go, componentsJson);
             ElementUtil.SetupMask(go, MaskParam);
 
-            SetAnchor(go, renderContext);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
+
             return go;
         }
 

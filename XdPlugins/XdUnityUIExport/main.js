@@ -102,7 +102,7 @@ const STYLE_CONTENT_SIZE_FITTER_HORIZONTAL_FIT =
   'content-size-fitter-horizontal-fit'
 const STYLE_CONTENT_SIZE_FITTER_VERTICAL_FIT =
   'content-size-fitter-vertical-fit'
-const STYLE_MARGIN_FIX = 'margin-fix'
+const STYLE_MARGIN_FIX = 'fix'
 const STYLE_IMAGE = 'image'
 const STYLE_IMAGE_SCALE = 'image-scale'
 const STYLE_IMAGE_SLICE = 'image-slice' // 9スライス ドット数を指定する
@@ -175,6 +175,7 @@ const STYLE_ADD_COMPONENT = 'add-component'
 const STYLE_MASK = 'mask'
 
 const appLanguage = application.appLanguage
+
 //const appLanguage = 'en'
 
 /**
@@ -1262,6 +1263,7 @@ function getStyleFix(styleFix) {
   }
 
   // null：わからない　true:フィックス　false:フィックスされていないで確定 いずれ数字に変わる
+  // この関数はFixオプションで指定されているかどうかを返すので、TrueかFalse
   let styleFixWidth = false
   let styleFixHeight = false
   let styleFixTop = false
@@ -1356,6 +1358,10 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   const style = getNodeNameAndStyle(node).style
 
   // console.log(`----------------------${node.name}----------------------`)
+
+  // null：わからない
+  // true:フィックスで確定
+  // false:フィックスされていないで確定 いずれ数字に変わる
   let styleFixWidth = null
   let styleFixHeight = null
   let styleFixTop = null
@@ -1467,6 +1473,8 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   // console.log("top:" + fixOptionTop, "bottom:" + fixOptionBottom)
   // console.log("width:" + fixOptionWidth, "height:" + fixOptionHeight)
 
+  let pivot_x = 0.5
+  let pivot_y = 0.5
   let offsetMin = {
     x: null,
     y: null,
@@ -1487,14 +1495,23 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     // 親のX座標から､X座標が固定値できまる
     anchorMin.x = 0
     offsetMin.x = beforeBounds.x - parentBeforeBounds.x
+    if (styleFixRight !== true) {
+      // leftのみが固定されているのなら、pivot_xを0
+      pivot_x = 0
+    }
   } else {
     anchorMin.x = styleFixLeft
     offsetMin.x = 0
   }
+
   if (styleFixRight === true) {
     // 親のX座標から､X座標が固定値できまる
     anchorMax.x = 1
     offsetMax.x = beforeBounds.ex - parentBeforeBounds.ex
+    if (styleFixLeft !== true) {
+      // rightのみが固定されているのなら、pivot_xを1
+      pivot_x = 1
+    }
   } else {
     anchorMax.x = 1 - styleFixRight
     offsetMax.x = 0
@@ -1502,15 +1519,22 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   // 横幅が固定されている
   if (styleFixWidth) {
-    if (styleFixLeft === true) {
-      anchorMax.x = anchorMin.x
-      offsetMax.x = offsetMin.x + beforeBounds.width
-    } else if (styleFixLeft !== true && styleFixRight === true) {
-      anchorMin.x = anchorMax.x
-      offsetMin.x = offsetMax.x - beforeBounds.width
-    }
     if (styleFixLeft !== true && styleFixRight !== true) {
       //左右共ロックされていない
+      anchorMin.x = anchorMax.x = (styleFixLeft + 1 - styleFixRight) / 2
+      offsetMin.x = -beforeBounds.width / 2
+      offsetMax.x = beforeBounds.width / 2
+    } else if (styleFixLeft === true && styleFixRight !== true) {
+      anchorMax.x = anchorMin.x
+      offsetMax.x = offsetMin.x + beforeBounds.width
+    } else if (styleFixRight === true && styleFixRight !== true) {
+      anchorMin.x = anchorMax.x
+      offsetMin.x = offsetMax.x - beforeBounds.width
+    } else {
+      // 不正な設定
+      // サイズが固定されて、左右固定されている
+      // 左右共ロックされていない と同じ設定をする
+      console.log('error: fix-right & fix-left & fix-width')
       anchorMin.x = anchorMax.x = (styleFixLeft + 1 - styleFixRight) / 2
       offsetMin.x = -beforeBounds.width / 2
       offsetMax.x = beforeBounds.width / 2
@@ -1522,6 +1546,10 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     // 親のY座標から､Y座標が固定値できまる
     anchorMax.y = 1
     offsetMax.y = -(beforeBounds.y - parentBeforeBounds.y)
+    if (styleFixBottom !== true) {
+      // topのみが固定されているのなら、pivot_yを1
+      pivot_y = 1
+    }
   } else {
     anchorMax.y = 1 - styleFixTop
     offsetMax.y = 0
@@ -1530,20 +1558,32 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     // 親のY座標から､Y座標が固定値できまる
     anchorMin.y = 0
     offsetMin.y = -(beforeBounds.ey - parentBeforeBounds.ey)
+    if (styleFixTop !== true) {
+      // bottom側が固定されているのなら、pivot_yを0
+      pivot_y = 0
+    }
   } else {
     anchorMin.y = styleFixBottom
     offsetMin.y = 0
   }
 
   if (styleFixHeight) {
-    if (styleFixTop === true) {
+    if (styleFixTop !== true && styleFixBottom !== true) {
+      //両方共ロックされていない
+      anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2
+      offsetMin.y = -beforeBounds.height / 2
+      offsetMax.y = beforeBounds.height / 2
+    } else if (styleFixTop === true && styleFixBottom !== true) {
       anchorMin.y = anchorMax.y
       offsetMin.y = offsetMax.y - beforeBounds.height
     } else if (styleFixTop !== true && styleFixBottom === true) {
       anchorMax.y = anchorMin.y
       offsetMax.y = offsetMin.y + beforeBounds.height
-    } else if (styleFixTop !== true && styleFixBottom !== true) {
-      //両方共ロックされていない
+    } else {
+      // 不正な設定
+      // サイズが固定されて、上下固定されている
+      // 上下共ロックされていない　と同じ設定をする
+      console.log('error: fix-top & fix-bottom & fix-height')
       anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2
       offsetMin.y = -beforeBounds.height / 2
       offsetMax.y = beforeBounds.height / 2
@@ -1588,6 +1628,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
       width: styleFixWidth,
       height: styleFixHeight,
     },
+    pivot: { x: pivot_x, y: pivot_y },
     anchor_min: anchorMin,
     anchor_max: anchorMax,
     offset_min: offsetMin,
@@ -2102,31 +2143,36 @@ function addMask(json, style) {
 
 /**
  * 指定のAnchorパラメータを設定する
- * @param json
+ * @param rectTransformJson
  * @param style
  */
 function addRectTransformAnchorOffsetXY(json, style) {
   if (!style) return
   // RectTransformの値がない場合、作成する
+  if (!('rect_transform' in json)) {
+    json['rect_transform'] = {}
+  }
+  let rectTransformJson = json['rect_transform']
+
   //TODO: 初期値はいらないだろうか
-  if (!('anchor_min' in json)) json['anchor_min'] = {}
-  if (!('anchor_max' in json)) json['anchor_max'] = {}
-  if (!('offset_min' in json)) json['offset_min'] = {}
-  if (!('offset_max' in json)) json['offset_max'] = {}
-  // Styleで指定が会った場合、上書きする
+  if (!('anchor_min' in rectTransformJson)) rectTransformJson['anchor_min'] = {}
+  if (!('anchor_max' in rectTransformJson)) rectTransformJson['anchor_max'] = {}
+  if (!('offset_min' in rectTransformJson)) rectTransformJson['offset_min'] = {}
+  if (!('offset_max' in rectTransformJson)) rectTransformJson['offset_max'] = {}
+  // Styleで指定があった場合、上書きする
   const anchorsX = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X)
   const anchorsY = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y)
   if (anchorsX) {
-    json['anchor_min']['x'] = parseFloat(anchorsX[0])
-    json['anchor_max']['x'] = parseFloat(anchorsX[1])
-    json['offset_min']['x'] = parseFloat(anchorsX[2])
-    json['offset_max']['x'] = parseFloat(anchorsX[3])
+    rectTransformJson['anchor_min']['x'] = parseFloat(anchorsX[0])
+    rectTransformJson['anchor_max']['x'] = parseFloat(anchorsX[1])
+    rectTransformJson['offset_min']['x'] = parseFloat(anchorsX[2])
+    rectTransformJson['offset_max']['x'] = parseFloat(anchorsX[3])
   }
   if (anchorsY) {
-    json['anchor_min']['y'] = parseFloat(anchorsY[0])
-    json['anchor_max']['y'] = parseFloat(anchorsY[1])
-    json['offset_min']['y'] = parseFloat(anchorsY[2])
-    json['offset_max']['y'] = parseFloat(anchorsY[3])
+    rectTransformJson['anchor_min']['y'] = parseFloat(anchorsY[0])
+    rectTransformJson['anchor_max']['y'] = parseFloat(anchorsY[1])
+    rectTransformJson['offset_min']['y'] = parseFloat(anchorsY[2])
+    rectTransformJson['offset_max']['y'] = parseFloat(anchorsY[3])
   }
 }
 
@@ -2161,7 +2207,9 @@ function anchorChange(json,style)
 function addRectTransformDraw(json, node) {
   let param = getRectTransformDraw(node)
   if (param) {
-    Object.assign(json, param)
+    Object.assign(json, {
+      rect_transform: param,
+    })
   }
 }
 
@@ -2173,8 +2221,10 @@ function addRectTransformDraw(json, node) {
  */
 function addRectTransform(json, node) {
   let param = getRectTransform(node)
-  if (param != null) {
-    Object.assign(json, param)
+  if (param) {
+    Object.assign(json, {
+      rect_transform: param,
+    })
   }
 }
 
@@ -2574,6 +2624,14 @@ function addLayoutParam(layoutJson, style) {
  * @param {Style} style
  */
 function addLayoutElement(json, node, style) {
+  if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'ignore-layout')) {
+    Object.assign(json, {
+      layout_element: {
+        ignore_layout: true,
+      },
+    })
+  }
+
   const bounds = getBeforeGlobalDrawBounds(node)
   if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'min')) {
     Object.assign(json, {
@@ -2772,12 +2830,14 @@ async function createContent(style, json, node, funcForEachChild, root) {
   let offsetMin = { x: contentX, y: -contentHeight - contentY }
   let offsetMax = { x: contentWidth + contentX, y: -contentY }
   Object.assign(contentJson, {
-    fix: contentStyleFix,
-    pivot, // ContentのPivotはX,Yで渡す　他のところは文字列になっている
-    anchor_min: anchorMin,
-    anchor_max: anchorMax,
-    offset_min: offsetMin,
-    offset_max: offsetMax,
+    rect_transform: {
+      fix: contentStyleFix,
+      pivot, // ContentのPivotはX,Yで渡す　他のところは文字列になっている
+      anchor_min: anchorMin,
+      anchor_max: anchorMax,
+      offset_min: offsetMin,
+      offset_max: offsetMax,
+    },
   })
 
   addRectTransformAnchorOffsetXY(contentJson, contentStyle) // anchor設定を上書きする
@@ -3193,10 +3253,12 @@ async function createImage(json, node, root, outputFolder, renditions) {
     //ボタン画像はボタンとぴったりサイズをあわせる
     let imageJson = json['elements'][0]
     Object.assign(imageJson, {
-      anchor_min: { x: 0, y: 0 },
-      anchor_max: { x: 1, y: 1 },
-      offset_min: { x: 0, y: 0 },
-      offset_max: { x: 0, y: 0 },
+      rect_transform: {
+        anchor_min: { x: 0, y: 0 },
+        anchor_max: { x: 1, y: 1 },
+        offset_min: { x: 0, y: 0 },
+        offset_max: { x: 0, y: 0 },
+      },
     })
     // レイヤーは親と同じ物を使用 activeかどうかは設定せず、親に依存するようにする
     addLayer(imageJson, style)
@@ -3211,6 +3273,7 @@ async function createImage(json, node, root, outputFolder, renditions) {
     addLayer(json, style)
     addState(json, style)
     addParsedNames(json, node)
+    addLayoutElement(json, node, style)
     // assignComponent
     if (style.first(STYLE_COMPONENT) != null) {
       Object.assign(json, {
@@ -3250,22 +3313,24 @@ async function createImage(json, node, root, outputFolder, renditions) {
 async function createRoot(layoutJson, node, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
   Object.assign(layoutJson, {
-    // Artboardは親のサイズにぴったりはまるようにする
-    anchor_min: {
-      x: 0,
-      y: 0,
-    },
-    anchor_max: {
-      x: 1,
-      y: 1,
-    },
-    offset_min: {
-      x: 0,
-      y: 0,
-    },
-    offset_max: {
-      x: 0,
-      y: 0,
+    rect_transform: {
+      // Artboardは親のサイズにぴったりはまるようにする
+      anchor_min: {
+        x: 0,
+        y: 0,
+      },
+      anchor_max: {
+        x: 1,
+        y: 1,
+      },
+      offset_min: {
+        x: 0,
+        y: 0,
+      },
+      offset_max: {
+        x: 0,
+        y: 0,
+      },
     },
     elements: [], // これがないとBAUM2でエラーになる(elementsが見つからないため､例外がでる)
   })

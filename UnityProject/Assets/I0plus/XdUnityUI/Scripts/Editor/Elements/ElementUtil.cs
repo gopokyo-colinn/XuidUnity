@@ -198,7 +198,7 @@ namespace XdUnityUI.Editor
             // 配列、Dictionaryへのアクセスも考慮してある
             try
             {
-                if (string.IsNullOrEmpty(propertyPath))
+                if (String.IsNullOrEmpty(propertyPath))
                     return null;
                 string[] splitter = {"."};
                 var sourceProperties = propertyPath.Split(splitter, StringSplitOptions.None);
@@ -238,7 +238,7 @@ namespace XdUnityUI.Editor
             // 配列、Dictionaryへのアクセスも考慮してある
             try
             {
-                if (string.IsNullOrEmpty(propertyPath))
+                if (String.IsNullOrEmpty(propertyPath))
                     return null;
                 string[] splitter = {"."};
                 var memberNames = propertyPath.Split(splitter, StringSplitOptions.None);
@@ -276,19 +276,19 @@ namespace XdUnityUI.Editor
                 }
                 else if (targetType == typeof(float))
                 {
-                    value = float.Parse(firstStrData);
+                    value = Single.Parse(firstStrData);
                 }
                 else if (targetType == typeof(double))
                 {
-                    value = double.Parse(firstStrData);
+                    value = Double.Parse(firstStrData);
                 }
                 else if (targetType == typeof(Vector3))
                 {
                     if (strData.Count >= 3)
                     {
-                        var x = float.Parse(strData[0] as string);
-                        var y = float.Parse(strData[1] as string);
-                        var z = float.Parse(strData[2] as string);
+                        var x = Single.Parse(strData[0] as string);
+                        var y = Single.Parse(strData[1] as string);
+                        var z = Single.Parse(strData[2] as string);
                         value = new Vector3(x, y, z);
                     }
                     else
@@ -300,7 +300,7 @@ namespace XdUnityUI.Editor
                 else
                 {
                     // enum値などこちら
-                    value = int.Parse(firstStrData);
+                    value = Int32.Parse(firstStrData);
                 }
 
                 memberInfo.SetMemberValue(targetValue, value);
@@ -568,6 +568,12 @@ namespace XdUnityUI.Editor
             {
                 componentLayoutElement.preferredHeight = preferredHeight.Value;
             }
+
+            var ignoreLayout = layoutElement.GetBool("ignore_layout");
+            if (ignoreLayout != null)
+            {
+                componentLayoutElement.ignoreLayout = ignoreLayout.Value;
+            }
         }
 
         public static void SetupLayoutGroup(GameObject go, Dictionary<string, object> layout)
@@ -656,6 +662,33 @@ namespace XdUnityUI.Editor
             if ((b = scrollRect.GetBool("vertical")) != null)
             {
                 scrollRectComponent.vertical = b.Value;
+            }
+        }
+
+        public static void SetRectTransform(GameObject root, Dictionary<string, object> rectTransformJson)
+        {
+            var rect = root.GetComponent<RectTransform>();
+
+            var anchorMin = rectTransformJson.GetDic("anchor_min").GetVector2("x", "y");
+            var anchorMax = rectTransformJson.GetDic("anchor_max").GetVector2("x", "y");
+            var offsetMin = rectTransformJson.GetDic("offset_min").GetVector2("x", "y");
+            var offsetMax = rectTransformJson.GetDic("offset_max").GetVector2("x", "y");
+            if (anchorMin != null) rect.anchorMin = anchorMin.Value;
+            if (anchorMax != null) rect.anchorMax = anchorMax.Value;
+            if (offsetMin != null) rect.offsetMin = offsetMin.Value;
+            if (offsetMax != null) rect.offsetMax = offsetMax.Value;
+        }
+
+        public static void SetLayer(GameObject go, string layerName)
+        {
+            switch (layerName)
+            {
+                case "Default":
+                    go.layer = 0;
+                    break;
+                case "UI":
+                    go.layer = 5;
+                    break;
             }
         }
     }

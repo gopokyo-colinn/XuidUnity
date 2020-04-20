@@ -38,15 +38,15 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
 
-            SetLayer(go, layer);
-            SetAnchor(go, renderContext);
+            ElementUtil.SetLayer(go, layer);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
 
             // タッチイベントを取得するイメージコンポーネントになる
             ElementUtil.SetupFillColor(go, FillColorParam);
 
             // コンテンツ部分を入れるコンテナ
             var goContent = new GameObject("$Content");
-            SetLayer(goContent, layer); // Viewportと同じレイヤー
+            ElementUtil.SetLayer(goContent, layer); // Viewportと同じレイヤー
             var contentRect = goContent.AddComponent<RectTransform>();
             goContent.transform.SetParent(go.transform);
 

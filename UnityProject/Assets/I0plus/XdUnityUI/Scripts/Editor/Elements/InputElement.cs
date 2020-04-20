@@ -51,8 +51,8 @@ namespace XdUnityUI.Editor
                 }
             }
 
-            SetLayer(go, layer);
-            SetAnchor(go, renderContext);
+            ElementUtil.SetLayer(go, layer);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
             
             return go;
         }

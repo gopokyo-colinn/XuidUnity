@@ -16,11 +16,11 @@ namespace XdUnityUI.Editor
         //private Vector2? sizeDelta;
         public Dictionary<string, object> component;
         public Dictionary<string, object> imageJson;
+        protected Dictionary<string, object> LayoutElementParam;
 
         public ImageElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            //canvasPosition = json.GetVector2("x", "y");
-            //sizeDelta = json.GetVector2("w", "h");
+            LayoutElementParam = json.GetDic("layout_element");
             component = json.GetDic("component");
             imageJson = json.GetDic("image");
         }
@@ -77,8 +77,10 @@ namespace XdUnityUI.Editor
                 image.type = Image.Type.Simple;
                 image.preserveAspect = true;
             }
-
-            SetAnchor(go, renderContext);
+            
+            
+            ElementUtil.SetupLayoutElement(go, LayoutElementParam);
+            ElementUtil.SetRectTransform(go, rectTransformJson);
 
             return go;
         }

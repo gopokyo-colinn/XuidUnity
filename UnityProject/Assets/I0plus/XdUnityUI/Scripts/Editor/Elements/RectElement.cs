@@ -26,7 +26,9 @@ namespace XdUnityUI.Editor
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
             }
-            SetAnchor(go, renderContext);
+
+            ElementUtil.SetRectTransform(go, rectTransformJson);
+
             return go;
         }
 
