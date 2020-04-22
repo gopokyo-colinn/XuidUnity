@@ -173,6 +173,8 @@ const STYLE_VIEWPORT_CREATE_CONTENT = 'viewport-create-content'
 const STYLE_V_ALIGN = 'v-align' //テキストの縦方向のアライメント XDの設定に追記される
 const STYLE_ADD_COMPONENT = 'add-component'
 const STYLE_MASK = 'mask'
+const STYLE_UNITY_NAME = 'unity-name'
+const STYLE_CHECK_LOG = 'check-log'
 
 const appLanguage = application.appLanguage
 
@@ -205,13 +207,12 @@ function getString(multilangStr) {
  */
 async function loadCssRules(currentFolder, filename) {
   if (!currentFolder) return null
-  console.log(`${filename}の読み込みを開始します`)
+  // console.log(`${filename}の読み込みを開始します`)
   let file
   try {
     file = await currentFolder.getEntry(filename)
   } catch (e) {
-    // cssフォルダ以下にもあるか
-    console.log('cssフォルダ以下にもあるかチェック')
+    // console.log("cssフォルダ以下にもあるかチェック")
     file = await currentFolder.getEntry('css/' + filename)
     if (!file) return null
   }
@@ -587,7 +588,7 @@ class ResponsiveParameter {
  * @param {boolean} convertDot ドットも変換対象にするか
  * @return {string}
  */
-function convertToFileName(name, convertDot = false) {
+function replaceToFileName(name, convertDot = false) {
   if (convertDot) {
     return name.replace(/[\\/:*?"<>|#\x00-\x1F\x7F\.]/g, '_')
   }
@@ -1236,8 +1237,6 @@ function forEachReverseElements(elements, func) {
   }
 }
 
-const STYLE_UNITY_NAME = 'unity-name'
-
 /**
  * @param {SceneNodeClass} node
  */
@@ -1249,8 +1248,14 @@ function getUnityName(node) {
     unityName = unityName.replace(/\${childIndex}/, childIndex)
     return unityName
   }
-  const id = getCssIdFromNodeName(node)
-  return id ? id : nodeName
+
+  const parsed = parseNodeName(getNodeName(node))
+  if (parsed) {
+    if (parsed.id) return parsed.id
+    if (parsed.tagName) return parsed.tagName
+  }
+
+  return nodeName
 }
 
 /**
@@ -1382,85 +1387,77 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     styleFixRight = fix.right
   }
 
-  // X座標
-  // console.log(beforeBounds.width, afterBounds.width)
+  // ロックされている 0.001以下の誤差が起きることを確認した
+
+  if (styleFixLeft == null) {
+    const beforeLeft = parentBeforeBounds.x - beforeBounds.x
+    const afterLeft = parentAfterBounds.x - afterBounds.x
+    styleFixLeft = approxEqual(beforeLeft, afterLeft, 0.001)
+  }
+
+  if (styleFixRight == null) {
+    const beforeRight = parentBeforeBounds.ex - beforeBounds.ex
+    const afterRight = parentAfterBounds.ex - afterBounds.ex
+    styleFixRight = approxEqual(beforeRight, afterRight, 0.001)
+  }
+
+  if (styleFixTop == null) {
+    const beforeTop = parentBeforeBounds.y - beforeBounds.y
+    const afterTop = parentAfterBounds.y - afterBounds.y
+    styleFixTop = approxEqual(beforeTop, afterTop, 0.001)
+  }
+
+  if (styleFixBottom == null) {
+    const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
+    const afterBottom = parentAfterBounds.ey - afterBounds.ey
+    styleFixBottom = approxEqual(beforeBottom, afterBottom, 0.001)
+  }
+
   if (styleFixWidth == null) {
     styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width, 0.001)
   }
 
-  if (styleFixLeft == null) {
-    if (
-      approxEqual(
-        beforeBounds.x - parentBeforeBounds.x,
-        afterBounds.x - parentAfterBounds.x,
-      )
-    ) {
-      // ロックされている
-      styleFixLeft = true
-    }
+  if (styleFixHeight == null) {
+    styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height, 0.001)
   }
-  if (!styleFixLeft) {
-    // TODO:0もここに含まれるのではないか
+
+  if (styleFixLeft === false) {
     // 親のX座標･Widthをもとに､Left値がきまる
     styleFixLeft =
       (beforeBounds.x - parentBeforeBounds.x) / parentBeforeBounds.width
   }
 
-  const beforeRight =
-    parentBeforeBounds.x +
-    parentBeforeBounds.width -
-    (beforeBounds.x + beforeBounds.width)
-  const afterRight =
-    parentAfterBounds.x +
-    parentAfterBounds.width -
-    (afterBounds.x + afterBounds.width)
-
-  if (styleFixRight == null) {
-    if (approxEqual(beforeRight, afterRight, 0.001)) {
-      // ロックされている 0.001以下の誤差が起きることを確認した
-      styleFixRight = true
-    }
-  }
-  if (!styleFixRight) {
-    // TODO:0もここに含まれるのではないか
+  if (styleFixRight === false) {
     // 親のX座標･Widthをもとに､割合でRight座標がきまる
     styleFixRight =
       (parentBeforeBounds.ex - beforeBounds.ex) / parentBeforeBounds.width
   }
 
-  // Y座標
-  if (styleFixHeight == null) {
-    styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height, 0.001)
-  }
-
-  if (styleFixTop == null) {
-    if (
-      approxEqual(
-        beforeBounds.y - parentBeforeBounds.y,
-        afterBounds.y - parentAfterBounds.y,
-        0.001,
-      )
-    ) {
-      styleFixTop = true
-    }
-  }
-  if (!styleFixTop) {
+  if (styleFixTop === false) {
     // 親のY座標･heightをもとに､Top座標がきまる
     styleFixTop =
       (beforeBounds.y - parentBeforeBounds.y) / parentBeforeBounds.height
   }
 
-  const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
-  const afterBottom = parentAfterBounds.ey - afterBounds.ey
-  if (styleFixBottom == null) {
-    if (approxEqual(beforeBottom, afterBottom, 0.001)) {
-      styleFixBottom = true
-    }
-  }
-  if (!styleFixBottom) {
+  if (styleFixBottom === false) {
     // 親のY座標･Heightをもとに､Bottom座標がきまる
     styleFixBottom =
       (parentBeforeBounds.ey - beforeBounds.ey) / parentBeforeBounds.height
+  }
+
+  if (
+    styleFixLeft === true &&
+    styleFixRight === true &&
+    styleFixWidth === true
+  ) {
+    console.log(`***error: ${node.name} fix`)
+  }
+  if (
+    styleFixTop === true &&
+    styleFixBottom === true &&
+    styleFixHeight === true
+  ) {
+    console.log(`***error: ${node.name} fix`)
   }
 
   // anchorの値を決める
@@ -1469,6 +1466,10 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   // fixOptionTop,fixOptionBottom : true || number
   // fixOptionLeft,fixOptionRight : true || number
   // になっていないといけない
+  // null: 定義されていない widthかheightが固定されている
+  // number: 親に対しての割合 anchorに割合をいれ､offsetを0
+  // true: 固定されている anchorを0か1にし､offsetをピクセルで指定
+
   // console.log("left:" + fixOptionLeft, "right:" + fixOptionRight)
   // console.log("top:" + fixOptionTop, "bottom:" + fixOptionBottom)
   // console.log("width:" + fixOptionWidth, "height:" + fixOptionHeight)
@@ -1486,115 +1487,113 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   let anchorMin = { x: null, y: null } // left, bottom
   let anchorMax = { x: null, y: null } // right, top
 
-  // fixOptionXXX
-  // null 定義されていない widthかheightが固定されている
-  // number 親に対しての割合 anchorに割合をいれ､offsetを0
-  // true 固定されている anchorを0か1にし､offsetをピクセルで指定
-
-  if (styleFixLeft === true) {
-    // 親のX座標から､X座標が固定値できまる
-    anchorMin.x = 0
-    offsetMin.x = beforeBounds.x - parentBeforeBounds.x
-    if (styleFixRight !== true) {
-      // leftのみが固定されているのなら、pivot_xを0
-      pivot_x = 0
-    }
-  } else {
-    anchorMin.x = styleFixLeft
-    offsetMin.x = 0
-  }
-
-  if (styleFixRight === true) {
-    // 親のX座標から､X座標が固定値できまる
-    anchorMax.x = 1
-    offsetMax.x = beforeBounds.ex - parentBeforeBounds.ex
-    if (styleFixLeft !== true) {
-      // rightのみが固定されているのなら、pivot_xを1
-      pivot_x = 1
-    }
-  } else {
-    anchorMax.x = 1 - styleFixRight
-    offsetMax.x = 0
-  }
-
-  // 横幅が固定されている
   if (styleFixWidth) {
+    // 横幅が固定されている
+    // AnchorMin.xとAnchorMax.xは同じ値になる（親の大きさに左右されない）
+    //   <-> これが違う値の場合、横幅は親に依存に、それにoffset値を加算した値になる
+    //        -> pivotでoffsetの値はかわらない
+    // offsetMin.yとoffsetMax.yの距離がHeight
     if (styleFixLeft !== true && styleFixRight !== true) {
       //左右共ロックされていない
       anchorMin.x = anchorMax.x = (styleFixLeft + 1 - styleFixRight) / 2
       offsetMin.x = -beforeBounds.width / 2
       offsetMax.x = beforeBounds.width / 2
     } else if (styleFixLeft === true && styleFixRight !== true) {
-      anchorMax.x = anchorMin.x
+      // 親のX座標から､X座標が固定値できまる
+      anchorMin.x = 0
+      anchorMax.x = 0
+      offsetMin.x = beforeBounds.x - parentBeforeBounds.x
       offsetMax.x = offsetMin.x + beforeBounds.width
-    } else if (styleFixRight === true && styleFixRight !== true) {
-      anchorMin.x = anchorMax.x
+    } else if (styleFixLeft !== true && styleFixRight === true) {
+      // 親のX座標から､X座標が固定値できまる
+      anchorMin.x = 1
+      anchorMax.x = 1
+      offsetMax.x = beforeBounds.ex - parentBeforeBounds.ex
       offsetMin.x = offsetMax.x - beforeBounds.width
     } else {
       // 不正な設定
       // サイズが固定されて、左右固定されている
       // 左右共ロックされていない と同じ設定をする
-      console.log('error: fix-right & fix-left & fix-width')
+      console.log(
+        `***error: ${node.name} fix-right(${styleFixRight}) & fix-left(${styleFixLeft}) & fix-width(${styleFixWidth})`,
+      )
       anchorMin.x = anchorMax.x = (styleFixLeft + 1 - styleFixRight) / 2
       offsetMin.x = -beforeBounds.width / 2
       offsetMax.x = beforeBounds.width / 2
     }
+  } else {
+    if (styleFixLeft === true) {
+      // 親のX座標から､X座標が固定値できまる
+      anchorMin.x = 0
+      offsetMin.x = beforeBounds.x - parentBeforeBounds.x
+    } else {
+      anchorMin.x = styleFixLeft
+      offsetMin.x = 0
+    }
+
+    if (styleFixRight === true) {
+      // 親のX座標から､X座標が固定値できまる
+      anchorMax.x = 1
+      offsetMax.x = beforeBounds.ex - parentBeforeBounds.ex
+    } else {
+      anchorMax.x = 1 - styleFixRight
+      offsetMax.x = 0
+    }
   }
 
   // AdobeXD と　Unity2D　でY軸の向きがことなるため､Top→Max　Bottom→Min
-  if (styleFixTop === true) {
-    // 親のY座標から､Y座標が固定値できまる
-    anchorMax.y = 1
-    offsetMax.y = -(beforeBounds.y - parentBeforeBounds.y)
-    if (styleFixBottom !== true) {
-      // topのみが固定されているのなら、pivot_yを1
-      pivot_y = 1
-    }
-  } else {
-    anchorMax.y = 1 - styleFixTop
-    offsetMax.y = 0
-  }
-  if (styleFixBottom === true) {
-    // 親のY座標から､Y座標が固定値できまる
-    anchorMin.y = 0
-    offsetMin.y = -(beforeBounds.ey - parentBeforeBounds.ey)
-    if (styleFixTop !== true) {
-      // bottom側が固定されているのなら、pivot_yを0
-      pivot_y = 0
-    }
-  } else {
-    anchorMin.y = styleFixBottom
-    offsetMin.y = 0
-  }
-
   if (styleFixHeight) {
+    // 高さが固定されている
+    // AnchorMin.yとAnchorMax.yは同じ値になる（親の大きさに左右されない）
+    //   <-> これが違う値の場合、高さは親に依存に、それにoffset値を加算した値になる　つまりpivotでoffsetの値はかわらない
+    // offsetMin.yとoffsetMax.yの距離がHeight
     if (styleFixTop !== true && styleFixBottom !== true) {
       //両方共ロックされていない
       anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2
       offsetMin.y = -beforeBounds.height / 2
       offsetMax.y = beforeBounds.height / 2
     } else if (styleFixTop === true && styleFixBottom !== true) {
-      anchorMin.y = anchorMax.y
+      // 親のY座標から､Y座標が固定値できまる
+      anchorMax.y = 1
+      anchorMin.y = 1
+      offsetMax.y = -(beforeBounds.y - parentBeforeBounds.y)
       offsetMin.y = offsetMax.y - beforeBounds.height
     } else if (styleFixTop !== true && styleFixBottom === true) {
+      // 親のY座標から､Y座標が固定値できまる
+      anchorMin.y = 0
       anchorMax.y = anchorMin.y
+      offsetMin.y = -(beforeBounds.ey - parentBeforeBounds.ey)
       offsetMax.y = offsetMin.y + beforeBounds.height
     } else {
       // 不正な設定
       // サイズが固定されて、上下固定されている
       // 上下共ロックされていない　と同じ設定をする
-      console.log('error: fix-top & fix-bottom & fix-height')
+      console.log(`***error: ${node.name} fix-top & fix-bottom & fix-height`)
       anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2
       offsetMin.y = -beforeBounds.height / 2
       offsetMax.y = beforeBounds.height / 2
     }
+  } else {
+    if (styleFixTop === true) {
+      // 親のY座標から､Y座標が固定値できまる
+      anchorMax.y = 1
+      offsetMax.y = -(beforeBounds.y - parentBeforeBounds.y)
+    } else {
+      anchorMax.y = 1 - styleFixTop
+      offsetMax.y = 0
+    }
+
+    if (styleFixBottom === true) {
+      // 親のY座標から､Y座標が固定値できまる
+      anchorMin.y = 0
+      offsetMin.y = -(beforeBounds.ey - parentBeforeBounds.ey)
+    } else {
+      anchorMin.y = styleFixBottom
+      offsetMin.y = 0
+    }
   }
 
-  if (
-    style.hasValue(STYLE_MARGIN_FIX, 'c', 'center') ||
-    // 横幅が固定され、左右も固定されている
-    (styleFixWidth === true && styleFixLeft === true && styleFixRight === true)
-  ) {
+  if (style.hasValue(STYLE_MARGIN_FIX, 'c', 'center')) {
     const beforeCenter = beforeBounds.x + beforeBounds.width / 2
     const parentBeforeCenter =
       parentBeforeBounds.x + parentBeforeBounds.width / 2
@@ -1605,11 +1604,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     offsetMax.x = +beforeBounds.width / 2
   }
 
-  if (
-    style.hasValue(STYLE_MARGIN_FIX, 'm', 'middle') ||
-    // 横幅が固定され、左右も固定されている
-    (styleFixHeight === true && styleFixTop === true && styleFixBottom === true)
-  ) {
+  if (style.hasValue(STYLE_MARGIN_FIX, 'm', 'middle')) {
     const beforeMiddle = beforeBounds.y + beforeBounds.height / 2
     const parentBeforeMiddle =
       parentBeforeBounds.y + parentBeforeBounds.height / 2
@@ -1617,6 +1612,19 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
       -(beforeMiddle - parentBeforeMiddle) / parentBeforeBounds.height + 0.5
     offsetMin.y = -beforeBounds.height / 2
     offsetMax.y = +beforeBounds.height / 2
+  }
+
+  // pivotの設定 固定されている方向にあわせる
+  if (styleFixLeft === true && styleFixRight !== true) {
+    pivot_x = 0
+  } else if (styleFixLeft !== true && styleFixRight === true) {
+    pivot_x = 1
+  }
+
+  if (styleFixTop === true && styleFixBottom !== true) {
+    pivot_y = 1
+  } else if (styleFixTop !== true && styleFixBottom === true) {
+    pivot_y = 0
   }
 
   return {
@@ -1910,8 +1918,6 @@ function hasAnyValue(values, ...checkValues) {
   return false
 }
 
-const STYLE_CHECK_LOG = 'check-log'
-
 /**
  *
  * @param {{name:string, parent:*}} node
@@ -1948,7 +1954,7 @@ function getStyleFromNode(node) {
   }
 
   if (style.has(STYLE_MATCH_LOG)) {
-    console.log(style.values(STYLE_MATCH_LOG))
+    console.log(`match-log:${style.values(STYLE_MATCH_LOG)}`)
   }
 
   //console.log('Style:',style)
@@ -2306,15 +2312,14 @@ function addBoundsCM(json, boundsCm) {
  */
 async function addImage(json, node, root, outputFolder, renditions) {
   let { node_name, style } = getNodeNameAndStyle(node)
-  console.log(`addImage ${node.name} ${style.first(STYLE_IMAGE_TYPE)}`)
+  const unityName = getUnityName(node)
 
   // 今回出力するためのユニークな名前をつける
   const parentName = getNodeName(node.parent)
 
   let hashStringLength = 5
   // ファイル名が長すぎるとエラーになる可能性もある
-  // let fileName = convertToFileName(parentName + "+" + node_name, true)
-  let fileName = convertToFileName(node_name, true)
+  let fileName = replaceToFileName(unityName, true)
   while (true) {
     const guidStr = '+' + node.guid.slice(0, hashStringLength)
     // すでに同じものがあるか検索
@@ -3636,10 +3641,15 @@ async function nodeRoot(renditions, outputFolder, root) {
  * @constructor
  */
 function nodeToFolderName(node) {
-  let nodeNameAndStyle = getNodeNameAndStyle(node)
-  let nodeName = nodeNameAndStyle.node_name
+  let name = node.name
+  const parsed = parseNodeName(getNodeName(node))
+  if (parsed) {
+    if (parsed.id) name = parsed.id
+    else if (parsed.tagName) name = parsed.tagName
+  }
+
   // フォルダ名に使えない文字を'_'に変換
-  return convertToFileName(nodeName, true)
+  return replaceToFileName(name, true)
 }
 
 /**
@@ -3657,9 +3667,9 @@ async function exportXdUnityUI(roots, outputFolder) {
   globalResponsiveBounds = {}
 
   for (let root of roots) {
-    console.log(`root-node:${root.name} -------`)
+    console.log(`----- root-node:${root.name} -----`)
     globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
-    const artboardCssFilename = convertToFileName(root.name) + '.css'
+    const artboardCssFilename = replaceToFileName(root.name) + '.css'
     try {
       const artboardCssRoles = await loadCssRules(
         outputFolder,
@@ -3669,7 +3679,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         globalCssRules = globalCssRules.concat(artboardCssRoles)
       }
     } catch (e) {
-      console.log(`***error failed to load: ${artboardCssFilename}`)
+      // console.log(`***error failed to load: ${artboardCssFilename}`)
       //console.log(e.message)
       //console.log(e.stack)
     }
@@ -3685,11 +3695,10 @@ async function exportXdUnityUI(roots, outputFolder) {
     if (!optionChangeContentOnly && !optionImageNoExport && outputFolder) {
       let entries = await outputFolder.getEntries()
       subFolder = entries.find(entry => {
-        console.log(entry.name)
         return entry.name == subFolderName
       })
       if (!subFolder) {
-        console.log('create folder.')
+        console.log(`create output folder:${subFolderName}`)
         subFolder = await outputFolder.createFolder(subFolderName)
       }
       if (subFolder.isFile) {
@@ -3746,7 +3755,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     await application
       .createRenditions(renditions)
       .then(() => {
-        console.log(`saved ${renditions.length} files`)
+        console.log(`saved ${renditions.length} image file(s)`)
       })
       .catch(error => {
         //console.log(renditions)
