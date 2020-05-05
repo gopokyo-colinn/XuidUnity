@@ -9,26 +9,19 @@ namespace XdUnityUI.Editor
     /// </summary>
     public class RootElement : GroupElement
     {
-        private Vector2 sizeDelta = Vector2.zero;
-
         public RootElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
         }
 
         protected override GameObject CreateSelf(RenderContext renderContext)
         {
-            var go = CreateUIGameObject(renderContext);
+            var go = CreateUiGameObject(renderContext);
 
             var rect = go.GetComponent<RectTransform>();
-            ElementUtil.SetRectTransform(go, rectTransformJson);
-            ElementUtil.SetLayer(go, layer);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
+            ElementUtil.SetLayer(go, Layer);
             SetMaskImage(renderContext, go);
             return go;
-        }
-
-        public override Area CalcArea()
-        {
-            return new Area(-sizeDelta / 2.0f, sizeDelta / 2.0f);
         }
     }
 }

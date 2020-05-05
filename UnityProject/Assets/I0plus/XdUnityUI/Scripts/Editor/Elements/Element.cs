@@ -10,14 +10,16 @@ namespace XdUnityUI.Editor
     /// </summary>
     public abstract class Element
     {
-        public string name;
-        protected bool? active;
-        protected string layer;
-        protected List<object> parsedNames;
-        protected Element parent;
+        protected string name;
+        protected bool? Active;
+        protected readonly string Layer;
+        protected readonly List<object> ParsedNames;
+        protected Element Parent;
 
-        protected Dictionary<string, object> rectTransformJson;
-        protected Dictionary<string, object> LayoutElementParam;
+        protected readonly Dictionary<string, object> RectTransformJson;
+        protected readonly Dictionary<string, object> LayoutElementJson;
+
+        public string Name => name;
 
         public abstract GameObject Render(RenderContext renderContext, GameObject parentObject);
 
@@ -25,35 +27,33 @@ namespace XdUnityUI.Editor
         {
         }
 
-        public abstract Area CalcArea();
-
         protected Element(Dictionary<string, object> json, Element parent)
         {
-            this.parent = parent;
+            this.Parent = parent;
             name = json.Get("name");
-            active = json.GetBool("active");
-            layer = json.Get("layer");
-            parsedNames = json.Get<List<object>>("parsed_names");
+            Active = json.GetBool("active");
+            Layer = json.Get("layer");
+            ParsedNames = json.Get<List<object>>("parsed_names");
 
-            rectTransformJson = json.GetDic("rect_transform");
-            LayoutElementParam = json.GetDic("layout_element");
+            RectTransformJson = json.GetDic("rect_transform");
+            LayoutElementJson = json.GetDic("layout_element");
         }
 
         public bool HasParsedName(string parsedName)
         {
-            if (parsedNames == null || parsedNames.Count == 0) return false;
-            var found = parsedNames.Find(s => (string) s == parsedName);
+            if (ParsedNames == null || ParsedNames.Count == 0) return false;
+            var found = ParsedNames.Find(s => (string) s == parsedName);
             return found != null;
         }
 
-        protected GameObject CreateUIGameObject(RenderContext renderContext)
+        protected GameObject CreateUiGameObject(RenderContext renderContext)
         {
             var go = new GameObject(name);
             go.AddComponent<RectTransform>();
-            ElementUtil.SetLayer(go, layer);
-            if (active != null)
+            ElementUtil.SetLayer(go, Layer);
+            if (Active != null)
             {
-                go.SetActive(active.Value);
+                go.SetActive(Active.Value);
             }
 
             return go;

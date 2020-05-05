@@ -609,17 +609,22 @@ async function pluginRenditionChildren(selection, root) {
       overwrite: true,
     })
     renditionOptions.push({
-      fileName: fileName,
+      // fileName: fileName,
       node: item,
       outputFile: file,
       type: application.RenditionType.PNG,
       scale: 1,
     })
-    console.log(fileName)
   }
 
   const results = await application
     .createRenditions(renditionOptions)
+    .then(results => {
+      // [2]
+      console.log(
+        `PNG rendition has been saved at ${results[0].outputFile.nativePath}`,
+      )
+    })
     .catch(error => {
       console.log('error:' + error)
       // https://forums.adobexdplatform.com/t/details-for-io-failed/1185/14
@@ -631,12 +636,26 @@ async function pluginRenditionChildren(selection, root) {
   console.log('done.')
 }
 
+
+async function resizeArtboard(selection, root) {
+  let node = selection.items[0]
+  const bounds = node.globalBounds
+  node.resize(bounds.width + 100, bounds.height + 100)
+  node.children.forEach(child=>{
+    const bounds = child.globalBounds
+    const drawBounds = child.globalDrawBounds
+    console.log(`${child.name}: ${bounds.height} ${drawBounds.height}`)
+  })
+}
+
+
 module.exports = {
   // コマンドIDとファンクションの紐付け
   commands: {
-    pluginMake9Slice: pluginMake9Slice,
+    pluginMake9Slice,
     pluginScaleAdjust: pluginResizeSlices,
     //pluginDuplicateStretch: pluginDuplicateStretch,
     pluginRenditionChildren,
+    resizeArtboard,
   },
 }

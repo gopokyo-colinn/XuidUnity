@@ -13,16 +13,18 @@ namespace XdUnityUI.Editor
     /// </summary>
     public class GroupElement : Element
     {
-        protected readonly List<Element> Elements;
         private Area _areaCache;
-        private Dictionary<string, object> _canvasGroupParam;
-        protected Dictionary<string, object> LayoutParam;
-        protected Dictionary<string, object> ContentSizeFitterParam;
-        protected Dictionary<string, object> MaskParam;
-        protected bool? RectMask2DParam;
-        protected string FillColorParam;
-        protected Dictionary<string, object> addComponentJson;
-        protected List<object> componentsJson;
+        protected readonly Dictionary<string, object> CanvasGroup;
+        protected readonly Dictionary<string, object> LayoutJson;
+        protected readonly Dictionary<string, object> ContentSizeFitterJson;
+        protected readonly Dictionary<string, object> MaskJson;
+        protected bool? RectMask2D;
+        protected readonly string FillColorJson;
+        protected Dictionary<string, object> AddComponentJson;
+        protected readonly List<object> ComponentsJson;
+
+        // children
+        protected readonly List<Element> Elements;
 
         public GroupElement(Dictionary<string, object> json, Element parent, bool resetStretch = false) : base(json,
             parent)
@@ -37,15 +39,14 @@ namespace XdUnityUI.Editor
             }
 
             Elements.Reverse();
-            _areaCache = CalcAreaInternal();
-            _canvasGroupParam = json.GetDic("canvas_group");
-            LayoutParam = json.GetDic("layout");
-            ContentSizeFitterParam = json.GetDic("content_size_fitter");
-            MaskParam = json.GetDic("mask");
-            RectMask2DParam = json.GetBool("rect_mask_2d");
-            FillColorParam = json.Get("fill_color");
-            addComponentJson = json.GetDic("add_component");
-            componentsJson = json.Get<List<object>>("components");
+            CanvasGroup = json.GetDic("canvas_group");
+            LayoutJson = json.GetDic("layout");
+            ContentSizeFitterJson = json.GetDic("content_size_fitter");
+            MaskJson = json.GetDic("mask");
+            RectMask2D = json.GetBool("rect_mask_2d");
+            FillColorJson = json.Get("fill_color");
+            AddComponentJson = json.GetDic("add_component");
+            ComponentsJson = json.Get<List<object>>("components");
         }
 
 
@@ -62,16 +63,16 @@ namespace XdUnityUI.Editor
             }
 
             RenderedChildren = RenderChildren(renderContext, go);
-            ElementUtil.SetupCanvasGroup(go, _canvasGroupParam);
+            ElementUtil.SetupCanvasGroup(go, CanvasGroup);
             ElementUtil.SetupChildImageComponent(go, RenderedChildren);
-            ElementUtil.SetupFillColor(go, FillColorParam);
-            ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterParam);
-            ElementUtil.SetupLayoutGroup(go, LayoutParam);
-            ElementUtil.SetupLayoutElement(go, LayoutElementParam);
-            ElementUtil.SetupComponents(go, componentsJson);
-            ElementUtil.SetupMask(go, MaskParam);
+            ElementUtil.SetupFillColor(go, FillColorJson);
+            ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
+            ElementUtil.SetupLayoutGroup(go, LayoutJson);
+            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
+            ElementUtil.SetupComponents(go, ComponentsJson);
+            ElementUtil.SetupMask(go, MaskJson);
 
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
         }
@@ -79,14 +80,7 @@ namespace XdUnityUI.Editor
 
         protected virtual GameObject CreateSelf(RenderContext renderContext)
         {
-            var go = CreateUIGameObject(renderContext);
-
-            var rect = go.GetComponent<RectTransform>();
-            var area = CalcArea();
-            //rect.sizeDelta = area.Size;
-            //rect.anchoredPosition = renderer.CalcPosition(area.Min, area.Size);
-
-            //SetMaskImage(renderer, go);
+            var go = CreateUiGameObject(renderContext);
             return go;
         }
 
@@ -135,16 +129,5 @@ namespace XdUnityUI.Editor
             return list;
         }
 
-        private Area CalcAreaInternal()
-        {
-            var area = Area.None();
-            foreach (var element in Elements) area.Merge(element.CalcArea());
-            return area;
-        }
-
-        public override Area CalcArea()
-        {
-            return _areaCache;
-        }
     }
 }

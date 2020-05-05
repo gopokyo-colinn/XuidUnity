@@ -10,24 +10,18 @@ namespace XdUnityUI.Editor
     /// </summary>
     public class ImageElement : Element
     {
-        //private string spriteName;
-
-        //private Vector2? canvasPosition;
-        //private Vector2? sizeDelta;
-        public Dictionary<string, object> component;
-        public Dictionary<string, object> imageJson;
-        protected Dictionary<string, object> LayoutElementParam;
+        public readonly Dictionary<string, object> ComponentJson; // be parent component
+        protected readonly Dictionary<string, object> ImageJson;
 
         public ImageElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            LayoutElementParam = json.GetDic("layout_element");
-            component = json.GetDic("component");
-            imageJson = json.GetDic("image");
+            ComponentJson = json.GetDic("component");
+            ImageJson = json.GetDic("image");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUIGameObject(renderContext);
+            var go = CreateUiGameObject(renderContext);
 
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
@@ -37,17 +31,17 @@ namespace XdUnityUI.Editor
             }
 
             var image = go.AddComponent<Image>();
-            var sourceImage = imageJson.Get("source_image");
+            var sourceImage = ImageJson.Get("source_image");
             if (sourceImage != null)
                 image.sprite = renderContext.GetSprite(sourceImage);
-            
+
             image.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-            var raycastTarget = imageJson.GetBool("raycast_target");
+            var raycastTarget = ImageJson.GetBool("raycast_target");
             if (raycastTarget != null)
                 image.raycastTarget = raycastTarget.Value;
 
             image.type = Image.Type.Sliced;
-            var imageType = imageJson.Get("image_type");
+            var imageType = ImageJson.Get("image_type");
             if (imageType != null)
             {
                 switch (imageType.ToLower())
@@ -70,28 +64,19 @@ namespace XdUnityUI.Editor
                 }
             }
 
-            var preserveAspect = imageJson.GetBool("preserve_aspect");
-            if (preserveAspect != null && preserveAspect.Value )
+            var preserveAspect = ImageJson.GetBool("preserve_aspect");
+            if (preserveAspect != null && preserveAspect.Value)
             {
                 // アスペクト比を保つ場合はSimpleにする
                 image.type = Image.Type.Simple;
                 image.preserveAspect = true;
             }
-            
-            
-            ElementUtil.SetupLayoutElement(go, LayoutElementParam);
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+
+
+            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
-        }
-
-        public override Area CalcArea()
-        {
-            /*
-            if (canvasPosition != null && sizeDelta != null)
-                return Area.FromPositionAndSize(canvasPosition.Value, sizeDelta.Value);
-                */
-            return null;
         }
     }
 }

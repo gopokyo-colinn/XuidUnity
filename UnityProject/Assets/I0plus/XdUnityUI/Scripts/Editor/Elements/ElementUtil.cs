@@ -113,7 +113,7 @@ namespace XdUnityUI.Editor
                 //TODO: item1がDestroyされていれば、コンティニューの処理が必要
                 if (!(createdChild.Item2 is ImageElement)) continue;
                 var imageElement = (ImageElement) createdChild.Item2;
-                if (imageElement.component == null) continue;
+                if (imageElement.ComponentJson == null) continue;
                 childImageBeComponent = createdChild;
             }
 
@@ -665,9 +665,13 @@ namespace XdUnityUI.Editor
             }
         }
 
-        public static void SetRectTransform(GameObject root, Dictionary<string, object> rectTransformJson)
+        public static void SetupRectTransform(GameObject root, Dictionary<string, object> rectTransformJson)
         {
             var rect = root.GetComponent<RectTransform>();
+            
+            // 先にPivotの設定をしてから Anchorの設定をする
+            var pivot = rectTransformJson.GetDic("pivot").GetVector2("x", "y");
+            if (pivot != null) rect.pivot = pivot.Value;
 
             var anchorMin = rectTransformJson.GetDic("anchor_min").GetVector2("x", "y");
             var anchorMax = rectTransformJson.GetDic("anchor_max").GetVector2("x", "y");

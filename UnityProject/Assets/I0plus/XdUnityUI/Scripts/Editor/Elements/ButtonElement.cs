@@ -11,13 +11,11 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ButtonElement : GroupElement
     {
-        private Dictionary<string, object> _button;
-        private Dictionary<string, object> _layoutElement;
+        protected readonly Dictionary<string, object> ButtonJson;
 
         public ButtonElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            _button = json.GetDic("button");
-            _layoutElement = json.GetDic("layout_element");
+            ButtonJson = json.GetDic("button");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -35,9 +33,9 @@ namespace XdUnityUI.Editor
             var button = go.AddComponent<Button>();
             GameObject targetImageObject = null;
             var deleteObjects = new Dictionary<GameObject, bool>();
-            if (_button != null)
+            if (ButtonJson != null)
             {
-                var type = _button.Get("transition");
+                var type = ButtonJson.Get("transition");
                 switch (type)
                 {
                     case "sprite-swap":
@@ -58,14 +56,14 @@ namespace XdUnityUI.Editor
                 }
 
                 var targetImage =
-                    ElementUtil.FindComponentByClassName<Image>(children, _button.Get("target_graphic_class"));
+                    ElementUtil.FindComponentByClassName<Image>(children, ButtonJson.Get("target_graphic_class"));
                 if (targetImage != null)
                 {
                     button.targetGraphic = targetImage;
                     targetImageObject = targetImage.gameObject;
                 }
 
-                var spriteStateJson = _button.GetDic("sprite_state");
+                var spriteStateJson = ButtonJson.GetDic("sprite_state");
                 if (spriteStateJson != null)
                 {
                     var spriteState = new SpriteState();
@@ -128,9 +126,9 @@ namespace XdUnityUI.Editor
                 button.targetGraphic = image;
             }
 
-            ElementUtil.SetRectTransform(go, rectTransformJson);
-            ElementUtil.SetupLayoutElement(go, _layoutElement);
-            ElementUtil.SetupComponents(go, componentsJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
+            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
+            ElementUtil.SetupComponents(go, ComponentsJson);
             return go;
         }
     }

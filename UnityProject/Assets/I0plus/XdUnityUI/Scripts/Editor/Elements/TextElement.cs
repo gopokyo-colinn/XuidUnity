@@ -53,7 +53,7 @@ namespace XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUIGameObject(renderContext);
+            var go = CreateUiGameObject(renderContext);
 
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
@@ -179,14 +179,9 @@ namespace XdUnityUI.Editor
             }
 
             //SetStretch(go, renderer);
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
-        }
-
-        public override Area CalcArea()
-        {
-            return Area.FromPositionAndSize(canvasPosition.Value, sizeDelta.Value);
         }
     }
 }

@@ -8,18 +8,13 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class RectElement : Element
     {
-        private Vector2? canvasPosition;
-        private Vector2? sizeDelta;
-
         public RectElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            canvasPosition = json.GetVector2("x", "y");
-            sizeDelta = json.GetVector2("w", "h");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUIGameObject(renderContext);
+            var go = CreateUiGameObject(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
             {
@@ -27,14 +22,9 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
 
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
-        }
-
-        public override Area CalcArea()
-        {
-            return Area.FromPositionAndSize(canvasPosition.Value, sizeDelta.Value);
         }
     }
 }

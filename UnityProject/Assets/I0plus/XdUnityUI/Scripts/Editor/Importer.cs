@@ -243,13 +243,14 @@ namespace XdUnityUI.Editor
 
                     // スライス処理
                     var message = TextureUtil.SliceSprite(importedAsset);
+                    changed = true;
+                    
                     // 元画像を削除する
                     if (deleteImportEntriesFlag)
                     {
                         File.Delete(Path.GetFullPath(importedAsset));
                         File.Delete(Path.GetFullPath(importedAsset) + ".meta");
                         // AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
-                        changed = true;
                     }
 
                     progressCount += 1;

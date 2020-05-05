@@ -9,11 +9,11 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ToggleElement : GroupElement
     {
-        private Dictionary<string, object> _toggleJson;
+        protected readonly Dictionary<string, object> ToggleJson;
 
         public ToggleElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            _toggleJson = json.GetDic("toggle");
+            ToggleJson = json.GetDic("toggle");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -31,19 +31,19 @@ namespace XdUnityUI.Editor
             var toggle = go.AddComponent<Toggle>();
 
             var targetImage =
-                ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("target_graphic_class"));
+                ElementUtil.FindComponentByClassName<Image>(children, ToggleJson.Get("target_graphic_class"));
             if (targetImage != null)
             {
                 toggle.targetGraphic = targetImage;
             }
 
-            var graphicImage = ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("graphic_class"));
+            var graphicImage = ElementUtil.FindComponentByClassName<Image>(children, ToggleJson.Get("graphic_class"));
             if (graphicImage != null)
             {
                 toggle.graphic = graphicImage;
             }
 
-            var spriteStateJson = _toggleJson.GetDic("sprite_state");
+            var spriteStateJson = ToggleJson.GetDic("sprite_state");
             if (spriteStateJson != null)
             {
                 var spriteState = new SpriteState();
@@ -85,7 +85,7 @@ namespace XdUnityUI.Editor
             }
 
             // トグルグループ名
-            var group = _toggleJson.Get("group");
+            var group = ToggleJson.Get("group");
             if (group != null)
             {
                 var toggleGroup = renderContext.GetToggleGroup(group);
@@ -93,8 +93,8 @@ namespace XdUnityUI.Editor
                 toggle.group = toggleGroup;
             }
 
-            ElementUtil.SetupLayoutElement(go, LayoutElementParam);
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
         }

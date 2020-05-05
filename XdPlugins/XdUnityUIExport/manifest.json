@@ -40,7 +40,7 @@
     {
       "type": "menu",
       "label": "XdUnityUI export",
-      "commandId": "exportXdUnityUICommand",
+      "commandId": "pluginExportXdUnityUI",
       "shortcut": {
         "win": "Ctrl+Shift+Alt+p"
       }

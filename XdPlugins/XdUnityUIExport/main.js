@@ -121,8 +121,10 @@ const STYLE_MATCH_LOG = 'match-log'
 const STYLE_PRESERVE_ASPECT = 'preserve-aspect'
 const STYLE_RAYCAST_TARGET = 'raycast-target' // 削除予定
 const STYLE_RECT_MASK_2D = 'rect-mask-twod'
-const STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X = 'rect-transform-anchor-offset-x'
-const STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y = 'rect-transform-anchor-offset-x'
+const STYLE_RECT_TRANSFORM_X = 'rect-transform-x' // offset-min offset-max anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_Y = 'rect-transform-y' // offset-min offset-max anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_ANCHORS_X = 'rect-transform-anchors-x' // anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_ANCHORS_Y = 'rect-transform-anchors-y' // anchors-min anchors-maxの順
 const STYLE_REPEATGRID_ATTACH_TEXT_DATA_SERIES =
   'repeatgrid-attach-text-data-series'
 const STYLE_REPEATGRID_ATTACH_IMAGE_DATA_SERIES =
@@ -1341,22 +1343,37 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   const bounds = hashBounds[node.guid]
   if (!bounds || !bounds.before || !bounds.after) return null
-  const beforeBounds = calcDrawBounds
-    ? bounds.before.global_draw_bounds
-    : bounds.before.global_bounds
-  const afterBounds = calcDrawBounds
-    ? bounds.after.global_draw_bounds
-    : bounds.after.global_bounds
-
   const parentBounds = hashBounds[node.parent.guid]
   if (!parentBounds || !parentBounds.before || !parentBounds.after) return null
+
+  const boundsBeforeGlobalBounds = bounds.before.global_bounds
+  //const boundsBeforeGlobalDrawBounds = bounds.before.global_draw_bounds
+  const boundsBeforeGlobalDrawBounds = bounds.before.global_bounds
+  const boundsAfterGlobalBounds = bounds.after.global_bounds
+  //const boundsAfterGlobalDrawBounds = bounds.after.global_draw_bounds
+  const boundsAfterGlobalDrawBounds = bounds.after.global_bounds
+
+  const parentBoundsBeforeGlobalBounds = parentBounds.before.global_bounds
+  //const parentBoundsBeforeGlobalDrawBounds = parentBounds.before.global_draw_bounds
+  const parentBoundsBeforeGlobalDrawBounds = parentBounds.before.global_bounds
+  const parentBoundsAfterGlobalBounds = parentBounds.after.global_bounds
+  //const parentBoundsAfterGlobalDrawBounds = parentBounds.after.global_draw_bounds
+  const parentBoundsAfterGlobalDrawBounds = parentBounds.after.global_bounds
+
+  const beforeBounds = calcDrawBounds
+    ? boundsBeforeGlobalDrawBounds
+    : boundsBeforeGlobalBounds
+  const afterBounds = calcDrawBounds
+    ? boundsAfterGlobalDrawBounds
+    : boundsAfterGlobalBounds
+
   //masked_global_boundsは、親がマスク持ちグループである場合、グループ全体のBoundsになる
   const parentBeforeBounds = calcDrawBounds
-    ? parentBounds.before.global_draw_bounds
-    : parentBounds.before.global_bounds
+    ? parentBoundsBeforeGlobalDrawBounds
+    : parentBoundsBeforeGlobalBounds
   const parentAfterBounds = calcDrawBounds
-    ? parentBounds.after.global_draw_bounds
-    : parentBounds.after.global_bounds
+    ? parentBoundsAfterGlobalDrawBounds
+    : parentBoundsAfterGlobalBounds
 
   // fix を取得するため
   // TODO: anchor スタイルのパラメータはとるべきでは
@@ -1378,7 +1395,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   if (styleFix != null) {
     // オプションが設定されたら、全ての設定が決まる(NULLではなくなる)
     const fix = getStyleFix(styleFix)
-    console.log(node.name, 'のmargin-fixが設定されました', fix)
+    console.log(node.name, 'のfixが設定されました', fix)
     styleFixWidth = fix.width
     styleFixHeight = fix.height
     styleFixTop = fix.top
@@ -1392,24 +1409,36 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   if (styleFixLeft == null) {
     const beforeLeft = parentBeforeBounds.x - beforeBounds.x
     const afterLeft = parentAfterBounds.x - afterBounds.x
+    console.log(
+      `${node.name} left. draw(${calcDrawBounds}) ${beforeLeft} ${afterLeft}`,
+    )
     styleFixLeft = approxEqual(beforeLeft, afterLeft, 0.001)
   }
 
   if (styleFixRight == null) {
     const beforeRight = parentBeforeBounds.ex - beforeBounds.ex
     const afterRight = parentAfterBounds.ex - afterBounds.ex
+    console.log(
+      `${node.name} right. draw(${calcDrawBounds}) ${beforeRight} ${afterRight}`,
+    )
     styleFixRight = approxEqual(beforeRight, afterRight, 0.001)
   }
 
   if (styleFixTop == null) {
     const beforeTop = parentBeforeBounds.y - beforeBounds.y
     const afterTop = parentAfterBounds.y - afterBounds.y
+    console.log(
+      `${node.name} top. draw(${calcDrawBounds}) ${beforeTop} ${afterTop}`,
+    )
     styleFixTop = approxEqual(beforeTop, afterTop, 0.001)
   }
 
   if (styleFixBottom == null) {
     const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
     const afterBottom = parentAfterBounds.ey - afterBounds.ey
+    console.log(
+      `${node.name} bottom. draw(${calcDrawBounds}) ${beforeBottom} ${afterBottom}`,
+    )
     styleFixBottom = approxEqual(beforeBottom, afterBottom, 0.001)
   }
 
@@ -1649,7 +1678,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
  * @param {SceneNodeClass} root
  * @return {ResponsiveParameter[]}
  */
-function makeResponsiveBounds(root) {
+async function makeResponsiveBounds(root) {
   let hashBounds = {}
   // 現在のboundsを取得する
   traverseNode(root, node => {
@@ -1673,6 +1702,9 @@ function makeResponsiveBounds(root) {
     // viewportの高さを高さが変わった分の変化に合わせる
     root.viewportHeight = viewportHeight + resizePlusHeight
   }
+
+  // ここでダイアログをだすと、Artboradをひきのばしたところで、どう変化したか見ることができる
+  // await fs.getFileForSaving('txt', { types: ['txt'] })
 
   // 変更されたboundsを取得する
   traverseNode(root, node => {
@@ -2152,7 +2184,7 @@ function addMask(json, style) {
  * @param rectTransformJson
  * @param style
  */
-function addRectTransformAnchorOffsetXY(json, style) {
+function addRectTransform(json, style) {
   if (!style) return
   // RectTransformの値がない場合、作成する
   if (!('rect_transform' in json)) {
@@ -2166,19 +2198,19 @@ function addRectTransformAnchorOffsetXY(json, style) {
   if (!('offset_min' in rectTransformJson)) rectTransformJson['offset_min'] = {}
   if (!('offset_max' in rectTransformJson)) rectTransformJson['offset_max'] = {}
   // Styleで指定があった場合、上書きする
-  const anchorsX = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X)
-  const anchorsY = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y)
+  const anchorsX = style.values(STYLE_RECT_TRANSFORM_X)
+  const anchorsY = style.values(STYLE_RECT_TRANSFORM_Y)
   if (anchorsX) {
-    rectTransformJson['anchor_min']['x'] = parseFloat(anchorsX[0])
-    rectTransformJson['anchor_max']['x'] = parseFloat(anchorsX[1])
-    rectTransformJson['offset_min']['x'] = parseFloat(anchorsX[2])
-    rectTransformJson['offset_max']['x'] = parseFloat(anchorsX[3])
+    rectTransformJson['offset_min']['x'] = parseFloat(anchorsX[0])
+    rectTransformJson['offset_max']['x'] = parseFloat(anchorsX[1])
+    rectTransformJson['anchor_min']['x'] = parseFloat(anchorsX[2])
+    rectTransformJson['anchor_max']['x'] = parseFloat(anchorsX[3])
   }
   if (anchorsY) {
-    rectTransformJson['anchor_min']['y'] = parseFloat(anchorsY[0])
-    rectTransformJson['anchor_max']['y'] = parseFloat(anchorsY[1])
-    rectTransformJson['offset_min']['y'] = parseFloat(anchorsY[2])
-    rectTransformJson['offset_max']['y'] = parseFloat(anchorsY[3])
+    rectTransformJson['offset_min']['y'] = parseFloat(anchorsY[0])
+    rectTransformJson['offset_max']['y'] = parseFloat(anchorsY[1])
+    rectTransformJson['anchor_min']['y'] = parseFloat(anchorsY[2])
+    rectTransformJson['anchor_max']['y'] = parseFloat(anchorsY[3])
   }
 }
 
@@ -2845,7 +2877,7 @@ async function createContent(style, json, node, funcForEachChild, root) {
     },
   })
 
-  addRectTransformAnchorOffsetXY(contentJson, contentStyle) // anchor設定を上書きする
+  addRectTransform(contentJson, contentStyle) // anchor設定を上書きする
 
   addContentSizeFitter(contentJson, contentStyle)
   addLayer(contentJson, contentStyle)
@@ -2956,7 +2988,7 @@ async function createInput(json, node, root, funcForEachChild) {
   // 基本
   addActive(json, style)
   addRectTransformDraw(json, node)
-  addRectTransformAnchorOffsetXY(json, style) // anchor設定を上書きする
+  addRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3010,7 +3042,7 @@ async function createGroup(json, node, root, funcForEachChild) {
   // 基本
   addActive(json, style)
   addRectTransformDraw(json, node)
-  addRectTransformAnchorOffsetXY(json, style) // anchor設定を上書きする
+  addRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3020,6 +3052,44 @@ async function createGroup(json, node, root, funcForEachChild) {
   addLayoutElement(json, node, style)
   addLayout(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
+
+  const styleWrap = style.first('wrap')
+  if (styleWrap) {
+    let child = {}
+    const keys = Object.keys(json)
+    for (let key of keys) {
+      child[key] = json[key]
+      delete json[key]
+    }
+    Object.assign(json, {
+      type: 'Group',
+      name: 'hello',
+      layer: 'UI',
+      rect_transform: {
+        pivot: {
+          x: 1,
+          y: 0,
+        },
+        anchor_min: {
+          x: 0,
+          y: 0,
+        },
+        anchor_max: {
+          x: 1,
+          y: 1,
+        },
+        offset_min: {
+          x: 0,
+          y: 0,
+        },
+        offset_max: {
+          x: 0,
+          y: 0,
+        },
+      },
+      elements: [child],
+    })
+  }
 }
 
 /**
@@ -3310,12 +3380,14 @@ async function createImage(json, node, root, outputFolder, renditions) {
 }
 
 /**
+ * Root用のRectTransform
+ * Rootの親のサイズにピッタリはまるようにする
  * @param layoutJson
  * @param node
  * @param funcForEachChild
  * @returns {Promise<void>}
  */
-async function createRoot(layoutJson, node, funcForEachChild) {
+function addRectTransformRoot(layoutJson, node, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
   Object.assign(layoutJson, {
     rect_transform: {
@@ -3337,7 +3409,6 @@ async function createRoot(layoutJson, node, funcForEachChild) {
         y: 0,
       },
     },
-    elements: [], // これがないとBAUM2でエラーになる(elementsが見つからないため､例外がでる)
   })
   if (
     node.fillEnabled === true &&
@@ -3348,8 +3419,6 @@ async function createRoot(layoutJson, node, funcForEachChild) {
       fill_color: node.fill.toHex(true),
     })
   }
-  await funcForEachChild()
-  addLayer(layoutJson, style)
 }
 
 /**
@@ -3498,7 +3567,7 @@ async function nodeRoot(renditions, outputFolder, root) {
 
   let traverse = async (
     nodeStack,
-    layoutJson,
+    json,
     depth,
     enableWriteToLayoutJson,
   ) => {
@@ -3526,7 +3595,7 @@ async function nodeRoot(renditions, outputFolder, root) {
         numChildren = maxNumChildren
       }
       if (numChildren > 0) {
-        layoutJson.elements = []
+        json.elements = []
         // 後ろから順番に処理をする
         // 描画順に関わるので､非同期処理にしない
         for (let i = numChildren - 1; i >= 0; i--) {
@@ -3546,18 +3615,21 @@ async function nodeRoot(renditions, outputFolder, root) {
           nodeStack.pop()
           // なにも入っていない場合はelementsに追加しない
           if (enableWriteToLayoutJson && Object.keys(childJson).length > 0) {
-            layoutJson.elements.push(childJson)
+            json.elements.push(childJson)
           }
         }
       }
+    }
+
+    // root nodeなら、Root用RectTransformをセットする
+    if (node === root) {
+      await addRectTransformRoot(json, node, funcForEachChild)
     }
 
     // nodeの型で処理の分岐
     let constructorName = node.constructor.name
     switch (constructorName) {
       case 'Artboard':
-        await createRoot(layoutJson, node, funcForEachChild)
-        break
       case 'Group':
       case 'BooleanGroup':
       case 'RepeatGrid':
@@ -3573,41 +3645,41 @@ async function nodeRoot(renditions, outputFolder, root) {
             outputFolder = null
             await funcForEachChild()
             outputFolder = tempOutputFolder
-            await createImage(layoutJson, node, root, outputFolder, renditions)
+            await createImage(json, node, root, outputFolder, renditions)
             return
           }
           if (style.checkBool(STYLE_BUTTON)) {
-            await createButton(layoutJson, node, root, funcForEachChild)
+            await createButton(json, node, root, funcForEachChild)
             return
           }
           if (style.checkBool(STYLE_SLIDER)) {
             const type = 'Slider'
-            Object.assign(layoutJson, {
+            Object.assign(json, {
               type: type,
               name: getUnityName(node),
             })
-            addRectTransformDraw(layoutJson, node)
+            addRectTransformDraw(json, node)
             await funcForEachChild()
             return
           }
           if (style.checkBool(STYLE_SCROLLBAR)) {
-            await createScrollbar(layoutJson, node, funcForEachChild)
+            await createScrollbar(json, node, funcForEachChild)
             return
           }
           if (style.checkBool(STYLE_TOGGLE)) {
-            await createToggle(layoutJson, node, root, funcForEachChild)
+            await createToggle(json, node, root, funcForEachChild)
             return
           }
           if (style.checkBool(STYLE_VIEWPORT)) {
-            await createViewport(layoutJson, node, root, funcForEachChild)
+            await createViewport(json, node, root, funcForEachChild)
             return
           }
           if (style.checkBool(STYLE_INPUT)) {
-            await createInput(layoutJson, node, root, funcForEachChild)
+            await createInput(json, node, root, funcForEachChild)
             return
           }
           // 通常のグループ
-          await createGroup(layoutJson, node, root, funcForEachChild)
+          await createGroup(json, node, root, funcForEachChild)
         }
         break
       case 'Line':
@@ -3615,11 +3687,11 @@ async function nodeRoot(renditions, outputFolder, root) {
       case 'Rectangle':
       case 'Path':
       case 'Polygon':
-        await createImage(layoutJson, node, root, outputFolder, renditions)
+        await createImage(json, node, root, outputFolder, renditions)
         await funcForEachChild()
         break
       case 'Text':
-        await nodeText(layoutJson, node, root, outputFolder, renditions)
+        await nodeText(json, node, root, outputFolder, renditions)
         await funcForEachChild()
         break
       default:
@@ -3667,7 +3739,7 @@ async function exportXdUnityUI(roots, outputFolder) {
   globalResponsiveBounds = {}
 
   for (let root of roots) {
-    console.log(`----- root-node:${root.name} -----`)
+    console.log(`----- ${root.name} -----`)
     globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
     const artboardCssFilename = replaceToFileName(root.name) + '.css'
     try {
@@ -3685,7 +3757,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     }
     globalCssVars = createCssVars(globalCssRules)
 
-    globalResponsiveBounds = makeResponsiveBounds(root)
+    globalResponsiveBounds = await makeResponsiveBounds(root)
 
     // フォルダ名に使えない文字を'_'に変換
     let subFolderName = nodeToFolderName(root)
@@ -3716,6 +3788,7 @@ async function exportXdUnityUI(roots, outputFolder) {
       // レイアウトファイルの出力
       await layoutFile.write(JSON.stringify(layoutJson, null, '  '))
     }
+    console.log('----- done -----')
   }
 
   // すべて可視にする
@@ -3927,7 +4000,7 @@ async function getExportArtboards(selection) {
  * @param {RootNode} root
  * @returns {Promise<void>}
  */
-async function exportXdUnityUICommand(selection, root) {
+async function pluginExportXdUnityUI(selection, root) {
   checkLatestVersion()
 
   // エキスポートマークがついたものだけ出力するオプションは、毎回オフにする
@@ -4199,9 +4272,10 @@ async function pluginResponsiveParamName(selection, root) {
   let selectionItems = selection.items
   // レスポンシブパラメータの作成
   globalResponsiveBounds = {}
-  selectionItems.forEach(item => {
+  // TODO: selectionItemsで、 for..of ループができるか、確認必要。 makeResponsiveBoundsで、await処理がないため、問題ないように見えてしまう可能性あり。
+  for (const item of selectionItems) {
     // あとで一括変化があったかどうか調べるため､responsiveBoundsにパラメータを追加していく
-    makeResponsiveBounds(item)
+    await makeResponsiveBounds(item)
     let func = node => {
       if (node.symbolId) return
       const param = calcRectTransform(node, {})
@@ -4230,110 +4304,12 @@ async function pluginResponsiveParamName(selection, root) {
       })
     }
     func(item)
-  })
+  }
 
   console.log('@fix:done')
 
   // データをもとに戻すため､意図的にエラーをスローすると､付加した情報も消えてしまう
   // Artboardをリサイズしてもとに戻しても、まったく同じ状態には戻らない
-}
-
-/**
- * 選択した複数のグループのDrawBoundsのサイズをそろえるため､ダミーの描画オブジェクトを作成する
- * 現在は､同一Artboardであることを求める
- * @param {Selection} selection
- * @param {RootNode} root
- */
-async function pluginAddImageSizeFix(selection, root) {
-  const sizeFixerName = '#SIZE-FIXER'
-  let artboard
-  let groups = []
-  // 選択されたものの検証　グループのものかどうかを探す
-  selection.items.forEach(item => {
-    if (!item.isContainer) {
-      throw error('failed')
-    }
-
-    // すでにあるSizeFixerを削除する
-    let sizeFixers = item.children.filter(child => {
-      return child.name === sizeFixerName
-    })
-    sizeFixers.forEach(item => {
-      item.removeFromParent()
-    })
-
-    if (artboard == null) {
-      // 最初のアートボード登録
-      artboard = getArtboard(item)
-    } else {
-      const myArtboard = getArtboard(item)
-      // 同じアートボードであるか
-      if (artboard !== myArtboard) {
-        throw error('failed')
-      }
-    }
-    groups.push(item)
-  })
-
-  // 選択されたグループの描画範囲を取得する
-  let calcFixBounds = new CalcBounds()
-  groups.forEach(group => {
-    calcFixBounds.addBounds(group.globalDrawBounds)
-  })
-
-  // サイズ固定のためのダミー透明描画オブジェクトを作成する
-  const fixBounds = calcFixBounds.bounds
-  groups.forEach(group => {
-    let fixerGraphic = new Rectangle()
-    fixerGraphic.name = sizeFixerName
-    fixerGraphic.width = fixBounds.width
-    fixerGraphic.height = fixBounds.height
-    fixerGraphic.fillEnabled = false
-    fixerGraphic.strokeEnabled = false
-    // まずは追加し
-    group.addChild(fixerGraphic)
-    // ズレを計算､移動する
-    const lineBounds = fixerGraphic.globalBounds
-    fixerGraphic.moveInParentCoordinates(
-      fixBounds.x - lineBounds.x,
-      fixBounds.y - lineBounds.y,
-    )
-  })
-  await alert('done', 'Size Fixer')
-}
-
-/**
- * 選択したノードを画像出力する
- * 画像出力のテスト用
- * @param {Selection} selection
- * @param {RootNode} root
- */
-async function testRendition(selection, root) {
-  const folder = await fs.getFolder()
-  if (!folder) return console.log('User canceled folder picker.')
-  const file = await folder.createFile('rendition.png')
-  let node = selection.items[0]
-  console.log(node.name)
-  let renditionSettings = [
-    {
-      node: node, // [1]
-      outputFile: file, // [2]
-      type: application.RenditionType.PNG, // [3]
-      scale: 2, // [4]
-    },
-  ]
-  application
-    .createRenditions(renditionSettings) // [1]
-    .then(results => {
-      // [2]
-      console.log(
-        `PNG rendition has been saved at ${results[0].outputFile.nativePath}`,
-      )
-    })
-    .catch(error => {
-      // [3]
-      console.log(error)
-    })
 }
 
 class CssSelector {
@@ -4627,46 +4603,9 @@ async function testParse(selection, root) {
   console.log(result)
 }
 
-/**
- * 全てのInteractionと、選択にあるTriggeredInteractionsを取得する プラグイン
- * manifest.json uiEntryPointsに以下を追加する
- * {
- *     "type": "menu",
- *     "label": "get interactions",
- *     "commandId": "getInteractionsCommand"
- * }
- * @param {Selection} selection
- * @param {RootNode} root
- * @return {Promise<void>}
- */
-async function getInteractionsCommand(selection, root) {
-  let allInteractions = require('interactions').allInteractions
-  console.log(allInteractions)
-
-  let node = selection.items[0]
-  if (node) {
-    // Print all the interactions triggered by a node
-    node.triggeredInteractions.forEach(interaction => {
-      console.log(
-        'Trigger: ' +
-          interaction.trigger.type +
-          ' -> Action: ' +
-          interaction.action.type,
-      )
-    })
-  }
-  console.log('done.')
-}
-
 module.exports = {
   // コマンドIDとファンクションの紐付け
   commands: {
-    exportXdUnityUICommand: exportXdUnityUICommand,
-    getInteractionsCommand: getInteractionsCommand,
-    /*
-    addResponsiveParam: pluginResponsiveParamName,
-    addImageSizeFix: pluginAddImageSizeFix,
-    testPlugin: testRendition,
-    */
+    pluginExportXdUnityUI,
   },
 }
