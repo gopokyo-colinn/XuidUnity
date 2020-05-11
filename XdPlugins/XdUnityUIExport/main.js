@@ -563,6 +563,87 @@ class ResponsiveParameter {
 
   updateAfter() {
     this.after = new GlobalBounds(this.node)
+
+    {
+      const beforeX = this.before.global_bounds.x
+      const beforeDrawX = this.before.global_draw_bounds.x
+      const beforeDrawSizeX = beforeDrawX - beforeX
+
+      const afterX = this.after.global_bounds.x
+      const afterDrawX = this.after.global_draw_bounds.x
+      const afterDrawSizeX = afterDrawX - afterX
+
+      if (!approxEqual(beforeDrawSizeX, afterDrawSizeX)) {
+        console.log(
+          `${this.node.name} ${beforeDrawSizeX -
+            afterDrawSizeX}リサイズ後のBounds.x取得がうまくいっていないようです`,
+        )
+        // beforeのサイズ差をもとに、afterを修正する
+        this.after.global_draw_bounds.x =
+          this.after.global_bounds.x + beforeDrawSizeX
+      }
+    }
+    {
+      const beforeY = this.before.global_bounds.y
+      const beforeDrawY = this.before.global_draw_bounds.y
+      const beforeDrawSizeY = beforeDrawY - beforeY
+
+      const afterY = this.after.global_bounds.y
+      const afterDrawY = this.after.global_draw_bounds.y
+      const afterDrawSizeY = afterDrawY - afterY
+
+      if (!approxEqual(beforeDrawSizeY, afterDrawSizeY)) {
+        console.log(
+          `${this.node.name} ${beforeDrawSizeY -
+            afterDrawSizeY}リサイズ後のBounds.y取得がうまくいっていないようです`,
+        )
+        // beforeのサイズ差をもとに、afterを修正する
+        this.after.global_draw_bounds.y =
+          this.after.global_bounds.y + beforeDrawSizeY
+      }
+    }
+    {
+      const beforeX = this.before.global_bounds.ex
+      const beforeDrawX = this.before.global_draw_bounds.ex
+      const beforeDrawSizeX = beforeDrawX - beforeX
+
+      const afterX = this.after.global_bounds.ex
+      const afterDrawX = this.after.global_draw_bounds.ex
+      const afterDrawSizeX = afterDrawX - afterX
+
+      if (!approxEqual(beforeDrawSizeX, afterDrawSizeX)) {
+        console.log(
+          `${this.node.name} ${beforeDrawSizeX -
+            afterDrawSizeX}リサイズ後のBounds.ex取得がうまくいっていないようです`,
+        )
+        // beforeのサイズ差をもとに、afterを修正する
+        this.after.global_draw_bounds.ex =
+          this.after.global_bounds.ex + beforeDrawSizeX
+      }
+    }
+    {
+      const beforeY = this.before.global_bounds.ey
+      const beforeDrawY = this.before.global_draw_bounds.ey
+      const beforeDrawSizeY = beforeDrawY - beforeY
+
+      const afterY = this.after.global_bounds.ey
+      const afterDrawY = this.after.global_draw_bounds.ey
+      const afterDrawSizeY = afterDrawY - afterY
+
+      if (!approxEqual(beforeDrawSizeY, afterDrawSizeY)) {
+        console.log(
+          `${this.node.name} ${beforeDrawSizeY -
+            afterDrawSizeY}リサイズ後のBounds.ey取得がうまくいっていないようです`,
+        )
+        // beforeのサイズ差をもとに、afterを修正する
+        this.after.global_draw_bounds.ey =
+          this.after.global_bounds.ey + beforeDrawSizeY
+      }
+    }
+    this.after.global_draw_bounds.width =
+      this.after.global_draw_bounds.ex - this.after.global_draw_bounds.x
+    this.after.global_draw_bounds.height =
+      this.after.global_draw_bounds.ey - this.after.global_draw_bounds.y
   }
 
   updateRestore() {
@@ -599,14 +680,15 @@ function replaceToFileName(name, convertDot = false) {
 
 /**
  * 誤差範囲での差があるか
+ * epsの値はこのアプリケーション内では共通にする
+ * after-bounds before-boundsの変形で誤差が許容範囲と判定したにもかかわらず、
+ * 後のcalcRectTransformで許容範囲外と判定してまうなどの事故を防ぐため
  * @param {number} a
  * @param {number} b
  * @param {number=} eps
  */
-function approxEqual(a, b, eps) {
-  if (eps == null) {
-    eps = 0.00001 // リサイズして元にもどしたとき､これぐらいの誤差がでる
-  }
+function approxEqual(a, b) {
+  const eps = 0.001 // リサイズして元にもどしたとき､これぐらいの誤差がでる
   return Math.abs(a - b) < eps
 }
 
@@ -673,6 +755,14 @@ function getRepeatGrid(node) {
   return null
 }
 
+/**
+ * nodeからスケールを考慮したglobalBoundsを取得する
+ * Artboardであった場合の、viewportHeightも考慮する
+ * ex,eyがつく
+ * ハッシュをつかわない
+ * @param node
+ * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
+ */
 function getGlobalBounds(node) {
   const bounds = node.globalBounds
   // Artboardにあるスクロール領域のボーダー
@@ -688,6 +778,14 @@ function getGlobalBounds(node) {
   }
 }
 
+/**
+ * nodeからスケールを考慮したglobalDrawBoundsを取得する
+ * Artboardであった場合の、viewportHeightも考慮する
+ * ex,eyがつく
+ * ハッシュをつかわない
+ * @param node
+ * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
+ */
 function getGlobalDrawBounds(node) {
   let bounds = node.globalDrawBounds
   const viewPortHeight = node.viewportHeight
@@ -706,7 +804,7 @@ function getGlobalDrawBounds(node) {
  * リサイズされる前のグローバル座標とサイズを取得する
  * responsiveBoundsの中の値は壊れないようにする
  * @param {SceneNodeClass} node
- * @return {null|Bounds}
+ * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
 function getBeforeGlobalDrawBounds(node) {
   // レスポンシブパラメータ作成用で､すでに取得した変形してしまう前のパラメータがあった場合
@@ -728,7 +826,7 @@ function getBeforeGlobalDrawBounds(node) {
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
  * @param {SceneNodeClass} node
- * @return {null|Bounds}
+ * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
 function getBeforeGlobalBounds(node) {
   const hashBounds = globalResponsiveBounds
@@ -1346,34 +1444,28 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   const parentBounds = hashBounds[node.parent.guid]
   if (!parentBounds || !parentBounds.before || !parentBounds.after) return null
 
-  const boundsBeforeGlobalBounds = bounds.before.global_bounds
-  //const boundsBeforeGlobalDrawBounds = bounds.before.global_draw_bounds
-  const boundsBeforeGlobalDrawBounds = bounds.before.global_bounds
-  const boundsAfterGlobalBounds = bounds.after.global_bounds
-  //const boundsAfterGlobalDrawBounds = bounds.after.global_draw_bounds
-  const boundsAfterGlobalDrawBounds = bounds.after.global_bounds
+  const beforeGlobalBounds = bounds.before.global_bounds
+  const beforeGlobalDrawBounds = bounds.before.global_draw_bounds
+  const parentBeforeGlobalBounds = parentBounds.before.global_bounds
+  const parentBeforeGlobalDrawBounds = parentBounds.before.global_draw_bounds
 
-  const parentBoundsBeforeGlobalBounds = parentBounds.before.global_bounds
-  //const parentBoundsBeforeGlobalDrawBounds = parentBounds.before.global_draw_bounds
-  const parentBoundsBeforeGlobalDrawBounds = parentBounds.before.global_bounds
-  const parentBoundsAfterGlobalBounds = parentBounds.after.global_bounds
-  //const parentBoundsAfterGlobalDrawBounds = parentBounds.after.global_draw_bounds
-  const parentBoundsAfterGlobalDrawBounds = parentBounds.after.global_bounds
+  const afterGlobalBounds = bounds.after.global_bounds
+  const afterGlobalDrawBounds = bounds.after.global_draw_bounds
+  const parentAfterGlobalBounds = parentBounds.after.global_bounds
+  const parentAfterGlobalDrawBounds = parentBounds.after.global_draw_bounds
 
   const beforeBounds = calcDrawBounds
-    ? boundsBeforeGlobalDrawBounds
-    : boundsBeforeGlobalBounds
-  const afterBounds = calcDrawBounds
-    ? boundsAfterGlobalDrawBounds
-    : boundsAfterGlobalBounds
+    ? beforeGlobalDrawBounds
+    : beforeGlobalBounds
+  const afterBounds = calcDrawBounds ? afterGlobalDrawBounds : afterGlobalBounds
 
   //masked_global_boundsは、親がマスク持ちグループである場合、グループ全体のBoundsになる
   const parentBeforeBounds = calcDrawBounds
-    ? parentBoundsBeforeGlobalDrawBounds
-    : parentBoundsBeforeGlobalBounds
+    ? parentBeforeGlobalDrawBounds
+    : parentBeforeGlobalBounds
   const parentAfterBounds = calcDrawBounds
-    ? parentBoundsAfterGlobalDrawBounds
-    : parentBoundsAfterGlobalBounds
+    ? parentAfterGlobalDrawBounds
+    : parentAfterGlobalBounds
 
   // fix を取得するため
   // TODO: anchor スタイルのパラメータはとるべきでは
@@ -1406,48 +1498,36 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   // ロックされている 0.001以下の誤差が起きることを確認した
 
+  const beforeLeft = parentBeforeBounds.x - beforeBounds.x
+  const afterLeft = parentAfterBounds.x - afterBounds.x
   if (styleFixLeft == null) {
-    const beforeLeft = parentBeforeBounds.x - beforeBounds.x
-    const afterLeft = parentAfterBounds.x - afterBounds.x
-    console.log(
-      `${node.name} left. draw(${calcDrawBounds}) ${beforeLeft} ${afterLeft}`,
-    )
-    styleFixLeft = approxEqual(beforeLeft, afterLeft, 0.001)
+    styleFixLeft = approxEqual(beforeLeft, afterLeft)
   }
 
+  const beforeRight = parentBeforeBounds.ex - beforeBounds.ex
+  const afterRight = parentAfterBounds.ex - afterBounds.ex
   if (styleFixRight == null) {
-    const beforeRight = parentBeforeBounds.ex - beforeBounds.ex
-    const afterRight = parentAfterBounds.ex - afterBounds.ex
-    console.log(
-      `${node.name} right. draw(${calcDrawBounds}) ${beforeRight} ${afterRight}`,
-    )
-    styleFixRight = approxEqual(beforeRight, afterRight, 0.001)
+    styleFixRight = approxEqual(beforeRight, afterRight)
   }
 
+  const beforeTop = parentBeforeBounds.y - beforeBounds.y
+  const afterTop = parentAfterBounds.y - afterBounds.y
   if (styleFixTop == null) {
-    const beforeTop = parentBeforeBounds.y - beforeBounds.y
-    const afterTop = parentAfterBounds.y - afterBounds.y
-    console.log(
-      `${node.name} top. draw(${calcDrawBounds}) ${beforeTop} ${afterTop}`,
-    )
-    styleFixTop = approxEqual(beforeTop, afterTop, 0.001)
+    styleFixTop = approxEqual(beforeTop, afterTop)
   }
 
+  const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
+  const afterBottom = parentAfterBounds.ey - afterBounds.ey
   if (styleFixBottom == null) {
-    const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
-    const afterBottom = parentAfterBounds.ey - afterBounds.ey
-    console.log(
-      `${node.name} bottom. draw(${calcDrawBounds}) ${beforeBottom} ${afterBottom}`,
-    )
-    styleFixBottom = approxEqual(beforeBottom, afterBottom, 0.001)
+    styleFixBottom = approxEqual(beforeBottom, afterBottom)
   }
 
   if (styleFixWidth == null) {
-    styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width, 0.001)
+    styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width)
   }
 
   if (styleFixHeight == null) {
-    styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height, 0.001)
+    styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height)
   }
 
   if (styleFixLeft === false) {
@@ -1472,21 +1552,6 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     // 親のY座標･Heightをもとに､Bottom座標がきまる
     styleFixBottom =
       (parentBeforeBounds.ey - beforeBounds.ey) / parentBeforeBounds.height
-  }
-
-  if (
-    styleFixLeft === true &&
-    styleFixRight === true &&
-    styleFixWidth === true
-  ) {
-    console.log(`***error: ${node.name} fix`)
-  }
-  if (
-    styleFixTop === true &&
-    styleFixBottom === true &&
-    styleFixHeight === true
-  ) {
-    console.log(`***error: ${node.name} fix`)
   }
 
   // anchorの値を決める
@@ -1540,15 +1605,17 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
       offsetMax.x = beforeBounds.ex - parentBeforeBounds.ex
       offsetMin.x = offsetMax.x - beforeBounds.width
     } else {
-      // 不正な設定
-      // サイズが固定されて、左右固定されている
-      // 左右共ロックされていない と同じ設定をする
-      console.log(
-        `***error: ${node.name} fix-right(${styleFixRight}) & fix-left(${styleFixLeft}) & fix-width(${styleFixWidth})`,
-      )
-      anchorMin.x = anchorMax.x = (styleFixLeft + 1 - styleFixRight) / 2
-      offsetMin.x = -beforeBounds.width / 2
-      offsetMax.x = beforeBounds.width / 2
+      // 不確定な設定
+      // 1)サイズが固定、左右固定されている
+      // 2)サイズが固定されているが、どちらも実数
+      // サイズ固定で、位置が親の中心にたいして、絶対値できまるようにする
+      // console.log( `${node.name} fix-right(${styleFixRight}) & fix-left(${styleFixLeft}) & fix-width(${styleFixWidth})`)
+      anchorMin.x = anchorMax.x = 0.5
+      const parentCenterX = parentBeforeBounds.x + parentBeforeBounds.width / 2
+      const centerX = beforeBounds.x + beforeBounds.width / 2
+      const offsetX = centerX - parentCenterX
+      offsetMin.x = offsetX - beforeBounds.width / 2
+      offsetMax.x = offsetX + beforeBounds.width / 2
     }
   } else {
     if (styleFixLeft === true) {
@@ -1597,10 +1664,21 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
       // 不正な設定
       // サイズが固定されて、上下固定されている
       // 上下共ロックされていない　と同じ設定をする
-      console.log(`***error: ${node.name} fix-top & fix-bottom & fix-height`)
       anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2
       offsetMin.y = -beforeBounds.height / 2
       offsetMax.y = beforeBounds.height / 2
+
+      // 不確定な設定
+      // 1)サイズが固定、左右固定されている
+      // 2)サイズが固定されているが、どちらも実数
+      // サイズ固定で、位置が親の中心にたいして、絶対値できまるようにする
+      // console.log(`${node.name} fix-right(${styleFixRight}) & fix-left(${styleFixLeft}) & fix-width(${styleFixWidth})`)
+      anchorMin.y = anchorMax.y = 0.5
+      const parentCenterY = parentBeforeBounds.y + parentBeforeBounds.height / 2
+      const centerY = beforeBounds.y + beforeBounds.height / 2
+      const offsetY = -centerY + parentCenterY
+      offsetMin.y = offsetY - beforeBounds.height / 2
+      offsetMax.y = offsetY + beforeBounds.height / 2
     }
   } else {
     if (styleFixTop === true) {
@@ -2364,10 +2442,13 @@ async function addImage(json, node, root, outputFolder, renditions) {
     hashStringLength++
   }
 
+  let sliceOption = { slice: "auto" }
+
   let fileExtension = '.png'
   // 明確にfalseと指定してある場合にNO SLICEとする
   if (style.first(STYLE_IMAGE_SLICE) === 'false') {
     fileExtension = '-noslice.png'
+    sliceOption = { slice: "none" }
   }
   const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
   if (image9SliceValues && image9SliceValues.length > 0) {
@@ -2385,15 +2466,42 @@ async function addImage(json, node, root, outputFolder, renditions) {
        2番目の値が省略された場合には、1番目の値と同じ。
        */
       const paramLength = image9SliceValues.length
-      const top = parseInt(image9SliceValues[0]) * globalScale
-      const right =
+      let top = parseInt(image9SliceValues[0]) * globalScale
+      let right =
         paramLength > 1 ? parseInt(image9SliceValues[1]) * globalScale : top
-      const bottom =
+      let bottom =
         paramLength > 2 ? parseInt(image9SliceValues[2]) * globalScale : top
-      const left =
+      let left =
         paramLength > 3 ? parseInt(image9SliceValues[3]) * globalScale : right
+
+      // DrawBoundsで大きくなった分を考慮する　(影などで大きくなる)
+      const beforeBounds = getBeforeGlobalBounds(node)
+      const beforeDrawBounds = getBeforeGlobalDrawBounds(node)
+
       let offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
+      console.log('slice:' + offset)
+
+      top -= beforeDrawBounds.y - beforeBounds.y
+      bottom += beforeDrawBounds.ey - beforeBounds.ey
+      left -= beforeDrawBounds.x - beforeBounds.x
+      right += beforeDrawBounds.ex - beforeBounds.ex
+
+      offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
+
       fileExtension = '-9slice,' + offset + '.png'
+
+      sliceOption = {
+        slice: "border",
+        border:
+        {
+          top,
+          bottom,
+          right,
+          left
+        }
+      }
+
+      console.log('slice:' + offset)
     }
   }
 
@@ -2486,9 +2594,12 @@ async function addImage(json, node, root, outputFolder, renditions) {
       // この画像サイズが、0になっていた場合出力に失敗する
       // 例：レスポンシブパラメータを取得するため、リサイズする→しかし元にもどらなかった
       // 出力画像ファイル
-      const file = await outputFolder.createFile(fileName + fileExtension, {
-        overwrite: true,
-      })
+      const imageFile = await outputFolder.createFile(
+        fileName + fileExtension,
+        {
+          overwrite: true,
+        },
+      )
 
       // mask イメージを出力する場合、maskをそのままRenditionできないため
       // Maskグループそのものイメージを出力している
@@ -2499,10 +2610,18 @@ async function addImage(json, node, root, outputFolder, renditions) {
       renditions.push({
         fileName: fileName,
         node: renditionNode,
-        outputFile: file,
+        outputFile: imageFile,
         type: application.RenditionType.PNG,
         scale: renditionScale,
       })
+
+      const sliceFile = await outputFolder.createFile(
+        fileName + fileExtension + '.json',
+        {
+          overwrite: true,
+        },
+      )
+      await sliceFile.write(JSON.stringify(sliceOption, null, '  '))
     }
   }
 }
@@ -3053,7 +3172,7 @@ async function createGroup(json, node, root, funcForEachChild) {
   addLayout(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
 
-  const styleWrap = style.first('wrap')
+  const styleWrap = style.first('wrap-y')
   if (styleWrap) {
     let child = {}
     const keys = Object.keys(json)
@@ -3072,23 +3191,27 @@ async function createGroup(json, node, root, funcForEachChild) {
         },
         anchor_min: {
           x: 0,
-          y: 0,
+          y: child.rect_transform.anchor_min.y,
         },
         anchor_max: {
           x: 1,
-          y: 1,
+          y: child.rect_transform.anchor_max.y,
         },
         offset_min: {
           x: 0,
-          y: 0,
+          y: child.rect_transform.offset_min.y,
         },
         offset_max: {
           x: 0,
-          y: 0,
+          y: child.rect_transform.offset_max.y,
         },
       },
       elements: [child],
     })
+    child.rect_transform.anchor_min.y = 0
+    child.rect_transform.anchor_max.y = 1
+    child.rect_transform.offset_min.y = 0
+    child.rect_transform.offset_max.y = 0
   }
 }
 
@@ -3504,19 +3627,21 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   Object.assign(json, {
     type: type,
     name: getUnityName(node),
-    text: nodeText.text,
-    textType: textType,
-    font: nodeText.fontFamily,
-    style: nodeText.fontStyle,
-    size: nodeText.fontSize * globalScale,
-    color: nodeText.fill.toHex(true),
-    align: hAlign + vAlign,
+    text: {
+      text: nodeText.text,
+      textType: textType,
+      font: nodeText.fontFamily,
+      style: nodeText.fontStyle,
+      size: nodeText.fontSize * globalScale,
+      color: nodeText.fill.toHex(true),
+      align: hAlign + vAlign,
+      vh: boundsCM.height,
+      opacity: 100,
+    },
     x: boundsCM.cx,
     y: boundsCM.cy,
     w: boundsCM.width,
     h: boundsCM.height,
-    vh: boundsCM.height,
-    opacity: 100,
   })
 
   // 基本パラメータ
@@ -3565,12 +3690,7 @@ function traverseNode(node, func) {
 async function nodeRoot(renditions, outputFolder, root) {
   let layoutJson = makeLayoutJson(root)
 
-  let traverse = async (
-    nodeStack,
-    json,
-    depth,
-    enableWriteToLayoutJson,
-  ) => {
+  let traverse = async (nodeStack, json, depth, enableWriteToLayoutJson) => {
     let node = nodeStack[nodeStack.length - 1]
     // レイヤー名から名前とオプションの分割
     let { style } = getNodeNameAndStyle(node)
