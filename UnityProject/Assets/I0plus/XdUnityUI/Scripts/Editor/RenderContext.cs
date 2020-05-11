@@ -6,9 +6,7 @@ using UnityEngine.Assertions;
 using UnityEditor;
 using UnityEngine.UI;
 
-#if TMP_PRESENT
 using TMPro;
-#endif
 
 namespace XdUnityUI.Editor
 {
@@ -88,7 +86,6 @@ namespace XdUnityUI.Editor
             return font;
         }
 
-#if TMP_PRESENT
         public TMP_FontAsset GetTMPFontAsset(string fontName, string style)
         {
             var fontFileName = Path.Combine(fontRootPath, fontName) + "-" + style + " SDF.asset";
@@ -100,7 +97,6 @@ namespace XdUnityUI.Editor
 
             return font;
         }
-#endif
 
         public Vector2 CalcPosition(Vector2 position, Vector2 size)
         {

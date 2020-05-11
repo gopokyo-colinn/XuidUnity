@@ -9,7 +9,7 @@ namespace XdUnityUI.Editor
     /// InputElement class.
     /// based on Baum2.Editor.InputElement class.
     /// </summary>
-    public sealed class InputElement : GroupElement
+    public class InputElement : GroupElement
     {
         protected readonly Dictionary<string, object> InputJson;
 

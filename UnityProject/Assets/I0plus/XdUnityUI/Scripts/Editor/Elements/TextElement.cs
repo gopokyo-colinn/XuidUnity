@@ -11,44 +11,11 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class TextElement : Element
     {
-        private string message;
-        private string fontName;
-        private float? fontSize;
-        private string align;
-        private float? virtualHeight;
-        private Color fontColor;
-        private Vector2? canvasPosition;
-        private Vector2? sizeDelta;
-        private bool enableStroke;
-        private int? strokeSize;
-        private Color strokeColor;
-        private string type;
-        private string style;
+        protected readonly Dictionary<string, object> textJson;
 
         public TextElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            message = json.Get("text");
-            fontName = json.Get("font");
-            fontSize = json.GetFloat("size");
-            align = json.Get("align");
-            type = json.Get("textType");
-            if (json.ContainsKey("style"))
-            {
-                style = json.Get("style");
-                style.ToLower();
-            }
-
-            if (json.ContainsKey("strokeSize"))
-            {
-                enableStroke = true;
-                strokeSize = json.GetInt("strokeSize");
-                strokeColor = EditorUtil.HexToColor(json.Get("strokeColor"));
-            }
-
-            fontColor = EditorUtil.HexToColor(json.Get("color"));
-            sizeDelta = json.GetVector2("w", "h");
-            canvasPosition = json.GetVector2("x", "y");
-            virtualHeight = json.GetFloat("vh");
+            textJson = json.GetDic("text");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -61,8 +28,14 @@ namespace XdUnityUI.Editor
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
             }
-            // rect.anchoredPosition = renderer.CalcPosition(canvasPosition, sizeDelta);
-            // rect.sizeDelta = sizeDelta;
+            
+            var message = textJson.Get("text");
+            var fontName = textJson.Get("font");
+            var fontSize = textJson.GetFloat("size");
+            var align = textJson.Get("align");
+            var type = textJson.Get("textType");
+
+            var virtualHeight = textJson.GetFloat("vh");
 
             var raw = go.AddComponent<RawData>();
             raw.Info["font_size"] = fontSize;
@@ -73,17 +46,11 @@ namespace XdUnityUI.Editor
 
             // 検索するフォント名を決定する
             var fontFilename = fontName;
-            if (style != null)
+            
+            if (textJson.ContainsKey("style"))
             {
+                var style = textJson.Get("style");
                 fontFilename += "-" + style;
-            }
-
-            text.font = renderContext.GetFont(fontFilename);
-            text.fontSize = Mathf.RoundToInt(fontSize.Value);
-            text.color = fontColor;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            if (style != null)
-            {
                 if (style.Contains("normal") || style.Contains("medium"))
                 {
                     text.fontStyle = FontStyle.Normal;
@@ -94,6 +61,15 @@ namespace XdUnityUI.Editor
                     text.fontStyle = FontStyle.Bold;
                 }
             }
+
+            text.font = renderContext.GetFont(fontFilename);
+            text.fontSize = Mathf.RoundToInt(fontSize.Value);
+            text.color = Color.black;
+
+            var color = textJson.Get("color");
+            text.color = color != null ? EditorUtil.HexToColor(color) : Color.black; 
+
+            text.verticalOverflow = VerticalWrapMode.Truncate;
 
             if (type == "point")
             {
@@ -170,15 +146,17 @@ namespace XdUnityUI.Editor
                     break;
             }
 
-            if (enableStroke)
+            
+            if (textJson.ContainsKey("strokeSize"))
             {
+                var strokeSize = textJson.GetInt("strokeSize");
+                var strokeColor = EditorUtil.HexToColor(textJson.Get("strokeColor"));
                 var outline = go.AddComponent<Outline>();
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);
                 outline.useGraphicAlpha = false;
             }
 
-            //SetStretch(go, renderer);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;

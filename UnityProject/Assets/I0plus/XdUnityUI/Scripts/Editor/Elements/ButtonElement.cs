@@ -9,7 +9,7 @@ namespace XdUnityUI.Editor
     /// ButtonElement class.
     /// based on Baum2.Editor.ButtonElement class.
     /// </summary>
-    public sealed class ButtonElement : GroupElement
+    public class ButtonElement : GroupElement
     {
         protected readonly Dictionary<string, object> ButtonJson;
 

@@ -138,6 +138,7 @@ namespace XdUnityUI.Editor
             }
             catch (Exception exception)
             {
+                // ignored
             }
 
             return false;
@@ -230,6 +231,7 @@ namespace XdUnityUI.Editor
                 var clearedImageMap = false;
                 // 画像コンバート　スライス処理
                 var messageCounter = new Dictionary<string, int>();
+                var total = 0;
                 foreach (var importedAsset in importedAssets)
                 {
                     if (!importedAsset.Contains(importDirectoryPath)) continue;
@@ -253,6 +255,7 @@ namespace XdUnityUI.Editor
                         // AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
                     }
 
+                    total++;
                     progressCount += 1;
                     UpdateDisplayProgressBar(message);
 
@@ -269,7 +272,7 @@ namespace XdUnityUI.Editor
 
                 foreach (var keyValuePair in messageCounter)
                 {
-                    Debug.Log($"[XdUnityUI] {keyValuePair.Key}:{keyValuePair.Value}");
+                    Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
                 }
 
                 if (changed)

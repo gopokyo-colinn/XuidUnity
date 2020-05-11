@@ -11,8 +11,8 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ViewportElement : GroupElement
     {
-        protected Dictionary<string, object> ScrollRectJson;
-        protected Dictionary<string, object> ContentJson;
+        protected readonly Dictionary<string, object> ScrollRectJson;
+        protected readonly Dictionary<string, object> ContentJson;
         protected Element ParentElement;
 
         public ViewportElement(Dictionary<string, object> json, Element parent) : base(json, parent, true)
