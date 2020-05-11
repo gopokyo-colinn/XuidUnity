@@ -34,6 +34,11 @@
       "type": "menu",
       "label": "Rendition children",
       "commandId": "pluginRenditionChildren"
+    },
+    {
+      "type": "menu",
+      "label": "Reisize artboard",
+      "commandId": "resizeArtboard"
     }
   ]
 }

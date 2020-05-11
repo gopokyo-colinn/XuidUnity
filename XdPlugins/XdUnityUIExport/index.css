@@ -40,8 +40,8 @@
 [typeof="RepeatGrid"] > * > * {
   /* margin-fix: l r t b*/
   match-log: "RepeadGrid child-child";
-  rect-transform-anchor-offset-x: 0 1 0 0;
-  rect-transform-anchor-offset-y: 0 1 0 0;
+  rect-transform-x: 0 0 0 1;
+  rect-transform-y: 0 0 0 1;
 }
 
 /*
@@ -138,7 +138,7 @@
 
 .viewport-layout-x > .content {
   conent-size-fitter: x;
-  rect-transform-anchor-offset-y: 0 1 0 0;
+  rect-transform-y: 0 0 0 1;
 }
 
 .viewport-layout-y > .content {
@@ -149,15 +149,15 @@
    offset.min.x: 0
    offset.max.x: 0
    */
-  rect-transform-anchor-offset-x: 0 1 0 0;
+  rect-transform-x: 0 0 0 1;
 }
 
 .viewport-grid-x > .content {
-  rect-transform-anchor-offset-x: 0 1 0 0;
+  rect-transform-x: 0 0 0 1;
 }
 
 .viewport-grid-y > .content {
-  rect-transform-anchor-offset-y: 0 1 0 0;
+  rect-transform-y: 0 0 0 1;
 }
 
 .scrollbar-x {

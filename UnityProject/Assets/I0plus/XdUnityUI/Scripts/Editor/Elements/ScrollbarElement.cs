@@ -11,11 +11,11 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ScrollbarElement : GroupElement
     {
-        private Dictionary<string, object> _scrollbar;
+        protected readonly Dictionary<string, object> ScrollbarJson;
 
         public ScrollbarElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            _scrollbar = json.GetDic("scrollbar");
+            ScrollbarJson = json.GetDic("scrollbar");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -28,12 +28,12 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
 
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             var children = RenderChildren(renderContext, go);
             ElementUtil.SetupChildImageComponent(go, children);
 
-            // DotsScrollberかどうかの判定に、Toggleがあるかどうかを確認する
+            // DotsScrollbarかどうかの判定に、Toggleがあるかどうかを確認する
             var toggleChild = children.Find(child => child.Item2 is ToggleElement);
             Scrollbar scrollbar;
             if (toggleChild == null)
@@ -48,12 +48,12 @@ namespace XdUnityUI.Editor
                 dotScrollbar.DotContainer = rect;
                 dotScrollbar.DotPrefab = toggleChild.Item1.GetComponent<Toggle>();
                 // Toggleボタンの並びレイアウト
-                ElementUtil.SetupLayoutGroup(go, LayoutParam);
+                ElementUtil.SetupLayoutGroup(go, LayoutJson);
                 dotScrollbar.size = 1; // sizeを1にすることで、Toggleが複数Cloneされることをふせぐ
                 scrollbar = dotScrollbar;
             }
 
-            var direction = _scrollbar.Get("direction");
+            var direction = ScrollbarJson.Get("direction");
             if (direction != null)
             {
                 switch (direction)
@@ -79,7 +79,7 @@ namespace XdUnityUI.Editor
                 }
             }
 
-            var handleClassName = _scrollbar.Get("handle_class");
+            var handleClassName = ScrollbarJson.Get("handle_class");
             if (handleClassName != null)
             {
                 var found = children.Find(child => child.Item2.HasParsedName(handleClassName));
@@ -89,7 +89,7 @@ namespace XdUnityUI.Editor
                 }
             }
 
-            ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterParam);
+            ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
             return go;
         }
 

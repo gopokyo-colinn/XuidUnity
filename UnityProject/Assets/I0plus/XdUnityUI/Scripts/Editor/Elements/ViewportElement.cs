@@ -11,20 +11,15 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ViewportElement : GroupElement
     {
-        private Vector2? canvasPosition;
-        private Vector2? sizeDelta;
-
-        private Dictionary<string, object> _scrollRect;
-        private Dictionary<string, object> _content;
-        private Element parentElement;
+        protected readonly Dictionary<string, object> ScrollRectJson;
+        protected readonly Dictionary<string, object> ContentJson;
+        protected Element ParentElement;
 
         public ViewportElement(Dictionary<string, object> json, Element parent) : base(json, parent, true)
         {
-            canvasPosition = json.GetVector2("x", "y");
-            sizeDelta = json.GetVector2("w", "h");
-            _scrollRect = json.GetDic("scroll_rect");
-            _content = json.GetDic("content");
-            parentElement = parent;
+            ScrollRectJson = json.GetDic("scroll_rect");
+            ContentJson = json.GetDic("content");
+            ParentElement = parent;
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -38,43 +33,43 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
 
-            ElementUtil.SetLayer(go, layer);
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetLayer(go, Layer);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             // タッチイベントを取得するイメージコンポーネントになる
-            ElementUtil.SetupFillColor(go, FillColorParam);
+            ElementUtil.SetupFillColor(go, FillColorJson);
 
             // コンテンツ部分を入れるコンテナ
             var goContent = new GameObject("$Content");
-            ElementUtil.SetLayer(goContent, layer); // Viewportと同じレイヤー
+            ElementUtil.SetLayer(goContent, Layer); // Viewportと同じレイヤー
             var contentRect = goContent.AddComponent<RectTransform>();
             goContent.transform.SetParent(go.transform);
 
-            if (_content != null)
+            if (ContentJson != null)
             {
-                goContent.name = _content.Get("name") ?? "";
+                goContent.name = ContentJson.Get("name") ?? "";
 
-                if (_content.ContainsKey("pivot"))
+                if (ContentJson.ContainsKey("pivot"))
                     // ここのPivotはX,Yでくる
-                    contentRect.pivot = _content.GetDic("pivot").GetVector2("x", "y").Value;
-                if (_content.ContainsKey("anchor_min"))
-                    contentRect.anchorMin = _content.GetDic("anchor_min").GetVector2("x", "y").Value;
-                if (_content.ContainsKey("anchor_max"))
-                    contentRect.anchorMax = _content.GetDic("anchor_max").GetVector2("x", "y").Value;
-                if (_content.ContainsKey("offset_min"))
-                    contentRect.offsetMin = _content.GetDic("offset_min").GetVector2("x", "y").Value;
-                if (_content.ContainsKey("offset_max"))
-                    contentRect.offsetMax = _content.GetDic("offset_max").GetVector2("x", "y").Value;
+                    contentRect.pivot = ContentJson.GetDic("pivot").GetVector2("x", "y").Value;
+                if (ContentJson.ContainsKey("anchor_min"))
+                    contentRect.anchorMin = ContentJson.GetDic("anchor_min").GetVector2("x", "y").Value;
+                if (ContentJson.ContainsKey("anchor_max"))
+                    contentRect.anchorMax = ContentJson.GetDic("anchor_max").GetVector2("x", "y").Value;
+                if (ContentJson.ContainsKey("offset_min"))
+                    contentRect.offsetMin = ContentJson.GetDic("offset_min").GetVector2("x", "y").Value;
+                if (ContentJson.ContainsKey("offset_max"))
+                    contentRect.offsetMax = ContentJson.GetDic("offset_max").GetVector2("x", "y").Value;
 
-                if (_content.ContainsKey("layout"))
+                if (ContentJson.ContainsKey("layout"))
                 {
-                    var contentLayout = _content.GetDic("layout");
+                    var contentLayout = ContentJson.GetDic("layout");
                     ElementUtil.SetupLayoutGroup(goContent, contentLayout);
                 }
 
-                if (_content.ContainsKey("content_size_fitter"))
+                if (ContentJson.ContainsKey("content_size_fitter"))
                 {
-                    var contentSizeFitter = _content.GetDic("content_size_fitter");
+                    var contentSizeFitter = ContentJson.GetDic("content_size_fitter");
                     var compSizeFitter = ElementUtil.SetupContentSizeFitter(goContent, contentSizeFitter);
                 }
             }
@@ -82,9 +77,9 @@ namespace XdUnityUI.Editor
             //Viewportのチャイルドはもとより、content向けのAnchor・Offsetを持っている
             RenderChildren(renderContext, goContent);
 
-            ElementUtil.SetupRectMask2D(go, RectMask2DParam);
+            ElementUtil.SetupRectMask2D(go, RectMask2D);
             // ScrollRectを設定した時点ではみでたContentがアジャストされる　PivotがViewport内に入っていればOK
-            ElementUtil.SetupScrollRect(go, goContent, _scrollRect);
+            ElementUtil.SetupScrollRect(go, goContent, ScrollRectJson);
 
             return go;
         }
@@ -118,12 +113,6 @@ namespace XdUnityUI.Editor
                         throw new ArgumentOutOfRangeException();
                 }
             });
-        }
-
-
-        public override Area CalcArea()
-        {
-            return Area.FromPositionAndSize(canvasPosition.Value, sizeDelta.Value);
         }
     }
 }

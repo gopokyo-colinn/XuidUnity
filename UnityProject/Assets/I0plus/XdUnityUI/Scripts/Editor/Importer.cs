@@ -138,6 +138,7 @@ namespace XdUnityUI.Editor
             }
             catch (Exception exception)
             {
+                // ignored
             }
 
             return false;
@@ -230,6 +231,7 @@ namespace XdUnityUI.Editor
                 var clearedImageMap = false;
                 // 画像コンバート　スライス処理
                 var messageCounter = new Dictionary<string, int>();
+                var total = 0;
                 foreach (var importedAsset in importedAssets)
                 {
                     if (!importedAsset.Contains(importDirectoryPath)) continue;
@@ -243,15 +245,17 @@ namespace XdUnityUI.Editor
 
                     // スライス処理
                     var message = TextureUtil.SliceSprite(importedAsset);
+                    changed = true;
+                    
                     // 元画像を削除する
                     if (deleteImportEntriesFlag)
                     {
                         File.Delete(Path.GetFullPath(importedAsset));
                         File.Delete(Path.GetFullPath(importedAsset) + ".meta");
                         // AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
-                        changed = true;
                     }
 
+                    total++;
                     progressCount += 1;
                     UpdateDisplayProgressBar(message);
 
@@ -268,7 +272,7 @@ namespace XdUnityUI.Editor
 
                 foreach (var keyValuePair in messageCounter)
                 {
-                    Debug.Log($"[XdUnityUI] {keyValuePair.Key}:{keyValuePair.Value}");
+                    Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
                 }
 
                 if (changed)

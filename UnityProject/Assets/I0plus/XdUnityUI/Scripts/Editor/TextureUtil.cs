@@ -111,7 +111,7 @@ namespace XdUnityUI.Editor
                 var name = imageHashMap[hashStr];
                 // Debug.Log("shared texture " + Path.GetFileName(newPath) + "==" + Path.GetFileName(name));
                 imagePathMap[newPath] = name;
-                return "shared other path texture";
+                return "Shared other path texture.";
             }
 
             // ハッシュからのパスを登録
@@ -128,12 +128,12 @@ namespace XdUnityUI.Editor
                 {
                     // 全く同じだった場合、書き込まないでそのまま利用する
                     // UnityのDB更新を防ぐ
-                    return "Same texture existed";
+                    return "Same texture existed.";
                 }
             }
 
             File.WriteAllBytes(newPath, pngData);
-            return "create new texture";
+            return "Created new texture.";
         }
 
         /// <summary>

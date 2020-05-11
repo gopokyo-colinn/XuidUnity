@@ -29,7 +29,7 @@ namespace XdUnityUI.Editor
             RectTransform handleRect = null;
             RenderChildren(renderContext, go, (g, element) =>
             {
-                var name = element.name.ToLower();
+                var name = element.Name.ToLower();
 
                 if (fillRect == null && name == "fill" || name.EndsWith("_fill"))
                 {
@@ -66,7 +66,7 @@ namespace XdUnityUI.Editor
             }
 
             // SetStretch(go, renderer);
-            ElementUtil.SetRectTransform(go, rectTransformJson);
+            ElementUtil.SetupRectTransform(go, RectTransformJson);
             return go;
         }
     }
