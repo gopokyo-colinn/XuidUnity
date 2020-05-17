@@ -11,11 +11,11 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ScrollbarElement : GroupElement
     {
-        protected readonly Dictionary<string, object> ScrollbarJson;
+        private readonly Dictionary<string, object> _scrollbarJson;
 
         public ScrollbarElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            ScrollbarJson = json.GetDic("scrollbar");
+            _scrollbarJson = json.GetDic("scrollbar");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -53,7 +53,7 @@ namespace XdUnityUI.Editor
                 scrollbar = dotScrollbar;
             }
 
-            var direction = ScrollbarJson.Get("direction");
+            var direction = _scrollbarJson.Get("direction");
             if (direction != null)
             {
                 switch (direction)
@@ -79,7 +79,7 @@ namespace XdUnityUI.Editor
                 }
             }
 
-            var handleClassName = ScrollbarJson.Get("handle_class");
+            var handleClassName = _scrollbarJson.Get("handle_class");
             if (handleClassName != null)
             {
                 var found = children.Find(child => child.Item2.HasParsedName(handleClassName));

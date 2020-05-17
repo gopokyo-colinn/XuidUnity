@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -8,23 +7,21 @@ using Object = UnityEngine.Object;
 namespace XdUnityUI.Editor
 {
     /// <summary>
-    /// GroupElement class.
-    /// based on Baum2.Editor.GroupElement class.
+    ///     GroupElement class.
+    ///     based on Baum2.Editor.GroupElement class.
     /// </summary>
     public class GroupElement : Element
     {
-        private Area _areaCache;
         protected readonly Dictionary<string, object> CanvasGroup;
-        protected readonly Dictionary<string, object> LayoutJson;
-        protected readonly Dictionary<string, object> ContentSizeFitterJson;
-        protected readonly Dictionary<string, object> MaskJson;
-        protected bool? RectMask2D;
-        protected readonly string FillColorJson;
-        protected Dictionary<string, object> AddComponentJson;
         protected readonly List<object> ComponentsJson;
+        protected readonly Dictionary<string, object> ContentSizeFitterJson;
 
-        // children
         protected readonly List<Element> Elements;
+        protected readonly string FillColorJson;
+        protected readonly Dictionary<string, object> LayoutJson;
+        protected readonly Dictionary<string, object> MaskJson;
+        protected Dictionary<string, object> AddComponentJson;
+        protected bool? RectMask2D;
 
         public GroupElement(Dictionary<string, object> json, Element parent, bool resetStretch = false) : base(json,
             parent)
@@ -49,7 +46,6 @@ namespace XdUnityUI.Editor
             ComponentsJson = json.Get<List<object>>("components");
         }
 
-
         public List<Tuple<GameObject, Element>> RenderedChildren { get; private set; }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -57,10 +53,8 @@ namespace XdUnityUI.Editor
             var go = CreateSelf(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            }
 
             RenderedChildren = RenderChildren(renderContext, go);
             ElementUtil.SetupCanvasGroup(go, CanvasGroup);
@@ -109,25 +103,16 @@ namespace XdUnityUI.Editor
             foreach (var element in Elements)
             {
                 var go = element.Render(renderContext, parent);
-                if (go.transform.parent != parent.transform)
-                {
-                    Debug.Log("親が設定されていない" + go.name);
-                }
+                if (go.transform.parent != parent.transform) Debug.Log("親が設定されていない" + go.name);
 
                 list.Add(new Tuple<GameObject, Element>(go, element));
-                if (callback != null)
-                {
-                    callback.Invoke(go, element);
-                }
+                if (callback != null) callback.Invoke(go, element);
             }
 
-            foreach (var element in Elements)
-            {
-                element.RenderPass2(list);
-            }
+            foreach (var element in Elements) element.RenderPass2(list);
 
+            RenderedChildren = list;
             return list;
         }
-
     }
 }
