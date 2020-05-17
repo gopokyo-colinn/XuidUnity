@@ -11,11 +11,11 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class TextElement : Element
     {
-        protected readonly Dictionary<string, object> textJson;
+        private readonly Dictionary<string, object> _textJson = default;
 
         public TextElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            textJson = json.GetDic("text");
+            _textJson = json.GetDic("text");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -29,17 +29,13 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
             
-            var message = textJson.Get("text");
-            var fontName = textJson.Get("font");
-            var fontSize = textJson.GetFloat("size");
-            var align = textJson.Get("align");
-            var type = textJson.Get("textType");
+            var message = _textJson.Get("text");
+            var fontName = _textJson.Get("font");
+            var fontSize = _textJson.GetFloat("size");
+            var align = _textJson.Get("align");
+            var type = _textJson.Get("textType");
 
-            var virtualHeight = textJson.GetFloat("vh");
-
-            var raw = go.AddComponent<RawData>();
-            raw.Info["font_size"] = fontSize;
-            raw.Info["align"] = align;
+            var virtualHeight = _textJson.GetFloat("vh");
 
             var text = go.AddComponent<Text>();
             text.text = message;
@@ -47,9 +43,9 @@ namespace XdUnityUI.Editor
             // 検索するフォント名を決定する
             var fontFilename = fontName;
             
-            if (textJson.ContainsKey("style"))
+            if (_textJson.ContainsKey("style"))
             {
-                var style = textJson.Get("style");
+                var style = _textJson.Get("style");
                 fontFilename += "-" + style;
                 if (style.Contains("normal") || style.Contains("medium"))
                 {
@@ -66,7 +62,7 @@ namespace XdUnityUI.Editor
             text.fontSize = Mathf.RoundToInt(fontSize.Value);
             text.color = Color.black;
 
-            var color = textJson.Get("color");
+            var color = _textJson.Get("color");
             text.color = color != null ? EditorUtil.HexToColor(color) : Color.black; 
 
             text.verticalOverflow = VerticalWrapMode.Truncate;
@@ -147,10 +143,10 @@ namespace XdUnityUI.Editor
             }
 
             
-            if (textJson.ContainsKey("strokeSize"))
+            if (_textJson.ContainsKey("strokeSize"))
             {
-                var strokeSize = textJson.GetInt("strokeSize");
-                var strokeColor = EditorUtil.HexToColor(textJson.Get("strokeColor"));
+                var strokeSize = _textJson.GetInt("strokeSize");
+                var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
                 var outline = go.AddComponent<Outline>();
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);

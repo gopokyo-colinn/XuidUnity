@@ -5,31 +5,23 @@ using UnityEngine;
 namespace XdUnityUI.Editor
 {
     /// <summary>
-    /// Element class.
-    /// based on Baum2.Editor.Element class.
+    ///     Element class.
+    ///     based on Baum2.Editor.Element class.
     /// </summary>
     public abstract class Element
     {
-        protected string name;
-        protected bool? Active;
         protected readonly string Layer;
+        protected readonly Dictionary<string, object> LayoutElementJson;
         protected readonly List<object> ParsedNames;
-        protected Element Parent;
 
         protected readonly Dictionary<string, object> RectTransformJson;
-        protected readonly Dictionary<string, object> LayoutElementJson;
-
-        public string Name => name;
-
-        public abstract GameObject Render(RenderContext renderContext, GameObject parentObject);
-
-        public virtual void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
-        {
-        }
+        protected bool? Active;
+        protected string name;
+        protected Element Parent;
 
         protected Element(Dictionary<string, object> json, Element parent)
         {
-            this.Parent = parent;
+            Parent = parent;
             name = json.Get("name");
             Active = json.GetBool("active");
             Layer = json.Get("layer");
@@ -37,6 +29,14 @@ namespace XdUnityUI.Editor
 
             RectTransformJson = json.GetDic("rect_transform");
             LayoutElementJson = json.GetDic("layout_element");
+        }
+
+        public string Name => name;
+
+        public abstract GameObject Render(RenderContext renderContext, GameObject parentObject);
+
+        public virtual void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
+        {
         }
 
         public bool HasParsedName(string parsedName)
@@ -51,10 +51,7 @@ namespace XdUnityUI.Editor
             var go = new GameObject(name);
             go.AddComponent<RectTransform>();
             ElementUtil.SetLayer(go, Layer);
-            if (Active != null)
-            {
-                go.SetActive(Active.Value);
-            }
+            if (Active != null) go.SetActive(Active.Value);
 
             return go;
         }

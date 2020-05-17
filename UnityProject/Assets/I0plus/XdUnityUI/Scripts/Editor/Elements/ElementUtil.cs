@@ -88,9 +88,16 @@ namespace XdUnityUI.Editor
             var found = children.Find(child =>
             {
                 // StateNameがNULLなら、ClassNameチェックなし
-                if (className == null || child.Item2.HasParsedName(className))
+                var (gameObject, element) = child;
+                if (className == null || element.HasParsedName(className))
                 {
-                    component = child.Item1.GetComponent<T>();
+                    component = gameObject.GetComponent<T>();
+                    if (component != null) return true;
+                }
+
+                if (element is GroupElement groupElement)
+                {
+                    component = FindComponentByClassName<T>(groupElement.RenderedChildren, className);
                     if (component != null) return true;
                 }
 
@@ -668,7 +675,7 @@ namespace XdUnityUI.Editor
         public static void SetupRectTransform(GameObject root, Dictionary<string, object> rectTransformJson)
         {
             var rect = root.GetComponent<RectTransform>();
-            
+
             // 先にPivotの設定をしてから Anchorの設定をする
             var pivot = rectTransformJson.GetDic("pivot").GetVector2("x", "y");
             if (pivot != null) rect.pivot = pivot.Value;

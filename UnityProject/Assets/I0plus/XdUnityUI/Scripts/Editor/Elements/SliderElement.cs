@@ -2,17 +2,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 namespace XdUnityUI.Editor
 {
     /// <summary>
-    /// SliderElement class.
-    /// based on Baum2.Editor.SliderElement class.
+    ///     SliderElement class.
+    ///     based on Baum2.Editor.SliderElement class.
     /// </summary>
     public sealed class SliderElement : GroupElement
     {
+        private readonly Dictionary<string, object> _sliderJson;
+
         public SliderElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
+            _sliderJson = json.GetDic("slider");
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -20,52 +22,59 @@ namespace XdUnityUI.Editor
             var go = CreateSelf(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            }
-
-            RectTransform fillRect = null;
-            RectTransform handleRect = null;
-            RenderChildren(renderContext, go, (g, element) =>
-            {
-                var name = element.Name.ToLower();
-
-                if (fillRect == null && name == "fill" || name.EndsWith("_fill"))
-                {
-                    fillRect = g.GetComponent<RectTransform>();
-                    g.GetComponent<Image>().raycastTarget = false;
-                }
-
-                if (handleRect == null && name == "handle" || name.EndsWith("_handle"))
-                {
-                    handleRect = g.GetComponent<RectTransform>();
-                }
-            });
 
             var slider = go.AddComponent<Slider>();
+
+            var children = RenderChildren(renderContext, go);
+
+            var direction = _sliderJson.Get("direction");
+            if (direction != null)
+            {
+                direction = direction.ToLower();
+                switch (direction)
+                {
+                    case "left-to-right":
+                    case "ltr":
+                    case "x":
+                        slider.direction = Slider.Direction.LeftToRight;
+                        break;
+                    case "right-to-left":
+                    case "rtl":
+                        slider.direction = Slider.Direction.RightToLeft;
+                        break;
+                    case "bottom-to-top":
+                    case "btt":
+                    case "y":
+                        slider.direction = Slider.Direction.BottomToTop;
+                        break;
+                    case "top-to-bottom":
+                    case "ttb":
+                        slider.direction = Slider.Direction.TopToBottom;
+                        break;
+                }
+            }
+
             slider.transition = Selectable.Transition.None;
-            slider.interactable = false;
+            //slider.interactable = false;
+
+            var fillRect =
+                ElementUtil.FindComponentByClassName<RectTransform>(children, _sliderJson.Get("fill_rect_name"));
+            if (fillRect != null)
+            {
+                slider.value = slider.maxValue;
+                slider.fillRect = fillRect;
+            }
+
+            var handleRect =
+                ElementUtil.FindComponentByClassName<RectTransform>(children, _sliderJson.Get("handle_rect_name"));
             if (handleRect != null)
             {
                 slider.handleRect = handleRect;
                 slider.interactable = true;
             }
 
-            if (fillRect != null)
-            {
-                slider.fillRect = fillRect;
-                // slider.fillRectに登録することでRectパラメータが変わる
-                // スムーズにいくためのレスポンシブパラメータ､太さの指定をTop-Bottom固定でやる
-                /*
-                 * slider
-                 *   handle
-                 *   gauge_image @fix=left-top-bottom
-                 *   fill @fix=left-top-bottom
-                 */
-            }
-
-            // SetStretch(go, renderer);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
             return go;
         }

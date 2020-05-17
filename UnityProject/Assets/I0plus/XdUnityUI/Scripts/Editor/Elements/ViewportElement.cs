@@ -11,15 +11,15 @@ namespace XdUnityUI.Editor
     /// </summary>
     public sealed class ViewportElement : GroupElement
     {
-        protected readonly Dictionary<string, object> ScrollRectJson;
-        protected readonly Dictionary<string, object> ContentJson;
-        protected Element ParentElement;
+        private readonly Dictionary<string, object> _scrollRectJson = default;
+        private readonly Dictionary<string, object> _contentJson = default;
+        private Element _parentElement = default;
 
         public ViewportElement(Dictionary<string, object> json, Element parent) : base(json, parent, true)
         {
-            ScrollRectJson = json.GetDic("scroll_rect");
-            ContentJson = json.GetDic("content");
-            ParentElement = parent;
+            _scrollRectJson = json.GetDic("scroll_rect");
+            _contentJson = json.GetDic("content");
+            _parentElement = parent;
         }
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
@@ -45,31 +45,31 @@ namespace XdUnityUI.Editor
             var contentRect = goContent.AddComponent<RectTransform>();
             goContent.transform.SetParent(go.transform);
 
-            if (ContentJson != null)
+            if (_contentJson != null)
             {
-                goContent.name = ContentJson.Get("name") ?? "";
+                goContent.name = _contentJson.Get("name") ?? "";
 
-                if (ContentJson.ContainsKey("pivot"))
+                if (_contentJson.ContainsKey("pivot"))
                     // ここのPivotはX,Yでくる
-                    contentRect.pivot = ContentJson.GetDic("pivot").GetVector2("x", "y").Value;
-                if (ContentJson.ContainsKey("anchor_min"))
-                    contentRect.anchorMin = ContentJson.GetDic("anchor_min").GetVector2("x", "y").Value;
-                if (ContentJson.ContainsKey("anchor_max"))
-                    contentRect.anchorMax = ContentJson.GetDic("anchor_max").GetVector2("x", "y").Value;
-                if (ContentJson.ContainsKey("offset_min"))
-                    contentRect.offsetMin = ContentJson.GetDic("offset_min").GetVector2("x", "y").Value;
-                if (ContentJson.ContainsKey("offset_max"))
-                    contentRect.offsetMax = ContentJson.GetDic("offset_max").GetVector2("x", "y").Value;
+                    contentRect.pivot = _contentJson.GetDic("pivot").GetVector2("x", "y").Value;
+                if (_contentJson.ContainsKey("anchor_min"))
+                    contentRect.anchorMin = _contentJson.GetDic("anchor_min").GetVector2("x", "y").Value;
+                if (_contentJson.ContainsKey("anchor_max"))
+                    contentRect.anchorMax = _contentJson.GetDic("anchor_max").GetVector2("x", "y").Value;
+                if (_contentJson.ContainsKey("offset_min"))
+                    contentRect.offsetMin = _contentJson.GetDic("offset_min").GetVector2("x", "y").Value;
+                if (_contentJson.ContainsKey("offset_max"))
+                    contentRect.offsetMax = _contentJson.GetDic("offset_max").GetVector2("x", "y").Value;
 
-                if (ContentJson.ContainsKey("layout"))
+                if (_contentJson.ContainsKey("layout"))
                 {
-                    var contentLayout = ContentJson.GetDic("layout");
+                    var contentLayout = _contentJson.GetDic("layout");
                     ElementUtil.SetupLayoutGroup(goContent, contentLayout);
                 }
 
-                if (ContentJson.ContainsKey("content_size_fitter"))
+                if (_contentJson.ContainsKey("content_size_fitter"))
                 {
-                    var contentSizeFitter = ContentJson.GetDic("content_size_fitter");
+                    var contentSizeFitter = _contentJson.GetDic("content_size_fitter");
                     var compSizeFitter = ElementUtil.SetupContentSizeFitter(goContent, contentSizeFitter);
                 }
             }
@@ -79,7 +79,7 @@ namespace XdUnityUI.Editor
 
             ElementUtil.SetupRectMask2D(go, RectMask2D);
             // ScrollRectを設定した時点ではみでたContentがアジャストされる　PivotがViewport内に入っていればOK
-            ElementUtil.SetupScrollRect(go, goContent, ScrollRectJson);
+            ElementUtil.SetupScrollRect(go, goContent, _scrollRectJson);
 
             return go;
         }

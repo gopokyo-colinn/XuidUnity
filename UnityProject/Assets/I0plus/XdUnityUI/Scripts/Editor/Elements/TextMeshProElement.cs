@@ -13,11 +13,11 @@ namespace XdUnityUI.Editor
     public sealed class TextMeshProElement : Element
     {
 #if TMP_PRESENT
-        protected readonly Dictionary<string, object> textJson;
+        private readonly Dictionary<string, object> _textJson = default;
 
         public TextMeshProElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
-            textJson = json.GetDic("text");
+            _textJson = json.GetDic("text");
         }
 
 
@@ -32,13 +32,13 @@ namespace XdUnityUI.Editor
                 rect.SetParent(parentObject.transform);
             }
             
-            var message = textJson.Get("text");
-            var fontName = textJson.Get("font");
-            var fontStyle = textJson.Get("style");
-            var fontSize = textJson.GetFloat("size");
-            var align = textJson.Get("align");
-            var type = textJson.Get("textType");
-            var virtualHeight = textJson.GetFloat("vh");
+            var message = _textJson.Get("text");
+            var fontName = _textJson.Get("font");
+            var fontStyle = _textJson.Get("style");
+            var fontSize = _textJson.GetFloat("size");
+            var align = _textJson.Get("align");
+            var type = _textJson.Get("textType");
+            var virtualHeight = _textJson.GetFloat("vh");
 
             var text = go.AddComponent<TextMeshProUGUI>();
             text.text = message;
@@ -48,7 +48,7 @@ namespace XdUnityUI.Editor
             // 自動的に改行されることが困ることもあるが、挙動としてはこちらのほうがXDに沿うことになる
             text.textInfo.textComponent.enableWordWrapping = true;
 
-            var color = textJson.Get("color");
+            var color = _textJson.Get("color");
             if (color != null)
             {
                 text.color = EditorUtil.HexToColor(color);
@@ -96,10 +96,10 @@ namespace XdUnityUI.Editor
                 text.alignment = middle ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.TopRight;
             }
 
-            if (textJson.ContainsKey("strokeSize"))
+            if (_textJson.ContainsKey("strokeSize"))
             {
-                var strokeSize = textJson.GetInt("strokeSize");
-                var strokeColor = EditorUtil.HexToColor(textJson.Get("strokeColor"));
+                var strokeSize = _textJson.GetInt("strokeSize");
+                var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
                 var outline = go.AddComponent<Outline>();
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);

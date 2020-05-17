@@ -208,7 +208,6 @@ namespace XdUnityUI.Editor
                 }
                 else
                 {
-                    VerticalLayoutGroup a;
                     CreateSpritesDirectory(importedAsset);
                     changed = true;
                 }
