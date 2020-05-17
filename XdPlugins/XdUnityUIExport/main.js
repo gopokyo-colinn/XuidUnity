@@ -84,15 +84,15 @@ const STYLE_ALIGN = 'align' // テキストの縦横のアライメントの設�
 const STYLE_BLANK = 'blank'
 const STYLE_BUTTON = 'button'
 const STYLE_BUTTON_TRANSITION = 'button-transition'
-const STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_CLASS =
+const STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_NAME =
   'button-transition-target-graphic-name'
-const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_CLASS =
+const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
   'button-transition-highlighted-sprite-name'
-const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_CLASS =
+const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_NAME =
   'button-transition-pressed-sprite-name'
-const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_CLASS =
+const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_NAME =
   'button-transition-selected-sprite-name'
-const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_CLASS =
+const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_NAME =
   'button-transition-disabled-sprite-name'
 const STYLE_CANVAS_GROUP = 'canvas-group' // 削除予定
 const STYLE_COMMENT_OUT = 'comment-out'
@@ -131,45 +131,48 @@ const STYLE_REPEATGRID_ATTACH_IMAGE_DATA_SERIES =
   'repeatgrid-attach-image-data-series'
 const STYLE_SCROLLBAR = 'scrollbar'
 const STYLE_SCROLLBAR_DIRECTION = 'scrollbar-direction'
-const STYLE_SCROLLBAR_HANDLE_CLASS = 'scrollbar-handle-name'
+const STYLE_SCROLLBAR_HANDLE_NAME = 'scrollbar-handle-name'
 const STYLE_SCROLL_RECT = 'scroll-rect'
-const STYLE_SCROLL_RECT_CONTENT_CLASS = 'scroll-rect-content-name'
-const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_CLASS =
+const STYLE_SCROLL_RECT_CONTENT_NAME = 'scroll-rect-content-name'
+const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_NAME =
   'scroll-rect-horizontal-scrollbar-name'
-const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_CLASS =
+const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_NAME =
   'scroll-rect-vertical-scrollbar-name'
 const STYLE_SLIDER = 'slider'
+const STYLE_SLIDER_DIRECTION = 'slider-direction'
+const STYLE_SLIDER_FILL_RECT_NAME = 'slider-fill-rect-name'
+const STYLE_SLIDER_HANDLE_RECT_NAME = 'slider-handle-rect-name'
 const STYLE_TEXT = 'text'
 const STYLE_TEXTMP = 'textmp' // textmeshpro
 const STYLE_TEXT_CONTENT = 'text-content'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
-const STYLE_TOGGLE_GRAPHIC_CLASS = 'toggle-graphic-name'
-const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_CLASS =
+const STYLE_TOGGLE_GRAPHIC_NAME = 'toggle-graphic-name'
+const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_NAME =
   'toggle-transition-target-graphic-name'
-const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_CLASS =
+const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
   'toggle-transition-highlighted-sprite-name'
-const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_CLASS =
+const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_NAME =
   'toggle-transition-pressed-sprite-name'
-const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_CLASS =
+const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_NAME =
   'toggle-transition-selected-sprite-name'
-const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_CLASS =
+const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_NAME =
   'toggle-transition-disabled-sprite-name'
 const STYLE_TOGGLE_GROUP = 'toggle-group'
 const STYLE_INPUT = 'input'
 const STYLE_INPUT_TRANSITION = 'input-transition'
-const STYLE_INPUT_GRAPHIC_CLASS = 'input-graphic-name'
-const STYLE_INPUT_TARGET_GRAPHIC_CLASS = 'input-transition-target-graphic-name'
-const STYLE_INPUT_TRANSITION_HIGHLIGHTED_SPRITE_CLASS =
+const STYLE_INPUT_GRAPHIC_NAME = 'input-graphic-name'
+const STYLE_INPUT_TARGET_GRAPHIC_NAME = 'input-transition-target-graphic-name'
+const STYLE_INPUT_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
   'input-transition-highlighted-sprite-name'
-const STYLE_INPUT_TRANSITION_PRESSED_SPRITE_CLASS =
+const STYLE_INPUT_TRANSITION_PRESSED_SPRITE_NAME =
   'input-transition-pressed-sprite-name'
-const STYLE_INPUT_TRANSITION_SELECTED_SPRITE_CLASS =
+const STYLE_INPUT_TRANSITION_SELECTED_SPRITE_NAME =
   'input-transition-selected-sprite-name'
-const STYLE_INPUT_TRANSITION_DISABLED_SPRITE_CLASS =
+const STYLE_INPUT_TRANSITION_DISABLED_SPRITE_NAME =
   'input-transition-disabled-sprite-name'
-const STYLE_INPUT_TEXT_COMPONENT_CLASS = 'input-text-component-name'
-const STYLE_INPUT_PLACEHOLDER_CLASS = 'input-placeholder-name'
+const STYLE_INPUT_TEXT_COMPONENT_NAME = 'input-text-component-name'
+const STYLE_INPUT_PLACEHOLDER_NAME = 'input-placeholder-name'
 const STYLE_VIEWPORT = 'viewport'
 const STYLE_VIEWPORT_CREATE_CONTENT = 'viewport-create-content'
 const STYLE_V_ALIGN = 'v-align' //テキストの縦方向のアライメント XDの設定に追記される
@@ -184,7 +187,6 @@ const appLanguage = application.appLanguage
 
 /**
  *
- * @param {} id
  * @returns {string}
  */
 function getString(multilangStr) {
@@ -573,10 +575,11 @@ class ResponsiveParameter {
       const afterDrawX = this.after.global_draw_bounds.x
       const afterDrawSizeX = afterDrawX - afterX
 
+      // global
       if (!approxEqual(beforeDrawSizeX, afterDrawSizeX)) {
         console.log(
           `${this.node.name} ${beforeDrawSizeX -
-            afterDrawSizeX}リサイズ後のBounds.x取得がうまくいっていないようです`,
+            afterDrawSizeX}リサイズ後のBounds.x取得が正確ではないようです`,
         )
         // beforeのサイズ差をもとに、afterを修正する
         this.after.global_draw_bounds.x =
@@ -685,7 +688,6 @@ function replaceToFileName(name, convertDot = false) {
  * 後のcalcRectTransformで許容範囲外と判定してまうなどの事故を防ぐため
  * @param {number} a
  * @param {number} b
- * @param {number=} eps
  */
 function approxEqual(a, b) {
   const eps = 0.001 // リサイズして元にもどしたとき､これぐらいの誤差がでる
@@ -782,7 +784,9 @@ function getGlobalBounds(node) {
  * nodeからスケールを考慮したglobalDrawBoundsを取得する
  * Artboardであった場合の、viewportHeightも考慮する
  * ex,eyがつく
- * ハッシュをつかわない
+ * ハッシュをつかわないで取得する
+ * Textのフォントサイズ情報など、描画サイズにかかわるものを取得する
+ * アートボードの伸縮でサイズが変わってしまうために退避できるように
  * @param node
  * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
@@ -790,7 +794,7 @@ function getGlobalDrawBounds(node) {
   let bounds = node.globalDrawBounds
   const viewPortHeight = node.viewportHeight
   if (viewPortHeight != null) bounds.height = viewPortHeight
-  return {
+  let b = {
     x: bounds.x * globalScale,
     y: bounds.y * globalScale,
     width: bounds.width * globalScale,
@@ -798,11 +802,21 @@ function getGlobalDrawBounds(node) {
     ex: (bounds.x + bounds.width) * globalScale,
     ey: (bounds.y + bounds.height) * globalScale,
   }
+
+  // console.log('node.constructor.name:' + node.constructor.name)
+  if (node.constructor.name === 'Text') {
+    Object.assign(b, {
+      text: {
+        fontSize: node.fontSize,
+      },
+    })
+  }
+  return b
 }
 
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
- * responsiveBoundsの中の値は壊れないようにする
+ * ハッシュからデータを取得する
  * @param {SceneNodeClass} node
  * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
@@ -818,9 +832,7 @@ function getBeforeGlobalDrawBounds(node) {
     }
   }
   if (bounds) return bounds
-  // throw 'リサイズ前のGlobalDrawBoundsの情報がありません'+node.name
-  // リサイズされなかったので、そのままの値を返す
-  return node.globalDrawBounds
+  throw 'リサイズ前のGlobalDrawBoundsの情報がありません' + node.name
 }
 
 /**
@@ -838,8 +850,7 @@ function getBeforeGlobalBounds(node) {
     }
   }
   if (bounds) return bounds
-  // throw 'リサイズ前のGlobalBoundsの情報がありません'+node.name
-  return null
+  throw 'リサイズ前のGlobalBoundsの情報がありません' + node.name
 }
 
 /**
@@ -2442,13 +2453,13 @@ async function addImage(json, node, root, outputFolder, renditions) {
     hashStringLength++
   }
 
-  let sliceOption = { slice: "auto" }
+  let sliceOption = { slice: 'auto' }
 
   let fileExtension = '.png'
   // 明確にfalseと指定してある場合にNO SLICEとする
   if (style.first(STYLE_IMAGE_SLICE) === 'false') {
     fileExtension = '-noslice.png'
-    sliceOption = { slice: "none" }
+    sliceOption = { slice: 'none' }
   }
   const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
   if (image9SliceValues && image9SliceValues.length > 0) {
@@ -2491,14 +2502,13 @@ async function addImage(json, node, root, outputFolder, renditions) {
       fileExtension = '-9slice,' + offset + '.png'
 
       sliceOption = {
-        slice: "border",
-        border:
-        {
+        slice: 'border',
+        border: {
           top,
           bottom,
           right,
-          left
-        }
+          left,
+        },
       }
 
       console.log('slice:' + offset)
@@ -2656,7 +2666,7 @@ function addScrollRect(json, style) {
 
   const scrollRectJson = json['scroll_rect']
   const content_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_CONTENT_CLASS),
+    style.first(STYLE_SCROLL_RECT_CONTENT_NAME),
   )
   if (content_class) {
     Object.assign(scrollRectJson, {
@@ -2664,7 +2674,7 @@ function addScrollRect(json, style) {
     })
   }
   const vertical_scrollbar_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_CLASS),
+    style.first(STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_NAME),
   )
   if (vertical_scrollbar_class) {
     Object.assign(scrollRectJson, {
@@ -2672,7 +2682,7 @@ function addScrollRect(json, style) {
     })
   }
   const horizontal_scrollbar_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_CLASS),
+    style.first(STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_NAME),
   )
   if (horizontal_scrollbar_class) {
     Object.assign(scrollRectJson, {
@@ -3094,9 +3104,9 @@ async function createInput(json, node, root, funcForEachChild) {
     elements: [], // Groupは空でもelementsをもっていないといけない
   })
   await funcForEachChild()
-  let target_graphic_class = style.first(STYLE_INPUT_TARGET_GRAPHIC_CLASS)
-  let text_component_class = style.first(STYLE_INPUT_TEXT_COMPONENT_CLASS)
-  let placeholder_class = style.first(STYLE_INPUT_PLACEHOLDER_CLASS)
+  let target_graphic_class = style.first(STYLE_INPUT_TARGET_GRAPHIC_NAME)
+  let text_component_class = style.first(STYLE_INPUT_TEXT_COMPONENT_NAME)
+  let placeholder_class = style.first(STYLE_INPUT_PLACEHOLDER_NAME)
   Object.assign(json, {
     input: {
       target_graphic_class,
@@ -3111,6 +3121,165 @@ async function createInput(json, node, root, funcForEachChild) {
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
+}
+
+/**
+ * ノードに親を挿入する
+ * pivotは子供のものをそのまま使用している要検討
+ * @param json
+ * @param style
+ * @param node
+ */
+function addWrap(json, node, style) {
+  const styleWrapSliderHandleX = style.first('wrap-slider-handle-x')
+  if (styleWrapSliderHandleX) {
+    // スライダーハンドル専用のWrap
+    // スライダーハンドル移動領域を作成する
+    let child = {}
+    // プロパティの移動
+    Object.assign(child, json)
+    for (let member in json) delete json[member]
+    // ラップするオブジェクトの作成
+    // 作成できる条件
+    // ・ハンドルがBarよりも高さがある
+    // ・100％の位置にある
+    // ・Barよりも右にはみでている
+    const childBounds = getBeforeGlobalDrawBounds(node)
+    const childRectTransform = child.rect_transform
+    Object.assign(json, {
+      type: 'Group',
+      name: 'wrap-slider-handle-x',
+      layer: child.layer,
+      rect_transform: {
+        pivot: {
+          x: childRectTransform.pivot.x,
+          y: childRectTransform.pivot.y,
+        },
+        anchor_min: {
+          x: 0,
+          y: 0,
+        },
+        anchor_max: {
+          x: 1,
+          y: 1,
+        },
+        offset_min: {
+          x: 0,
+          y: 0,
+        },
+        offset_max: {
+          x: -childBounds.width/2, // はみでている分ひっこめる
+          y: 0,
+        },
+      },
+      elements: [child],
+    })
+    childRectTransform.pivot.x = 0.5
+    childRectTransform.pivot.y = 0.5
+    if (
+      approxEqual(
+        childRectTransform.anchor_min.x,
+        childRectTransform.anchor_max.x,
+      )
+    ) {
+      const handleWidth =
+        childRectTransform.offset_max.x - childRectTransform.offset_min.x
+      console.log('handleWidth:', handleWidth)
+      childRectTransform.offset_max.x = handleWidth / 2
+      childRectTransform.offset_min.x = -handleWidth / 2
+    }
+    return
+  }
+
+  const styleWrap = style.first('wrap')
+  if (styleWrap) {
+    let child = {}
+    // プロパティの移動
+    Object.assign(child, json)
+    for (let member in json) delete json[member]
+    Object.assign(json, {
+      type: 'Group',
+      name: 'wrap',
+      layer: child.layer,
+      rect_transform: {
+        pivot: {
+          x: child.rect_transform.pivot.x,
+          y: child.rect_transform.pivot.y,
+        },
+        anchor_min: {
+          x: child.rect_transform.anchor_min.x,
+          y: child.rect_transform.anchor_min.y,
+        },
+        anchor_max: {
+          x: child.rect_transform.anchor_max.x,
+          y: child.rect_transform.anchor_max.y,
+        },
+        offset_min: {
+          x: child.rect_transform.offset_min.x,
+          y: child.rect_transform.offset_min.y,
+        },
+        offset_max: {
+          x: child.rect_transform.offset_max.x,
+          y: child.rect_transform.offset_max.y,
+        },
+      },
+      elements: [child],
+    })
+
+    // 子供は縦横ともにピッタリさせる
+    // pivotはそのまま
+    child.rect_transform.anchor_min.x = 0
+    child.rect_transform.anchor_max.x = 1
+    child.rect_transform.anchor_min.y = 0
+    child.rect_transform.anchor_max.y = 1
+    child.rect_transform.offset_min.x = 0
+    child.rect_transform.offset_max.x = 0
+    child.rect_transform.offset_min.y = 0
+    child.rect_transform.offset_max.y = 0
+    return
+  }
+
+  const styleWrapY = style.first('wrap-y')
+  if (styleWrapY) {
+    let child = {}
+    // プロパティの移動
+    Object.assign(child, json)
+    for (let member in json) delete json[member]
+    // ラップするオブジェクトの作成
+    Object.assign(json, {
+      type: 'Group',
+      name: 'wrap-y',
+      layer: child.layer,
+      rect_transform: {
+        pivot: {
+          x: 1,
+          y: 0,
+        },
+        anchor_min: {
+          x: 0,
+          y: child.rect_transform.anchor_min.y,
+        },
+        anchor_max: {
+          x: 1,
+          y: child.rect_transform.anchor_max.y,
+        },
+        offset_min: {
+          x: 0,
+          y: child.rect_transform.offset_min.y,
+        },
+        offset_max: {
+          x: 0,
+          y: child.rect_transform.offset_max.y,
+        },
+      },
+      elements: [child],
+    })
+    child.rect_transform.anchor_min.y = 0
+    child.rect_transform.anchor_max.y = 1
+    child.rect_transform.offset_min.y = 0
+    child.rect_transform.offset_max.y = 0
+    return
+  }
 }
 
 /**
@@ -3172,47 +3341,7 @@ async function createGroup(json, node, root, funcForEachChild) {
   addLayout(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
 
-  const styleWrap = style.first('wrap-y')
-  if (styleWrap) {
-    let child = {}
-    const keys = Object.keys(json)
-    for (let key of keys) {
-      child[key] = json[key]
-      delete json[key]
-    }
-    Object.assign(json, {
-      type: 'Group',
-      name: 'hello',
-      layer: 'UI',
-      rect_transform: {
-        pivot: {
-          x: 1,
-          y: 0,
-        },
-        anchor_min: {
-          x: 0,
-          y: child.rect_transform.anchor_min.y,
-        },
-        anchor_max: {
-          x: 1,
-          y: child.rect_transform.anchor_max.y,
-        },
-        offset_min: {
-          x: 0,
-          y: child.rect_transform.offset_min.y,
-        },
-        offset_max: {
-          x: 0,
-          y: child.rect_transform.offset_max.y,
-        },
-      },
-      elements: [child],
-    })
-    child.rect_transform.anchor_min.y = 0
-    child.rect_transform.anchor_max.y = 1
-    child.rect_transform.offset_min.y = 0
-    child.rect_transform.offset_max.y = 0
-  }
+  addWrap(json, node, style) // エレメントに操作のため、処理は最後にする
 }
 
 /**
@@ -3249,7 +3378,7 @@ async function createScrollbar(json, node, funcForEachChild) {
       direction,
     })
   }
-  let handle_class = style.first(STYLE_SCROLLBAR_HANDLE_CLASS)
+  let handle_class = style.first(STYLE_SCROLLBAR_HANDLE_NAME)
   if (handle_class != null) {
     handle_class = handle_class
     Object.assign(scrollbarJson, {
@@ -3279,8 +3408,68 @@ async function createScrollbar(json, node, funcForEachChild) {
   addLayoutElement(json, node, style)
   addLayout(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
+}
 
-  //return type
+/**
+ * @param json
+ * @param node
+ * @param funcForEachChild
+ * @returns {Promise<void>}
+ */
+async function createSlider(json, node, funcForEachChild) {
+  let { style } = getNodeNameAndStyle(node)
+
+  const type = 'Slider'
+  Object.assign(json, {
+    type: type,
+    name: getUnityName(node),
+    slider: {},
+  })
+
+  let sliderJson = json['slider']
+
+  let direction = style.first(STYLE_SLIDER_DIRECTION)
+  if (direction != null) {
+    Object.assign(sliderJson, {
+      direction,
+    })
+  }
+
+  let fill_rect_name = style.first(STYLE_SLIDER_FILL_RECT_NAME)
+  if (fill_rect_name != null) {
+    Object.assign(sliderJson, {
+      fill_rect_name,
+    })
+  }
+  let handle_rect_name = style.first(STYLE_SLIDER_HANDLE_RECT_NAME)
+  if (handle_rect_name != null) {
+    Object.assign(sliderJson, {
+      handle_rect_name,
+    })
+  }
+
+  const bounds = getBeforeGlobalBounds(node)
+  const childlenBounds = getNodeListBeforeGlobalBounds(node.children)
+  const spacingX = bounds.width - childlenBounds.bounds.width
+  const spacingY = bounds.height - childlenBounds.bounds.height
+  Object.assign(sliderJson, {
+    child_spacing_x: spacingX,
+    child_spacing_y: spacingY,
+  })
+
+  await funcForEachChild()
+
+  // 基本
+  addActive(json, style)
+  addRectTransformDraw(json, node)
+  addLayer(json, style)
+  addState(json, style)
+  addParsedNames(json, node)
+  //
+  addCanvasGroup(json, node, style)
+  addLayoutElement(json, node, style)
+  addLayout(json, node, node, node.children, style)
+  addContentSizeFitter(json, style)
 }
 
 /**
@@ -3309,7 +3498,7 @@ async function createToggle(json, node, root, funcForEachChild) {
     })
   }
 
-  const graphic_class = style.first(STYLE_TOGGLE_GRAPHIC_CLASS)
+  const graphic_class = style.first(STYLE_TOGGLE_GRAPHIC_NAME)
   if (graphic_class) {
     Object.assign(toggleJson, {
       graphic_class,
@@ -3322,19 +3511,19 @@ async function createToggle(json, node, root, funcForEachChild) {
   let styleToggleTransition = style.first(STYLE_TOGGLE_TRANSITION)
   if (styleToggleTransition) {
     const target_graphic_class = style.first(
-      STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_CLASS,
+      STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_NAME,
     )
     const highlighted_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_CLASS,
+      STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_NAME,
     )
     const pressed_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_CLASS,
+      STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_NAME,
     )
     const selected_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_CLASS,
+      STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_NAME,
     )
     const disabled_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_CLASS,
+      STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_NAME,
     )
     Object.assign(toggleJson, {
       target_graphic_class,
@@ -3381,19 +3570,19 @@ async function createButton(json, node, root, funcForEachChild) {
   let styleButtonTransition = style.first(STYLE_BUTTON_TRANSITION)
   if (styleButtonTransition) {
     const target_graphic_class = style.first(
-      STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_CLASS,
+      STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_NAME,
     )
     const highlighted_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_CLASS,
+      STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_NAME,
     )
     const pressed_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_CLASS,
+      STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_NAME,
     )
     const selected_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_CLASS,
+      STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_NAME,
     )
     const disabled_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_CLASS,
+      STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_NAME,
     )
     Object.assign(json, {
       button: {
@@ -3479,7 +3668,9 @@ async function createImage(json, node, root, outputFolder, renditions) {
       })
     }
     await addImage(json, node, root, outputFolder, renditions)
+    addWrap(json, node, style) // エレメントに操作のため、処理は最後にする
   }
+
   //
   const imageDataValues = style.values(
     STYLE_REPEATGRID_ATTACH_IMAGE_DATA_SERIES,
@@ -3556,7 +3747,7 @@ function addRectTransformRoot(layoutJson, node, funcForEachChild) {
 async function nodeText(json, node, artboard, outputFolder, renditions) {
   let { style } = getNodeNameAndStyle(node)
 
-  /** @type {Text} */
+  /** @type {scenegraph.Text} */
   let nodeText = node
 
   // コンテンツ書き換え対応
@@ -3632,7 +3823,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
       textType: textType,
       font: nodeText.fontFamily,
       style: nodeText.fontStyle,
-      size: nodeText.fontSize * globalScale,
+      size: getBeforeGlobalDrawBounds(nodeText).text.fontSize * globalScale, // アートボードの伸縮でfontSizeが変わってしまう
       color: nodeText.fill.toHex(true),
       align: hAlign + vAlign,
       vh: boundsCM.height,
@@ -3773,13 +3964,16 @@ async function nodeRoot(renditions, outputFolder, root) {
             return
           }
           if (style.checkBool(STYLE_SLIDER)) {
-            const type = 'Slider'
-            Object.assign(json, {
-              type: type,
-              name: getUnityName(node),
-            })
-            addRectTransformDraw(json, node)
-            await funcForEachChild()
+            /*
+          const type = 'Slider'
+          Object.assign(json, {
+            type: type,
+            name: getUnityName(node),
+          })
+          addRectTransformDraw(json, node)
+          await funcForEachChild()
+          */
+            await createSlider(json, node, funcForEachChild)
             return
           }
           if (style.checkBool(STYLE_SCROLLBAR)) {
@@ -4374,8 +4568,8 @@ function getExportRoots(selectionItems) {
   let message = ''
 
   message +=
-    artboards.length > 0 ? '--- artboards ---\n' + artboards.join('\n') : ''
-  message += layers.length > 0 ? '--- layers ---\n' + layers.join('\n') : ''
+    artboards.length > 0 ? '[ARTBOARD] ' + artboards.join('\n[ARTBOARD] ') : ''
+  message += layers.length > 0 ? '[LAYER] ' + layers.join('\n[LAYER] ') : ''
 
   return {
     exportRoots,
@@ -4443,11 +4637,11 @@ class CssSelector {
     // console.log("SelectorTextをパースします",selectorText)
     this.json = cssSelectorParser.parse(selectorText.trim())
     /*
-    console.log(
-      'SelectorTextをパースしました',
-      JSON.stringify(this.json, null, '  '),
-    )
-     */
+      console.log(
+        'SelectorTextをパースしました',
+        JSON.stringify(this.json, null, '  '),
+      )
+       */
   }
 
   /**
