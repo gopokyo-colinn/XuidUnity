@@ -180,6 +180,36 @@
   margin-fix: l r t b;
 }
 
+.slider-x {
+  slider: true;
+  slider-direction: ltr;
+  slider-fill-rect-name: ".fill";
+  slider-handle-rect-name: ".handle";
+}
+
+.slider-x > .fill {
+  wrap: true
+}
+
+.slider-x > .handle {
+  wrap-slider-handle-x:true
+}
+
+.slider-y {
+  slider: true;
+  slider-direction: btt;
+  slider-fill-rect-name: ".fill";
+  slider-handle-rect-name: ".handle";
+}
+
+.slider-y > .fill {
+  wrap: true
+}
+
+.slider-y > .handle {
+  wrap-slider-handle-y:true
+}
+
 .dots-scrollbar {
   scrollbar: true;
   scrollbar-direction: ltr;
