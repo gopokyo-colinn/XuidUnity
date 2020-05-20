@@ -297,21 +297,21 @@ namespace XdUnityUI.Editor
                     }
 
                     // Create Prefab
-                    foreach (var asset in importedAssets)
+                    foreach (var assetPath in importedAssets)
                     {
                         UpdateDisplayProgressBar("layout");
                         progressCount += 1;
-                        if (!asset.Contains(importDirectoryPath)) continue;
-                        if (!asset.EndsWith(".layout.json", System.StringComparison.Ordinal)) continue;
+                        if (!assetPath.Contains(importDirectoryPath)) continue;
+                        if (!assetPath.EndsWith(".layout.json", System.StringComparison.Ordinal)) continue;
 
-                        var name = Path.GetFileName(asset).Replace(".layout.json", "");
+                        var directoryName = Path.GetFileName(assetPath).Replace(".layout.json", "");
                         var spriteRootPath =
-                            EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputSpritesPath(), name));
+                            EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputSpritesPath(), directoryName));
                         var fontRootPath = EditorUtil.ToUnityPath(EditorUtil.GetFontsPath());
-                        var creator = new PrefabCreator(spriteRootPath, fontRootPath, asset);
+                        var creator = new PrefabCreator(spriteRootPath, fontRootPath, assetPath);
                         var go = creator.Create();
                         var savePath =
-                            EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputPrefabsPath(), name + ".prefab"));
+                            EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputPrefabsPath(), directoryName + ".prefab"));
                         try
                         {
 #if UNITY_2018_3_OR_NEWER
@@ -336,7 +336,7 @@ namespace XdUnityUI.Editor
                         if (deleteImportEntriesFlag)
                         {
                             // layout.jsonを削除する
-                            AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
+                            AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(assetPath));
                         }
                     }
                     EditorUtility.ClearProgressBar();

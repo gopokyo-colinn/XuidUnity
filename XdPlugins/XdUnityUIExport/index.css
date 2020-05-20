@@ -59,8 +59,8 @@
  */
 .layout-y {
   layout-group: y;
-  layout-group-control-child-size: width height;
-  layout-group-child-force-expand: width;
+  /*layout-group-control-child-size: width height;
+  layout-group-child-force-expand: width;*/
   content-size-fitter-vertical-fit: preferred-size;
 }
 
@@ -187,12 +187,12 @@
   slider-handle-rect-name: ".handle";
 }
 
-.slider-x > .fill {
-  wrap: true
+.slider-x .fill {
+  wrap: true;
 }
 
-.slider-x > .handle {
-  wrap-slider-handle-x:true
+.slider-x .handle {
+  wrap-slider-handle-x:true;
 }
 
 .slider-y {

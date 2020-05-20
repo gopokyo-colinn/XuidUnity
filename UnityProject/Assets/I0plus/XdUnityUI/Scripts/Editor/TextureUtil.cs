@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using OnionRing;
+using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -140,27 +141,27 @@ namespace XdUnityUI.Editor
         /// アセットのイメージをスライスする
         /// 戻り地は、変換リザルトメッセージ
         /// </summary>
-        /// <param name="assetPath"></param>
+        /// <param name="sourceImagePath"></param>
         /// <returns></returns>
-        public static string SliceSprite(string assetPath)
+        public static string SliceSprite(string sourceImagePath)
         {
-            var directoryName = Path.GetFileName(Path.GetDirectoryName(assetPath));
+            var directoryName = Path.GetFileName(Path.GetDirectoryName(sourceImagePath));
             var directoryPath = Path.Combine(EditorUtil.GetOutputSpritesPath(), directoryName);
-            var fileName = Path.GetFileName(assetPath);
+            var sourceImageFileName = Path.GetFileName(sourceImagePath);
             // PNGを読み込み、同じサイズのTextureを作成する
-            var texture = CreateReadableTexture2D(CreateTextureFromPng(assetPath));
+            var texture = CreateReadableTexture2D(CreateTextureFromPng(sourceImagePath));
             // LoadAssetAtPathをつかったテクスチャ読み込み サイズが2のべき乗になる　JPGも読める
-            //var texture = CreateReadabeTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>(asset));
+            //var texture = CreateReadableTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>(asset));
             if (PreprocessTexture.SlicedTextures == null)
                 PreprocessTexture.SlicedTextures = new Dictionary<string, SlicedTexture>();
 
-            var noSlice = fileName.EndsWith("-noslice.png", StringComparison.Ordinal);
+            var noSlice = sourceImageFileName.EndsWith("-noslice.png", StringComparison.Ordinal);
             if (noSlice)
             {
                 var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
-                fileName = fileName.Replace("-noslice.png", ".png");
-                var newPath = Path.Combine(directoryPath, fileName);
-                PreprocessTexture.SlicedTextures[fileName] = slicedTexture;
+                sourceImageFileName = sourceImageFileName.Replace("-noslice.png", ".png");
+                var newPath = Path.Combine(directoryPath, sourceImageFileName);
+                PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
                 var pngData = texture.EncodeToPNG();
                 var imageHash = texture.imageContentsHash;
                 Object.DestroyImmediate(slicedTexture.Texture);
@@ -168,7 +169,7 @@ namespace XdUnityUI.Editor
             }
 
             const string pattern = "-9slice,([0-9]+)px,([0-9]+)px,([0-9]+)px,([0-9]+)px\\.png";
-            var matches = Regex.Match(fileName, pattern);
+            var matches = Regex.Match(sourceImageFileName, pattern);
             if (matches.Length > 0)
             {
                 // 上・右・下・左の端から内側へのオフセット量
@@ -178,10 +179,10 @@ namespace XdUnityUI.Editor
                 var left = Int32.Parse(matches.Groups[4].Value);
 
                 var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
-                fileName = Regex.Replace(fileName, pattern, ".png");
-                var newPath = Path.Combine(directoryPath, fileName);
+                sourceImageFileName = Regex.Replace(sourceImageFileName, pattern, ".png");
+                var newPath = Path.Combine(directoryPath, sourceImageFileName);
 
-                PreprocessTexture.SlicedTextures[fileName] = slicedTexture;
+                PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
                 var pngData = texture.EncodeToPNG();
                 var imageHash = texture.imageContentsHash;
                 Object.DestroyImmediate(slicedTexture.Texture);
@@ -189,14 +190,59 @@ namespace XdUnityUI.Editor
             }
 
             {
-                var slicedTexture = TextureSlicer.Slice(texture);
-                var newPath = Path.Combine(directoryPath, fileName);
+                var filePath = Path.Combine(directoryPath, sourceImageFileName);
+                var imageJsonPath = sourceImagePath + ".json";
+                if (File.Exists(imageJsonPath))
+                {
+                    var text = AssetDatabase.LoadAssetAtPath<TextAsset>(imageJsonPath).text;
+                    var json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
+                    var slice = json.Get("slice");
+                    switch (slice.ToLower())
+                    {
+                        case "auto":
+                            break;
+                        case "none":
+                        {
+                            var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
+                            var newPath = Path.Combine(directoryPath, sourceImageFileName);
+                            PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
+                            var pngData = texture.EncodeToPNG();
+                            var imageHash = texture.imageContentsHash;
+                            Object.DestroyImmediate(slicedTexture.Texture);
+                            return CheckWrite(newPath, pngData, imageHash);
+                        }
+                        case "border":
+                        {
+                            var border = json.GetDic("border");
+                            if (border == null) break; // borderパラメータがなかった
 
-                PreprocessTexture.SlicedTextures[fileName] = slicedTexture;
-                var pngData = slicedTexture.Texture.EncodeToPNG();
-                var imageHash = texture.imageContentsHash;
-                Object.DestroyImmediate(slicedTexture.Texture);
-                return CheckWrite(newPath, pngData, imageHash);
+                            // 上・右・下・左の端から内側へのオフセット量
+                            var top = border.GetInt("top").Value;
+                            var right = border.GetInt("right").Value;
+                            var bottom = border.GetInt("bottom").Value;
+                            var left = border.GetInt("left").Value;
+
+                            var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
+                            sourceImageFileName = Regex.Replace(sourceImageFileName, pattern, ".png");
+                            var newPath = Path.Combine(directoryPath, sourceImageFileName);
+
+                            PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
+                            var pngData = texture.EncodeToPNG();
+                            var imageHash = texture.imageContentsHash;
+                            Object.DestroyImmediate(slicedTexture.Texture);
+                            return CheckWrite(newPath, pngData, imageHash);
+                        }
+                    }
+                }
+                {
+                    // JSONがない場合、slice:auto であった場合
+                    var slicedTexture = TextureSlicer.Slice(texture);
+                    PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
+                    var pngData = slicedTexture.Texture.EncodeToPNG();
+                    var imageHash = texture.imageContentsHash;
+                    Object.DestroyImmediate(slicedTexture.Texture);
+                    return CheckWrite(filePath, pngData, imageHash);
+                }
             }
             // Debug.LogFormat("[XdUnityUI] Slice: {0} -> {1}", EditorUtil.ToUnityPath(asset), EditorUtil.ToUnityPath(newPath));
         }

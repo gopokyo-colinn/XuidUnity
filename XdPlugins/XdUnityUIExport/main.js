@@ -14,6 +14,7 @@ const {
   ImageFill,
   Rectangle,
   GraphicNode,
+  SceneNode,
   root,
   selection,
 } = require('scenegraph')
@@ -119,6 +120,7 @@ const STYLE_LAYOUT_GROUP_START_AXIS = 'layout-group-start-axis'
 const STYLE_LAYOUT_GROUP_USE_CHILD_SCALE = 'layout-group-use-child-scale'
 const STYLE_MATCH_LOG = 'match-log'
 const STYLE_PRESERVE_ASPECT = 'preserve-aspect'
+const STYLE_LOCK_ASPECT = 'lock-aspect' // preserve-aspectと同じ動作にする　アスペクト比を維持する
 const STYLE_RAYCAST_TARGET = 'raycast-target' // 削除予定
 const STYLE_RECT_MASK_2D = 'rect-mask-twod'
 const STYLE_RECT_TRANSFORM_X = 'rect-transform-x' // offset-min offset-max anchors-min anchors-maxの順
@@ -205,7 +207,7 @@ function getString(multilangStr) {
 }
 
 /**
- * @param {storage.Folder} currentFolder
+ * @param {Folder} currentFolder
  * @param {string} filename
  * @return {Promise<{selector: CssSelector, declarations: CssDeclarations, at_rule: string}[]>}
  */
@@ -442,6 +444,7 @@ function parseNodeName(nodeName) {
         })
       }
     } catch (e) {
+      console.log('parseNodeName: exception')
       result = { tagName: nodeName }
     }
   }
@@ -832,7 +835,8 @@ function getBeforeGlobalDrawBounds(node) {
     }
   }
   if (bounds) return bounds
-  throw 'リサイズ前のGlobalDrawBoundsの情報がありません' + node.name
+  //throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
+  return null
 }
 
 /**
@@ -864,9 +868,17 @@ function getBeforeGlobalBounds(node) {
 function getDrawBoundsCMInBase(node, base) {
   const nodeDrawBounds = getBeforeGlobalDrawBounds(node)
   const baseBounds = getBeforeGlobalDrawBounds(base)
+  if (baseBounds) {
+    return {
+      cx: nodeDrawBounds.x - baseBounds.x + nodeDrawBounds.width / 2,
+      cy: nodeDrawBounds.y - baseBounds.y + nodeDrawBounds.height / 2,
+      width: nodeDrawBounds.width,
+      height: nodeDrawBounds.height,
+    }
+  }
   return {
-    cx: nodeDrawBounds.x - baseBounds.x + nodeDrawBounds.width / 2,
-    cy: nodeDrawBounds.y - baseBounds.y + nodeDrawBounds.height / 2,
+    cx: nodeDrawBounds.x - nodeDrawBounds.width / 2,
+    cy: nodeDrawBounds.y - nodeDrawBounds.height / 2,
     width: nodeDrawBounds.width,
     height: nodeDrawBounds.height,
   }
@@ -1364,6 +1376,8 @@ function getUnityName(node) {
   if (parsed) {
     if (parsed.id) return parsed.id
     if (parsed.tagName) return parsed.tagName
+    if (parsed.classNames && parsed.classNames.length > 0)
+      return '.' + parsed.classNames.join('.')
   }
 
   return nodeName
@@ -1508,37 +1522,55 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   }
 
   // ロックされている 0.001以下の誤差が起きることを確認した
+  const horizontalConstraints = node.horizontalConstraints
+  const verticalConstraints = node.verticalConstraints
 
   const beforeLeft = parentBeforeBounds.x - beforeBounds.x
   const afterLeft = parentAfterBounds.x - afterBounds.x
   if (styleFixLeft == null) {
-    styleFixLeft = approxEqual(beforeLeft, afterLeft)
+    //styleFixLeft = approxEqual(beforeLeft, afterLeft)
+    styleFixLeft =
+      horizontalConstraints.position === SceneNode.FIXED_LEFT ||
+      horizontalConstraints.position === SceneNode.FIXED_BOTH
   }
 
   const beforeRight = parentBeforeBounds.ex - beforeBounds.ex
   const afterRight = parentAfterBounds.ex - afterBounds.ex
   if (styleFixRight == null) {
-    styleFixRight = approxEqual(beforeRight, afterRight)
+    //styleFixRight = approxEqual(beforeRight, afterRight)
+    styleFixRight =
+      horizontalConstraints.position === SceneNode.FIXED_RIGHT ||
+      horizontalConstraints.position === SceneNode.FIXED_BOTH
   }
 
   const beforeTop = parentBeforeBounds.y - beforeBounds.y
   const afterTop = parentAfterBounds.y - afterBounds.y
   if (styleFixTop == null) {
-    styleFixTop = approxEqual(beforeTop, afterTop)
+    // styleFixTop = approxEqual(beforeTop, afterTop)
+    styleFixTop =
+      verticalConstraints.position === SceneNode.FIXED_TOP ||
+      verticalConstraints.position === SceneNode.FIXED_BOTH
   }
 
   const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
   const afterBottom = parentAfterBounds.ey - afterBounds.ey
   if (styleFixBottom == null) {
-    styleFixBottom = approxEqual(beforeBottom, afterBottom)
+    // styleFixBottom = approxEqual(beforeBottom, afterBottom)
+    styleFixBottom =
+      verticalConstraints.position === SceneNode.FIXED_BOTTOM ||
+      verticalConstraints.position === SceneNode.FIXED_BOTH
   }
 
   if (styleFixWidth == null) {
-    styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width)
+    //styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width)
+    styleFixWidth =
+      horizontalConstraints.size === SceneNode.SIZE_FIXED
   }
 
   if (styleFixHeight == null) {
-    styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height)
+    // styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height)
+    styleFixHeight =
+      verticalConstraints.size === SceneNode.SIZE_FIXED
   }
 
   if (styleFixLeft === false) {
@@ -1781,8 +1813,8 @@ async function makeResponsiveBounds(root) {
   // リサイズは大きくなるほうでする
   // リピートグリッドが小さくなったとき、みえなくなるものがでてくる可能性がある
   // そうなると、リサイズ前後での比較ができなくなる
-  const resizePlusWidth = 100
-  const resizePlusHeight = 100
+  const resizePlusWidth = 0
+  const resizePlusHeight = 0
 
   // rootのリサイズ
   const viewportHeight = root.viewportHeight // viewportの高さの保存
@@ -2423,15 +2455,35 @@ function addBoundsCM(json, boundsCm) {
 }
 
 /**
+ * アスペクト比を固定する
+ * 現状、イメージにしか適応できない
+ * @param json
+ * @param style
+ */
+function checkPreserveAspect(json, style) {
+  const stylePreserveAspect = style.first(STYLE_PRESERVE_ASPECT)
+  const styleLockAspect = style.first(STYLE_LOCK_ASPECT)
+  return stylePreserveAspect || styleLockAspect
+}
+
+/**
  *
  * @param json
  * @param {SceneNodeClass} node
  * @param root
  * @param outputFolder
  * @param renditions
+ * @param localStyle {Style}  後付できるスタイルパラメータ
  * @return {Promise<void>}
  */
-async function addImage(json, node, root, outputFolder, renditions) {
+async function addImage(
+  json,
+  node,
+  root,
+  outputFolder,
+  renditions,
+  localStyle = null,
+) {
   let { node_name, style } = getNodeNameAndStyle(node)
   const unityName = getUnityName(node)
 
@@ -2457,8 +2509,11 @@ async function addImage(json, node, root, outputFolder, renditions) {
 
   let fileExtension = '.png'
   // 明確にfalseと指定してある場合にNO SLICEとする
-  if (style.first(STYLE_IMAGE_SLICE) === 'false') {
-    fileExtension = '-noslice.png'
+  if (
+    style.first(STYLE_IMAGE_SLICE) === 'false' ||
+    (localStyle && localStyle.first(STYLE_IMAGE_SLICE) === 'false')
+  ) {
+    // fileExtension = '-noslice.png'
     sliceOption = { slice: 'none' }
   }
   const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
@@ -2499,7 +2554,7 @@ async function addImage(json, node, root, outputFolder, renditions) {
 
       offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
 
-      fileExtension = '-9slice,' + offset + '.png'
+      // fileExtension = '-9slice,' + offset + '.png'
 
       sliceOption = {
         slice: 'border',
@@ -2510,8 +2565,7 @@ async function addImage(json, node, root, outputFolder, renditions) {
           left,
         },
       }
-
-      console.log('slice:' + offset)
+      // console.log('slice:' + offset)
     }
   }
 
@@ -2531,10 +2585,9 @@ async function addImage(json, node, root, outputFolder, renditions) {
   })
   let imageJson = json['image']
 
-  const stylePreserveAspect = style.first(STYLE_PRESERVE_ASPECT)
-  if (stylePreserveAspect != null) {
+  if (checkPreserveAspect(imageJson, style)) {
     Object.assign(imageJson, {
-      preserve_aspect: checkBool(stylePreserveAspect),
+      preserve_aspect: true,
     })
   }
 
@@ -3168,7 +3221,7 @@ function addWrap(json, node, style) {
           y: 0,
         },
         offset_max: {
-          x: -childBounds.width/2, // はみでている分ひっこめる
+          x: -childBounds.width / 2, // はみでている分ひっこめる
           y: 0,
         },
       },
@@ -3278,7 +3331,6 @@ function addWrap(json, node, style) {
     child.rect_transform.anchor_max.y = 1
     child.rect_transform.offset_min.y = 0
     child.rect_transform.offset_max.y = 0
-    return
   }
 }
 
@@ -3615,8 +3667,16 @@ async function createButton(json, node, root, funcForEachChild) {
  * @param {SceneNodeClass} root
  * @param {*} outputFolder
  * @param {*} renditions
+ * @param localStyle {Style}
  */
-async function createImage(json, node, root, outputFolder, renditions) {
+async function createImage(
+  json,
+  node,
+  root,
+  outputFolder,
+  renditions,
+  localStyle = null,
+) {
   //TODO: 塗りチェック、シャドウチェック、輪郭チェック、全てない場合はイメージコンポーネントも無しにする
   let { style } = getNodeNameAndStyle(node)
 
@@ -3636,7 +3696,14 @@ async function createImage(json, node, root, outputFolder, renditions) {
     })
 
     // imageの作成
-    await addImage(json.elements[0], node, root, outputFolder, renditions)
+    await addImage(
+      json.elements[0],
+      node,
+      root,
+      outputFolder,
+      renditions,
+      localStyle,
+    )
     //ボタン画像はボタンとぴったりサイズをあわせる
     let imageJson = json['elements'][0]
     Object.assign(imageJson, {
@@ -3667,7 +3734,7 @@ async function createImage(json, node, root, outputFolder, renditions) {
         component: {},
       })
     }
-    await addImage(json, node, root, outputFolder, renditions)
+    await addImage(json, node, root, outputFolder, renditions, localStyle)
     addWrap(json, node, style) // エレメントに操作のため、処理は最後にする
   }
 
@@ -3774,13 +3841,24 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   }
 
   // ラスタライズオプションチェック
-  if (style.checkBool(STYLE_IMAGE) || style.checkBool(STYLE_IMAGE_SLICE)) {
-    await createImage(json, node, artboard, outputFolder, renditions)
-    return
-  }
-
-  if (!style.checkBool(STYLE_TEXT) && !style.checkBool(STYLE_TEXTMP)) {
-    await createImage(json, node, artboard, outputFolder, renditions)
+  // - ラスタライズオプションがTRUE
+  // - TEXT化オプションがFALSE
+  // スライスしないオプションで出力する
+  if (
+    style.checkBool(STYLE_IMAGE) ||
+    style.checkBool(STYLE_IMAGE_SLICE) ||
+    (!style.checkBool(STYLE_TEXT) && !style.checkBool(STYLE_TEXTMP))
+  ) {
+    const localStyle = new Style()
+    localStyle.setFirst(STYLE_IMAGE_SLICE, 'false')
+    await createImage(
+      json,
+      node,
+      artboard,
+      outputFolder,
+      renditions,
+      localStyle,
+    )
     return
   }
 
@@ -3823,7 +3901,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
       textType: textType,
       font: nodeText.fontFamily,
       style: nodeText.fontStyle,
-      size: getBeforeGlobalDrawBounds(nodeText).text.fontSize * globalScale, // アートボードの伸縮でfontSizeが変わってしまう
+      size: nodeText.fontSize * globalScale, // アートボードの伸縮でfontSizeが変わってしまう
       color: nodeText.fill.toHex(true),
       align: hAlign + vAlign,
       vh: boundsCM.height,
@@ -3964,15 +4042,6 @@ async function nodeRoot(renditions, outputFolder, root) {
             return
           }
           if (style.checkBool(STYLE_SLIDER)) {
-            /*
-          const type = 'Slider'
-          Object.assign(json, {
-            type: type,
-            name: getUnityName(node),
-          })
-          addRectTransformDraw(json, node)
-          await funcForEachChild()
-          */
             await createSlider(json, node, funcForEachChild)
             return
           }
@@ -4076,6 +4145,9 @@ async function exportXdUnityUI(roots, outputFolder) {
     // フォルダ名に使えない文字を'_'に変換
     let subFolderName = nodeToFolderName(root)
 
+    /**
+     * @type {Folder}
+     */
     let subFolder
     // アートボード毎にフォルダを作成する
     if (!optionChangeContentOnly && !optionImageNoExport && outputFolder) {
@@ -4094,13 +4166,25 @@ async function exportXdUnityUI(roots, outputFolder) {
 
     const layoutJson = await nodeRoot(renditions, subFolder, root)
 
-    if (outputFolder && !optionChangeContentOnly) {
+    if (!optionChangeContentOnly) {
+      const layoutJsonString = JSON.stringify(layoutJson, null, '  ')
       const layoutFileName = subFolderName + '.layout.json'
-      const layoutFile = await outputFolder.createFile(layoutFileName, {
-        overwrite: true,
-      })
-      // レイアウトファイルの出力
-      await layoutFile.write(JSON.stringify(layoutJson, null, '  '))
+      if (subFolder) {
+        const layoutFile = await subFolder.createFile(layoutFileName, {
+          overwrite: true,
+        })
+        // レイアウトファイルの出力
+        await layoutFile.write(layoutJsonString)
+      }
+      /*
+      if (outputFolder) {
+        const layoutFile = await outputFolder.createFile(layoutFileName, {
+          overwrite: true,
+        })
+        // レイアウトファイルの出力
+        await layoutFile.write(layoutJsonString)
+      }
+      */
     }
     console.log('----- done -----')
   }
