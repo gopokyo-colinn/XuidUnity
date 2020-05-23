@@ -91,14 +91,14 @@ namespace XdUnityUI.Editor
         }
 
 
-        public static string GetOutputSpritesPath()
+        public static string GetOutputSpritesFolderPath()
         {
             var path = GetPath("_XdUnityUISprites1", false);
             if (path != null) return path;
             return GetPath("_XdUnityUISprites");
         }
 
-        public static string GetOutputPrefabsPath()
+        public static string GetOutputPrefabsFolderPath()
         {
             var path = GetPath("_XdUnityUIPrefabs1", false);
             if (path != null) return path;
@@ -146,13 +146,13 @@ namespace XdUnityUI.Editor
         /// <summary>
         /// サブディレクトリを含めたスプライトの出力パスを取得する
         /// </summary>
-        /// <param name="asset"></param>
+        /// <param name="path"></param>
         /// <returns></returns>
-        public static string GetBaumSpritesFullPath(string asset)
+        public static string GetBaumSpritesFullPath(string path)
         {
             // サブディレクトリ名を取得する
-            var directoryName = Path.GetFileName(Path.GetFileName(asset));
-            var directoryPath = GetOutputSpritesPath();
+            var directoryName = Path.GetFileName(Path.GetFileName(path));
+            var directoryPath = GetOutputSpritesFolderPath();
             var directoryFullPath = Path.Combine(directoryPath, directoryName);
             return directoryFullPath;
         }

@@ -146,7 +146,7 @@ namespace XdUnityUI.Editor
         public static string SliceSprite(string sourceImagePath)
         {
             var directoryName = Path.GetFileName(Path.GetDirectoryName(sourceImagePath));
-            var directoryPath = Path.Combine(EditorUtil.GetOutputSpritesPath(), directoryName);
+            var outputDirectoryPath = Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), directoryName);
             var sourceImageFileName = Path.GetFileName(sourceImagePath);
             // PNGを読み込み、同じサイズのTextureを作成する
             var texture = CreateReadableTexture2D(CreateTextureFromPng(sourceImagePath));
@@ -155,12 +155,12 @@ namespace XdUnityUI.Editor
             if (PreprocessTexture.SlicedTextures == null)
                 PreprocessTexture.SlicedTextures = new Dictionary<string, SlicedTexture>();
 
-            var noSlice = sourceImageFileName.EndsWith("-noslice.png", StringComparison.Ordinal);
+            var noSlice = sourceImageFileName.EndsWith("-noslice.png", StringComparison.OrdinalIgnoreCase);
             if (noSlice)
             {
                 var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
                 sourceImageFileName = sourceImageFileName.Replace("-noslice.png", ".png");
-                var newPath = Path.Combine(directoryPath, sourceImageFileName);
+                var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
                 PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
                 var pngData = texture.EncodeToPNG();
                 var imageHash = texture.imageContentsHash;
@@ -180,7 +180,7 @@ namespace XdUnityUI.Editor
 
                 var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
                 sourceImageFileName = Regex.Replace(sourceImageFileName, pattern, ".png");
-                var newPath = Path.Combine(directoryPath, sourceImageFileName);
+                var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
 
                 PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
                 var pngData = texture.EncodeToPNG();
@@ -190,11 +190,11 @@ namespace XdUnityUI.Editor
             }
 
             {
-                var filePath = Path.Combine(directoryPath, sourceImageFileName);
+                var filePath = Path.Combine(outputDirectoryPath, sourceImageFileName);
                 var imageJsonPath = sourceImagePath + ".json";
                 if (File.Exists(imageJsonPath))
                 {
-                    var text = AssetDatabase.LoadAssetAtPath<TextAsset>(imageJsonPath).text;
+                    var text = File.ReadAllText(imageJsonPath);
                     var json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
                     var slice = json.Get("slice");
                     switch (slice.ToLower())
@@ -204,7 +204,7 @@ namespace XdUnityUI.Editor
                         case "none":
                         {
                             var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
-                            var newPath = Path.Combine(directoryPath, sourceImageFileName);
+                            var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
                             PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
                             var pngData = texture.EncodeToPNG();
                             var imageHash = texture.imageContentsHash;
@@ -224,7 +224,7 @@ namespace XdUnityUI.Editor
 
                             var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
                             sourceImageFileName = Regex.Replace(sourceImageFileName, pattern, ".png");
-                            var newPath = Path.Combine(directoryPath, sourceImageFileName);
+                            var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
 
                             PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
                             var pngData = texture.EncodeToPNG();

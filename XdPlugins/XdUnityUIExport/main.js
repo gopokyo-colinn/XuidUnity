@@ -1525,9 +1525,14 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   const horizontalConstraints = node.horizontalConstraints
   const verticalConstraints = node.verticalConstraints
 
+  if (!horizontalConstraints || !verticalConstraints) {
+    // BooleanGroupの子供等、情報がとれないものがある
+    // console.log(`${node.name} constraints情報がありません`)
+  }
+
   const beforeLeft = parentBeforeBounds.x - beforeBounds.x
   const afterLeft = parentAfterBounds.x - afterBounds.x
-  if (styleFixLeft == null) {
+  if (styleFixLeft == null && horizontalConstraints != null) {
     //styleFixLeft = approxEqual(beforeLeft, afterLeft)
     styleFixLeft =
       horizontalConstraints.position === SceneNode.FIXED_LEFT ||
@@ -1536,7 +1541,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   const beforeRight = parentBeforeBounds.ex - beforeBounds.ex
   const afterRight = parentAfterBounds.ex - afterBounds.ex
-  if (styleFixRight == null) {
+  if (styleFixRight == null && horizontalConstraints != null) {
     //styleFixRight = approxEqual(beforeRight, afterRight)
     styleFixRight =
       horizontalConstraints.position === SceneNode.FIXED_RIGHT ||
@@ -1545,7 +1550,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   const beforeTop = parentBeforeBounds.y - beforeBounds.y
   const afterTop = parentAfterBounds.y - afterBounds.y
-  if (styleFixTop == null) {
+  if (styleFixTop == null && verticalConstraints != null) {
     // styleFixTop = approxEqual(beforeTop, afterTop)
     styleFixTop =
       verticalConstraints.position === SceneNode.FIXED_TOP ||
@@ -1554,23 +1559,21 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   const beforeBottom = parentBeforeBounds.ey - beforeBounds.ey
   const afterBottom = parentAfterBounds.ey - afterBounds.ey
-  if (styleFixBottom == null) {
+  if (styleFixBottom == null && verticalConstraints != null) {
     // styleFixBottom = approxEqual(beforeBottom, afterBottom)
     styleFixBottom =
       verticalConstraints.position === SceneNode.FIXED_BOTTOM ||
       verticalConstraints.position === SceneNode.FIXED_BOTH
   }
 
-  if (styleFixWidth == null) {
+  if (styleFixWidth == null && horizontalConstraints != null) {
     //styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width)
-    styleFixWidth =
-      horizontalConstraints.size === SceneNode.SIZE_FIXED
+    styleFixWidth = horizontalConstraints.size === SceneNode.SIZE_FIXED
   }
 
-  if (styleFixHeight == null) {
+  if (styleFixHeight == null && verticalConstraints != null) {
     // styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height)
-    styleFixHeight =
-      verticalConstraints.size === SceneNode.SIZE_FIXED
+    styleFixHeight = verticalConstraints.size === SceneNode.SIZE_FIXED
   }
 
   if (styleFixLeft === false) {
@@ -1597,12 +1600,13 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
       (parentBeforeBounds.ey - beforeBounds.ey) / parentBeforeBounds.height
   }
 
-  // anchorの値を決める
   // ここまでに
   // fixOptionWidth,fixOptionHeight : true || false
   // fixOptionTop,fixOptionBottom : true || number
   // fixOptionLeft,fixOptionRight : true || number
   // になっていないといけない
+
+  // anchorの値を決める
   // null: 定義されていない widthかheightが固定されている
   // number: 親に対しての割合 anchorに割合をいれ､offsetを0
   // true: 固定されている anchorを0か1にし､offsetをピクセルで指定
@@ -1818,7 +1822,7 @@ async function makeResponsiveBounds(root) {
 
   // rootのリサイズ
   const viewportHeight = root.viewportHeight // viewportの高さの保存
-  root.resize(rootWidth + resizePlusWidth, rootHeight + resizePlusHeight)
+  // root.resize(rootWidth + resizePlusWidth, rootHeight + resizePlusHeight)
   if (viewportHeight) {
     // viewportの高さを高さが変わった分の変化に合わせる
     root.viewportHeight = viewportHeight + resizePlusHeight
@@ -1836,7 +1840,7 @@ async function makeResponsiveBounds(root) {
   })
 
   // Artboardのサイズを元に戻す
-  root.resize(rootWidth, rootHeight)
+  // root.resize(rootWidth, rootHeight)
   if (viewportHeight) {
     root.viewportHeight = viewportHeight
   }
@@ -3901,7 +3905,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
       textType: textType,
       font: nodeText.fontFamily,
       style: nodeText.fontStyle,
-      size: nodeText.fontSize * globalScale, // アートボードの伸縮でfontSizeが変わってしまう
+      size: getBeforeGlobalDrawBounds(nodeText).text.fontSize * globalScale, // アートボードの伸縮でfontSizeが変わってしまうため、保存してある情報を使う
       color: nodeText.fill.toHex(true),
       align: hAlign + vAlign,
       vh: boundsCM.height,
@@ -4017,10 +4021,10 @@ async function nodeRoot(renditions, outputFolder, root) {
 
     // nodeの型で処理の分岐
     let constructorName = node.constructor.name
+    console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'Artboard':
       case 'Group':
-      case 'BooleanGroup':
       case 'RepeatGrid':
       case 'SymbolInstance':
         {
@@ -4065,6 +4069,9 @@ async function nodeRoot(renditions, outputFolder, root) {
           await createGroup(json, node, root, funcForEachChild)
         }
         break
+      case 'BooleanGroup':
+        // BooleanGroup以下の子供は、レスポンシブパラメータの取得ができない
+        // そのため、まとめてイメージに変換する
       case 'Line':
       case 'Ellipse':
       case 'Rectangle':

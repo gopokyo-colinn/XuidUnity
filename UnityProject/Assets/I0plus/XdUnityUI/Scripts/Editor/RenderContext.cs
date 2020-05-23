@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEditor;
 using UnityEngine.UI;
-
 using TMPro;
 
 namespace XdUnityUI.Editor
@@ -67,7 +66,7 @@ namespace XdUnityUI.Editor
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(unityPath);
             if (sprite == null)
             {
-                Debug.LogError(string.Format("[XdUnityUI] sprite \"{0}\" is not found.", fileInfo.FullName));
+                Debug.LogError($"[XdUnityUI] sprite \"{unityPath}\" is not found.");
             }
 
             return sprite;
@@ -80,7 +79,7 @@ namespace XdUnityUI.Editor
             if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
             if (font == null)
             {
-                Debug.LogError(string.Format($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found"));
+                Debug.LogError($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found");
             }
 
             return font;
