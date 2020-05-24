@@ -4021,7 +4021,7 @@ async function nodeRoot(renditions, outputFolder, root) {
 
     // nodeの型で処理の分岐
     let constructorName = node.constructor.name
-    console.log(`${node.name} constructorName:${constructorName}`)
+    // console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'Artboard':
       case 'Group':

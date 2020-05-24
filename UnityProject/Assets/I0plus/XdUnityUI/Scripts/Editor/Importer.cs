@@ -78,7 +78,7 @@ namespace XdUnityUI.Editor
         }
 
 
-        [MenuItem("Assets/XdUnityUI/Specified Folder Import")]
+        [MenuItem("Assets/XdUnityUI/Specify Folder Import...")]
         public static async Task MenuImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
@@ -121,7 +121,7 @@ namespace XdUnityUI.Editor
 
                 // ファイルの追加
                 var files = Directory.EnumerateFiles(
-                    importFolderPath, "*", SearchOption.AllDirectories);
+                    importFolderPath, "*", SearchOption.TopDirectoryOnly);
 
                 foreach (var file in files)
                 {
