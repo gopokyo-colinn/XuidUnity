@@ -3,20 +3,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Ludiq.OdinSerializer.Utilities;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+
 #if UNITY_2019_1_OR_NEWER
 using UnityEditor.U2D;
 using UnityEngine.U2D;
-
 #endif
 
 namespace XdUnityUI.Editor
 {
     /// <summary>
-    /// based on Baum2/Editor/Scripts/BaumImporter file.
+    ///     based on Baum2/Editor/Scripts/BaumImporter file.
     /// </summary>
     public sealed class updateDisplayProgressBar : AssetPostprocessor
     {
@@ -38,7 +37,7 @@ namespace XdUnityUI.Editor
         }
 
         /// <summary>
-        /// 自動インポート
+        ///     自動インポート
         /// </summary>
         /// <param name="importedAssets"></param>
         /// <param name="deletedAssets"></param>
@@ -82,10 +81,7 @@ namespace XdUnityUI.Editor
         public static async Task MenuImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
-            if (path.IsNullOrWhitespace())
-            {
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(path)) return;
 
             var folders = new List<string> {path};
             await ImportFolders(folders, true, false);
@@ -95,17 +91,14 @@ namespace XdUnityUI.Editor
         public static async Task MenuImportSpecifiedFolderLayoutOnly()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
-            if (path.IsNullOrWhitespace())
-            {
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(path)) return;
 
             var folders = new List<string> {path};
             await ImportFolders(folders, false, false);
         }
 
         /// <summary>
-        /// Project ウィンドウで、ハイライトされているディレクトリを取得する
+        ///     Project ウィンドウで、ハイライトされているディレクトリを取得する
         /// </summary>
         /// <returns></returns>
         private static IEnumerable<string> ProjectHighlightedFolders()
@@ -168,7 +161,7 @@ namespace XdUnityUI.Editor
 
 
         /// <summary>
-        /// Assetディレクトリに追加されたファイルを確認、インポート処理を行う
+        ///     Assetディレクトリに追加されたファイルを確認、インポート処理を行う
         /// </summary>
         /// <param name="importedPaths"></param>
         /// <param name="movedAssets"></param>

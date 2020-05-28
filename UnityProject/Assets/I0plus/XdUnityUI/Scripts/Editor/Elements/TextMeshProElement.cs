@@ -10,9 +10,9 @@ namespace XdUnityUI.Editor
     /// <summary>
     /// TextMeshProElement class.
     /// </summary>
+#if TMP_PRESENT
     public sealed class TextMeshProElement : Element
     {
-#if TMP_PRESENT
         private readonly Dictionary<string, object> _textJson = default;
 
         public TextMeshProElement(Dictionary<string, object> json, Element parent) : base(json, parent)
@@ -109,6 +109,6 @@ namespace XdUnityUI.Editor
             ElementUtil.SetupRectTransform(go, RectTransformJson);
             return go;
         }
-#endif
     }
+#endif
 }
