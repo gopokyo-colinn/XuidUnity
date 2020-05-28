@@ -48,18 +48,11 @@ namespace XdUnityUI.Editor
             if (_contentJson != null)
             {
                 goContent.name = _contentJson.Get("name") ?? "";
-
-                if (_contentJson.ContainsKey("pivot"))
-                    // ここのPivotはX,Yでくる
-                    contentRect.pivot = _contentJson.GetDic("pivot").GetVector2("x", "y").Value;
-                if (_contentJson.ContainsKey("anchor_min"))
-                    contentRect.anchorMin = _contentJson.GetDic("anchor_min").GetVector2("x", "y").Value;
-                if (_contentJson.ContainsKey("anchor_max"))
-                    contentRect.anchorMax = _contentJson.GetDic("anchor_max").GetVector2("x", "y").Value;
-                if (_contentJson.ContainsKey("offset_min"))
-                    contentRect.offsetMin = _contentJson.GetDic("offset_min").GetVector2("x", "y").Value;
-                if (_contentJson.ContainsKey("offset_max"))
-                    contentRect.offsetMax = _contentJson.GetDic("offset_max").GetVector2("x", "y").Value;
+                var rectJson = _contentJson.GetDic("rect_transform");
+                if (rectJson != null)
+                {
+                    ElementUtil.SetupRectTransform(goContent,rectJson);
+                }
 
                 if (_contentJson.ContainsKey("layout"))
                 {

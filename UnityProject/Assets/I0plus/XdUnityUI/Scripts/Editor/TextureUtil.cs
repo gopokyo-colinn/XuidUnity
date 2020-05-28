@@ -145,6 +145,7 @@ namespace XdUnityUI.Editor
         /// <returns></returns>
         public static string SliceSprite(string sourceImagePath)
         {
+            // Debug.Log($"[XdUnityUI] {sourceImagePath}");
             var directoryName = Path.GetFileName(Path.GetDirectoryName(sourceImagePath));
             var outputDirectoryPath = Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), directoryName);
             var sourceImageFileName = Path.GetFileName(sourceImagePath);
