@@ -91,6 +91,19 @@ namespace XdUnityUI.Editor
             await ImportFolders(folders, true, false);
         }
 
+        [MenuItem("Assets/XdUnityUI/Specify Folder Import(layout only)...")]
+        public static async Task MenuImportSpecifiedFolderLayoutOnly()
+        {
+            var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
+            if (path.IsNullOrWhitespace())
+            {
+                return;
+            }
+
+            var folders = new List<string> {path};
+            await ImportFolders(folders, false, false);
+        }
+
         /// <summary>
         /// Project ウィンドウで、ハイライトされているディレクトリを取得する
         /// </summary>
