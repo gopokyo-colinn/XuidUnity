@@ -8,10 +8,12 @@ const {
   Rectangle,
   GraphicNode,
   selection,
+  SceneNode,
 } = require('scenegraph')
 const application = require('application')
 const commands = require('commands')
 const fs = require('uxp').storage.localFileSystem
+const { alert, confirm, prompt, error, warning } = require('./lib/dialogs.js')
 
 /**
  * Shorthand for creating Elements.
@@ -48,9 +50,11 @@ function h(tag, props, ...children) {
  * alertの表示
  * @param {string} message
  */
+
+/*
 async function alert(message, title) {
   if (title == null) {
-    title = 'XD Baum2 Export'
+    title = '9SliceHelper'
   }
   let dialog = h(
     'dialog',
@@ -64,7 +68,7 @@ async function alert(message, title) {
       },
       h('h1', title),
       h('hr'),
-      h('span', message),
+      h('div', message),
       h(
         'footer',
         h(
@@ -81,8 +85,9 @@ async function alert(message, title) {
     ),
   )
   document.body.appendChild(dialog)
-  return await dialog.showModal()
+  return dialog.showModal()
 }
+ */
 
 /**
  * パラメータの取得
@@ -103,7 +108,7 @@ function getImageSliceParameters(str) {
   2番目の値が省略された場合には、1番目の値と同じ。
   */
   if (!result || !result.groups.top) {
-    console.log('failed:', str)
+    console.log('failed tp get parameters:', str)
     return null
   } // 一つも値がとれなかったとき
   let top = parseInt(result.groups.top)
@@ -124,7 +129,6 @@ function getImageSliceParameters(str) {
 /**
  * @param {SceneNodeClass} node
  * @param {Bounds} newGlobalBounds
- * @constructor
  */
 function SetGlobalBounds(node, newGlobalBounds) {
   const globalBounds = node.globalBounds
@@ -381,12 +385,15 @@ function resizeMaskAndGraphicNode(
 function resizeSlicedGroup(wholeGlobalBounds, sliceNode, sliceParameter) {
   if (sliceNode.name === 'source') {
     sliceNode.resize(sliceNode.fill.naturalWidth, sliceNode.fill.naturalHeight)
-    return
+    // 他のスライスグループと同じように、今所属しているグループから外れる
+    sliceNode.removeFromParent()
+    selection.insertionParent.addChild(sliceNode)
+    return sliceNode
   }
+
   let mask = sliceNode.mask
   if (!mask) {
-    console.log('*** not found mask')
-    return
+    throw 'error*** not found mask'
   }
 
   // ungroup するのでその前にグループの中身を取得しておく
@@ -396,7 +403,6 @@ function resizeSlicedGroup(wholeGlobalBounds, sliceNode, sliceParameter) {
   })
 
   const sliceNodeName = sliceNode.name
-  let parent = sliceNode.parent
   selection.items = [sliceNode]
 
   // 操作できるようにグループ解除
@@ -432,21 +438,133 @@ function resizeSlicedGroup(wholeGlobalBounds, sliceNode, sliceParameter) {
 }
 
 /**
+ *
+ * @param {string} nodeName
+ * @param {SceneNodeClass} node
+ * @param sliceParameter
+ */
+function setConstraints(nodeName, node) {
+  let horizontalConstraints = null
+  let verticalConstraints = null
+
+  switch (nodeName) {
+    case 'top-left':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_LEFT,
+        size: SceneNode.SIZE_FIXED,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_TOP,
+        size: SceneNode.SIZE_FIXED,
+      }
+      break
+    case 'top':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_BOTH,
+        size: SceneNode.SIZE_RESIZES,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_TOP,
+        size: SceneNode.SIZE_FIXED,
+      }
+      break
+    case 'top-right':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_RIGHT,
+        size: SceneNode.SIZE_FIXED,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_TOP,
+        size: SceneNode.SIZE_FIXED,
+      }
+      break
+    case 'left':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_LEFT,
+        size: SceneNode.SIZE_FIXED,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_BOTH,
+        size: SceneNode.SIZE_RESIZES,
+      }
+      break
+    case 'center':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_BOTH,
+        size: SceneNode.SIZE_RESIZES,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_BOTH,
+        size: SceneNode.SIZE_RESIZES,
+      }
+      break
+    case 'right':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_RIGHT,
+        size: SceneNode.SIZE_FIXED,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_BOTH,
+        size: SceneNode.SIZE_RESIZES,
+      }
+      break
+    case 'bottom-left':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_LEFT,
+        size: SceneNode.SIZE_FIXED,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_BOTTOM,
+        size: SceneNode.SIZE_FIXED,
+      }
+      break
+    case 'bottom':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_BOTH,
+        size: SceneNode.SIZE_RESIZES,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_BOTTOM,
+        size: SceneNode.SIZE_FIXED,
+      }
+      break
+    case 'bottom-right':
+      horizontalConstraints = {
+        position: SceneNode.FIXED_RIGHT,
+        size: SceneNode.SIZE_FIXED,
+      }
+      verticalConstraints = {
+        position: SceneNode.FIXED_BOTTOM,
+        size: SceneNode.SIZE_FIXED,
+      }
+      break
+    default:
+      break
+  }
+
+  // console.log(node)
+  if (horizontalConstraints) {
+    // console.log(horizontalConstraints)
+    node.horizontalConstraints = horizontalConstraints
+  }
+
+  if (verticalConstraints) {
+    // console.log(verticalConstraints)
+    node.verticalConstraints = verticalConstraints
+  }
+}
+
+/**
  * 選択したノードを画像出力する
  * 画像出力のテスト用
- * @param {*} selection
- * @param {*} root
+ * @param parent
+ * @param {*} slicedGroups
  */
-function pluginResizeSlices(selection, root) {
-  let selectionItems = []
-  selection.items.forEach(item => {
-    selectionItems.push(item)
-  })
-
-  let parentGlobalBounds = selection.items[0].parent.globalBounds
+function resizeSlicedGroups(parent, slicedGroups) {
+  let parentGlobalBounds = parent.globalBounds
 
   let resizedGroups = []
-  selectionItems.forEach(item => {
+  slicedGroups.forEach(slicedGroup => {
     /*
     // 9スライスされたROOTを選んでやる場合
     item.children.forEach(child => {
@@ -459,12 +577,11 @@ function pluginResizeSlices(selection, root) {
     })
     */
     // スライスされたグループを選んだ場合
-    console.log(item.parent.name)
-    const sliceParameter = getImageSliceParameters(item.parent.name)
+    const sliceParameter = getImageSliceParameters(slicedGroup.parent.name)
     if (sliceParameter != null) {
       let resizedGroup = resizeSlicedGroup(
         parentGlobalBounds,
-        item,
+        slicedGroup,
         sliceParameter,
       )
       resizedGroups.push(resizedGroup)
@@ -555,7 +672,7 @@ function make9Slice(sourceNode, selection) {
   selection.items[0].name = itemName
 
   selection.items = slicedGroups
-  let groups = pluginResizeSlices(selection, null)
+  let groups = resizeSlicedGroups(selection.items[0].parent, selection.items)
 
   // バラバラになってしまうので、最後にもう一度まとめる
   // ソースは見えないようにする
@@ -564,18 +681,58 @@ function make9Slice(sourceNode, selection) {
   groups.push(sourceNode)
   selection.items = groups
   commands.group()
+
+  for (let group of groups) {
+    setConstraints(group.name, group)
+  }
+
   selection.items[0].name = itemName
 }
 
 async function pluginMake9Slice(selection, root) {
-  let selectionItems = []
-  selection.items.forEach(item => {
-    selectionItems.push(item)
-  })
+  const title = '9SliceHelper'
+  const errorMessage = [
+    'Select one any following.',
+    '- rectangle image layer',
+    '- 9sliced groups parent layer',
+  ]
 
-  selectionItems.forEach(item => {
-    make9Slice(item, selection)
-  })
+  if (selection.items.length !== 1) {
+    alert(title, errorMessage)
+    return
+  }
+
+  const node = selection.items[0]
+  const nodeConstructorName = node.constructor.name
+  const nodeFill = node.fill
+
+  console.log(nodeConstructorName)
+  if (nodeConstructorName === 'Group') {
+    //
+    const nodeName = node.name
+    const slicedGroups = []
+    node.children.forEach(child => {
+      slicedGroups.push(child)
+    })
+    const groups = resizeSlicedGroups(node, slicedGroups)
+    selection.items = groups
+    commands.group()
+    selection.items[0].name = nodeName
+    return
+  }
+
+  if (nodeConstructorName !== 'Rectangle' && !nodeFill) {
+    alert(title, errorMessage)
+    return
+  }
+
+  const nodeFillConstructorName = nodeFill.constructor.name
+  if (nodeFillConstructorName !== 'ImageFill') {
+    alert(title, errorMessage)
+    return
+  }
+
+  make9Slice(node, selection)
 
   console.log('done')
 }
@@ -589,73 +746,13 @@ function pluginDuplicateStretch(slection, root) {
   })
 }
 
-/**
- * 選択したグループの子供を画像出力する
- * @param selection
- * @param root
- * @returns {Promise<void>}
- */
-async function pluginRenditionChildren(selection, root) {
-  const outputFolder = await fs.getFolder()
-
-  if (!outputFolder) return console.log('User canceled folder picker.')
-
-  let renditionOptions = []
-  const length = selection.items[0].children.length
-  for (let i = 0; i < length; i++) {
-    const item = selection.items[0].children.at(i)
-    const fileName = item.name + '.png'
-    const file = await outputFolder.createFile(fileName, {
-      overwrite: true,
-    })
-    renditionOptions.push({
-      // fileName: fileName,
-      node: item,
-      outputFile: file,
-      type: application.RenditionType.PNG,
-      scale: 1,
-    })
-  }
-
-  const results = await application
-    .createRenditions(renditionOptions)
-    .then(results => {
-      // [2]
-      console.log(
-        `PNG rendition has been saved at ${results[0].outputFile.nativePath}`,
-      )
-    })
-    .catch(error => {
-      console.log('error:' + error)
-      // https://forums.adobexdplatform.com/t/details-for-io-failed/1185/14
-      // https://helpx.adobe.com/xd/kb/import-export-issues.html
-      console.log(
-        '1)access denied (disk permission)\n2)readonly folder\n3)not enough disk space\n4)maximum path\n5)image size 0px',
-      )
-    })
-  console.log('done.')
-}
-
-
-async function resizeArtboard(selection, root) {
-  let node = selection.items[0]
-  const bounds = node.globalBounds
-  node.resize(bounds.width + 100, bounds.height + 100)
-  node.children.forEach(child=>{
-    const bounds = child.globalBounds
-    const drawBounds = child.globalDrawBounds
-    console.log(`${child.name}: ${bounds.height} ${drawBounds.height}`)
-  })
-}
-
-
 module.exports = {
   // コマンドIDとファンクションの紐付け
   commands: {
     pluginMake9Slice,
-    pluginScaleAdjust: pluginResizeSlices,
-    //pluginDuplicateStretch: pluginDuplicateStretch,
-    pluginRenditionChildren,
-    resizeArtboard,
+    // pluginScaleAdjust: pluginResizeSlices,
+    // pluginDuplicateStretch: pluginDuplicateStretch,
+    // pluginRenditionChildren,
+    // resizeArtboard,
   },
 }
