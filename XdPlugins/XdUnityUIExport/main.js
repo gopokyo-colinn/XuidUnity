@@ -123,8 +123,8 @@ const STYLE_PRESERVE_ASPECT = 'preserve-aspect'
 const STYLE_LOCK_ASPECT = 'lock-aspect' // preserve-aspectと同じ動作にする　アスペクト比を維持する
 const STYLE_RAYCAST_TARGET = 'raycast-target' // 削除予定
 const STYLE_RECT_MASK_2D = 'rect-mask-twod'
-const STYLE_RECT_TRANSFORM_X = 'rect-transform-x' // offset-min offset-max anchors-min anchors-maxの順
-const STYLE_RECT_TRANSFORM_Y = 'rect-transform-y' // offset-min offset-max anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X = 'rect-transform-anchor-offset-x' // offset-min offset-max anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y = 'rect-transform-anchor-offset-y' // offset-min offset-max anchors-min anchors-maxの順
 const STYLE_RECT_TRANSFORM_ANCHORS_X = 'rect-transform-anchors-x' // anchors-min anchors-maxの順
 const STYLE_RECT_TRANSFORM_ANCHORS_Y = 'rect-transform-anchors-y' // anchors-min anchors-maxの順
 const STYLE_REPEATGRID_ATTACH_TEXT_DATA_SERIES =
@@ -372,7 +372,7 @@ class CssDeclarations {
   }
 
   checkBool(property) {
-    return checkBool(this.first(property))
+    return checkAsBool(this.first(property))
   }
 }
 
@@ -930,7 +930,7 @@ function searchFileName(renditions, fileName) {
  * @param r
  * @returns {boolean}
  */
-function checkBool(r) {
+function checkAsBool(r) {
   if (typeof r == 'string') {
     const val = r.toLowerCase()
     if (val === 'false' || val === '0' || val === 'null') return false
@@ -1459,7 +1459,7 @@ function getStyleFix(styleFix) {
  * @param {SceneNodeClass} node
  * @param {Style} style
  * @param calcDrawBounds
- * @return {{offset_max: {x: null, y: null}, fix: {top: (boolean|number), left: (boolean|number), bottom: (boolean|number), width: boolean, right: (boolean|number), height: boolean}, anchor_min: {x: null, y: null}, anchor_max: {x: null, y: null}, offset_min: {x: null, y: null}}|null}
+ * @return {{offset_max: {x: number, y: number}, fix: {top: null, left: null, bottom: null, width: null, right: null, height: null}, pivot: {x: number, y: number}, anchor_min: {x: number, y: number}, anchor_max: {x: number, y: number}, offset_min: {x: number, y: number}}}
  */
 function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   if (!node || !node.parent) return null
@@ -1521,7 +1521,6 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
     styleFixRight = fix.right
   }
 
-  // ロックされている 0.001以下の誤差が起きることを確認した
   const horizontalConstraints = node.horizontalConstraints
   const verticalConstraints = node.verticalConstraints
 
@@ -1627,6 +1626,43 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   } // right(w), top(y)
   let anchorMin = { x: null, y: null } // left, bottom
   let anchorMax = { x: null, y: null } // right, top
+
+  // レスポンシブパラメータが不確定のままきた場合
+  // リピートグリッド以下のコンポーネント等 NULLになる
+  if (styleFixWidth === null || styleFixHeight === null) {
+    const beforeCenter = beforeBounds.x + beforeBounds.width / 2
+    const parentBeforeCenter =
+      parentBeforeBounds.x + parentBeforeBounds.width / 2
+    anchorMin.x = anchorMax.x =
+      (beforeCenter - parentBeforeCenter) / parentBeforeBounds.width + 0.5
+    // サイズを設定　センターからの両端サイズ
+    offsetMin.x = -beforeBounds.width / 2
+    offsetMax.x = +beforeBounds.width / 2
+
+    const beforeMiddle = beforeBounds.y + beforeBounds.height / 2
+    const parentBeforeMiddle =
+      parentBeforeBounds.y + parentBeforeBounds.height / 2
+    anchorMin.y = anchorMax.y =
+      -(beforeMiddle - parentBeforeMiddle) / parentBeforeBounds.height + 0.5
+    offsetMin.y = -beforeBounds.height / 2
+    offsetMax.y = +beforeBounds.height / 2
+
+    return {
+      fix: {
+        left: styleFixLeft,
+        right: styleFixRight,
+        top: styleFixTop,
+        bottom: styleFixBottom,
+        width: styleFixWidth,
+        height: styleFixHeight,
+      },
+      pivot: { x: 0.5, y: 0.5 },
+      anchor_min: anchorMin,
+      anchor_max: anchorMax,
+      offset_min: offsetMin,
+      offset_max: offsetMax,
+    }
+  }
 
   if (styleFixWidth) {
     // 横幅が固定されている
@@ -2033,7 +2069,7 @@ class Style {
   }
 
   checkBool(property) {
-    return checkBool(this.first(property))
+    return checkAsBool(this.first(property))
   }
 
   /**
@@ -2270,7 +2306,7 @@ function makeLayoutJson(root) {
 function addActive(json, style) {
   if (style.first('active')) {
     Object.assign(json, {
-      active: checkBool(style.first('active')),
+      active: checkAsBool(style.first('active')),
     })
   }
 }
@@ -2305,11 +2341,11 @@ function addMask(json, style) {
 }
 
 /**
- * 指定のAnchorパラメータを設定する
- * @param rectTransformJson
+ * RectTransformパラメータ指定による上書き
+ * @param json
  * @param style
  */
-function addRectTransform(json, style) {
+function addRectTransformAnchorOffset(json, style) {
   if (!style) return
   // RectTransformの値がない場合、作成する
   if (!('rect_transform' in json)) {
@@ -2323,19 +2359,21 @@ function addRectTransform(json, style) {
   if (!('offset_min' in rectTransformJson)) rectTransformJson['offset_min'] = {}
   if (!('offset_max' in rectTransformJson)) rectTransformJson['offset_max'] = {}
   // Styleで指定があった場合、上書きする
-  const anchorsX = style.values(STYLE_RECT_TRANSFORM_X)
-  const anchorsY = style.values(STYLE_RECT_TRANSFORM_Y)
-  if (anchorsX) {
-    rectTransformJson['offset_min']['x'] = parseFloat(anchorsX[0])
-    rectTransformJson['offset_max']['x'] = parseFloat(anchorsX[1])
-    rectTransformJson['anchor_min']['x'] = parseFloat(anchorsX[2])
-    rectTransformJson['anchor_max']['x'] = parseFloat(anchorsX[3])
+  const anchorOffsetX = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X)
+  if (anchorOffsetX) {
+    console.log(`anchorsX:${anchorOffsetX}`)
+    rectTransformJson['anchor_min']['x'] = parseFloat(anchorOffsetX[0])
+    rectTransformJson['anchor_max']['x'] = parseFloat(anchorOffsetX[1])
+    rectTransformJson['offset_min']['x'] = parseFloat(anchorOffsetX[2])
+    rectTransformJson['offset_max']['x'] = parseFloat(anchorOffsetX[3])
   }
-  if (anchorsY) {
-    rectTransformJson['offset_min']['y'] = parseFloat(anchorsY[0])
-    rectTransformJson['offset_max']['y'] = parseFloat(anchorsY[1])
-    rectTransformJson['anchor_min']['y'] = parseFloat(anchorsY[2])
-    rectTransformJson['anchor_max']['y'] = parseFloat(anchorsY[3])
+  const anchorOffsetY = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y)
+  if (anchorOffsetY) {
+    console.log(`anchorsY:${anchorOffsetY}`)
+    rectTransformJson['anchor_min']['y'] = parseFloat(anchorOffsetY[0])
+    rectTransformJson['anchor_max']['y'] = parseFloat(anchorOffsetY[1])
+    rectTransformJson['offset_min']['y'] = parseFloat(anchorOffsetY[2])
+    rectTransformJson['offset_max']['y'] = parseFloat(anchorOffsetY[3])
   }
 }
 
@@ -2366,29 +2404,33 @@ function anchorChange(json,style)
  * オプションにpivot､stretchがあれば上書き
  * @param {*} json
  * @param {SceneNodeClass} node
+ * @param style
  */
-function addRectTransformDraw(json, node) {
+function addRectTransformDraw(json, node, style) {
   let param = getRectTransformDraw(node)
   if (param) {
     Object.assign(json, {
       rect_transform: param,
     })
   }
+  addRectTransformAnchorOffset(json, style)
 }
 
 /**
  *
  * @param json
  * @param {SceneNode} node
+ * @param style
  * @returns {null}
  */
-function addRectTransform(json, node) {
+function addRectTransform(json, node, style) {
   let param = getRectTransform(node)
   if (param) {
     Object.assign(json, {
       rect_transform: param,
     })
   }
+  addRectTransformAnchorOffset(json, style)
 }
 
 /**
@@ -2512,64 +2554,71 @@ async function addImage(
   let sliceOption = { slice: 'auto' }
 
   let fileExtension = '.png'
+
+  const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
   // 明確にfalseと指定してある場合にNO SLICEとする
   if (
-    style.first(STYLE_IMAGE_SLICE) === 'false' ||
-    (localStyle && localStyle.first(STYLE_IMAGE_SLICE) === 'false')
+    !checkAsBool(style.first(STYLE_IMAGE_SLICE)) ||
+    (localStyle && !checkAsBool(localStyle.first(STYLE_IMAGE_SLICE)))
   ) {
     // fileExtension = '-noslice.png'
     sliceOption = { slice: 'none' }
-  }
-  const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
-  if (image9SliceValues && image9SliceValues.length > 0) {
-    if (node.rotation !== 0) {
-      console.log(
-        'warning*** 回転しているノードの9スライス指定は無効になります',
-      )
-    } else {
-      /*
-       省略については、CSSに準拠
-       http://www.htmq.com/css3/border-image-slice.shtml
-       上・右・下・左の端から内側へのオフセット量
-       4番目の値が省略された場合には、2番目の値と同じ。
-       3番目の値が省略された場合には、1番目の値と同じ。
-       2番目の値が省略された場合には、1番目の値と同じ。
-       */
-      const paramLength = image9SliceValues.length
-      let top = parseInt(image9SliceValues[0]) * globalScale
-      let right =
-        paramLength > 1 ? parseInt(image9SliceValues[1]) * globalScale : top
-      let bottom =
-        paramLength > 2 ? parseInt(image9SliceValues[2]) * globalScale : top
-      let left =
-        paramLength > 3 ? parseInt(image9SliceValues[3]) * globalScale : right
+  } else {
+    // sliceオプションチェック
+    if (
+      image9SliceValues &&
+      image9SliceValues.length > 0 &&
+      checkAsBool(image9SliceValues[0])
+    ) {
+      if (node.rotation !== 0) {
+        console.log(
+          'warning*** 回転しているノードの9スライス指定は無効になります',
+        )
+      } else {
+        /*
+         省略については、CSSに準拠
+         http://www.htmq.com/css3/border-image-slice.shtml
+         上・右・下・左の端から内側へのオフセット量
+         4番目の値が省略された場合には、2番目の値と同じ。
+         3番目の値が省略された場合には、1番目の値と同じ。
+         2番目の値が省略された場合には、1番目の値と同じ。
+         */
+        const paramLength = image9SliceValues.length
+        let top = parseInt(image9SliceValues[0]) * globalScale
+        let right =
+          paramLength > 1 ? parseInt(image9SliceValues[1]) * globalScale : top
+        let bottom =
+          paramLength > 2 ? parseInt(image9SliceValues[2]) * globalScale : top
+        let left =
+          paramLength > 3 ? parseInt(image9SliceValues[3]) * globalScale : right
 
-      // DrawBoundsで大きくなった分を考慮する　(影などで大きくなる)
-      const beforeBounds = getBeforeGlobalBounds(node)
-      const beforeDrawBounds = getBeforeGlobalDrawBounds(node)
+        // DrawBoundsで大きくなった分を考慮する　(影などで大きくなる)
+        const beforeBounds = getBeforeGlobalBounds(node)
+        const beforeDrawBounds = getBeforeGlobalDrawBounds(node)
 
-      let offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
-      console.log('slice:' + offset)
+        let offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
+        console.log('slice:' + offset)
 
-      top -= beforeDrawBounds.y - beforeBounds.y
-      bottom += beforeDrawBounds.ey - beforeBounds.ey
-      left -= beforeDrawBounds.x - beforeBounds.x
-      right += beforeDrawBounds.ex - beforeBounds.ex
+        top -= beforeDrawBounds.y - beforeBounds.y
+        bottom += beforeDrawBounds.ey - beforeBounds.ey
+        left -= beforeDrawBounds.x - beforeBounds.x
+        right += beforeDrawBounds.ex - beforeBounds.ex
 
-      offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
+        offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
 
-      // fileExtension = '-9slice,' + offset + '.png'
+        // fileExtension = '-9slice,' + offset + '.png'
 
-      sliceOption = {
-        slice: 'border',
-        border: {
-          top,
-          bottom,
-          right,
-          left,
-        },
+        sliceOption = {
+          slice: 'border',
+          border: {
+            top,
+            bottom,
+            right,
+            left,
+          },
+        }
+        // console.log('slice:' + offset)
       }
-      // console.log('slice:' + offset)
     }
   }
 
@@ -2582,7 +2631,7 @@ async function addImage(
     opacity: 100,
   })
 
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
 
   Object.assign(json, {
     image: {},
@@ -2598,7 +2647,7 @@ async function addImage(
   const styleRayCastTarget = style.first(STYLE_RAYCAST_TARGET)
   if (styleRayCastTarget != null) {
     Object.assign(imageJson, {
-      raycast_target: checkBool(styleRayCastTarget),
+      raycast_target: checkAsBool(styleRayCastTarget),
     })
   }
 
@@ -2652,7 +2701,7 @@ async function addImage(
     }
   }
 
-  if (!checkBool(style.first(STYLE_BLANK))) {
+  if (!checkAsBool(style.first(STYLE_BLANK))) {
     Object.assign(imageJson, {
       source_image: fileName,
     })
@@ -3063,7 +3112,9 @@ async function createContent(style, json, node, funcForEachChild, root) {
     },
   })
 
-  addRectTransform(contentJson, contentStyle) // anchor設定を上書きする
+  console.log('content:')
+  addRectTransformAnchorOffset(contentJson, contentStyle) // anchor設定を上書きする
+  console.log('content:', contentJson)
 
   addContentSizeFitter(contentJson, contentStyle)
   addLayer(contentJson, contentStyle)
@@ -3100,7 +3151,7 @@ async function createViewport(json, node, root, funcForEachChild) {
 
   // 基本
   addActive(json, style)
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3173,8 +3224,8 @@ async function createInput(json, node, root, funcForEachChild) {
   })
   // 基本
   addActive(json, style)
-  addRectTransformDraw(json, node)
-  addRectTransform(json, style) // anchor設定を上書きする
+  addRectTransformDraw(json, node, style)
+  //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3296,7 +3347,8 @@ function addWrap(json, node, style) {
     return
   }
 
-  const styleWrapY = style.first('wrap-y-item') || style.first('wrap-vertical-item')
+  const styleWrapY =
+    style.first('wrap-y-item') || style.first('wrap-vertical-item')
   if (styleWrapY) {
     let child = {}
     // プロパティの移動
@@ -3385,8 +3437,8 @@ async function createGroup(json, node, root, funcForEachChild) {
 
   // 基本
   addActive(json, style)
-  addRectTransformDraw(json, node)
-  addRectTransform(json, style) // anchor設定を上書きする
+  addRectTransformDraw(json, node, style)
+  //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3455,7 +3507,7 @@ async function createScrollbar(json, node, funcForEachChild) {
 
   // 基本
   addActive(json, style)
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3517,7 +3569,7 @@ async function createSlider(json, node, funcForEachChild) {
 
   // 基本
   addActive(json, style)
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3595,7 +3647,7 @@ async function createToggle(json, node, root, funcForEachChild) {
 
   // 基本パラメータ・コンポーネント
   addActive(json, style)
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3656,7 +3708,7 @@ async function createButton(json, node, root, funcForEachChild) {
 
   // 基本パラメータ
   addActive(json, style)
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -3727,7 +3779,7 @@ async function createImage(
     })
     // 基本パラメータ
     addActive(json, style)
-    addRectTransformDraw(json, node)
+    addRectTransformDraw(json, node, style)
     addLayer(json, style)
     addState(json, style)
     addParsedNames(json, node)
@@ -3920,7 +3972,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   // 基本パラメータ
   addActive(json, style)
   // Drawではなく、通常のレスポンシブパラメータを渡す　シャドウ等のエフェクトは自前でやる必要があるため
-  addRectTransformDraw(json, node)
+  addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addState(json, style)
   addParsedNames(json, node)
@@ -4070,8 +4122,8 @@ async function nodeRoot(renditions, outputFolder, root) {
         }
         break
       case 'BooleanGroup':
-        // BooleanGroup以下の子供は、レスポンシブパラメータの取得ができない
-        // そのため、まとめてイメージに変換する
+      // BooleanGroup以下の子供は、レスポンシブパラメータの取得ができない
+      // そのため、まとめてイメージに変換する
       case 'Line':
       case 'Ellipse':
       case 'Rectangle':
