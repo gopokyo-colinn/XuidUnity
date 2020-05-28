@@ -3296,7 +3296,7 @@ function addWrap(json, node, style) {
     return
   }
 
-  const styleWrapY = style.first('wrap-y')
+  const styleWrapY = style.first('wrap-y-item') || style.first('wrap-vertical-item')
   if (styleWrapY) {
     let child = {}
     // プロパティの移動
@@ -3305,7 +3305,7 @@ function addWrap(json, node, style) {
     // ラップするオブジェクトの作成
     Object.assign(json, {
       type: 'Group',
-      name: 'wrap-y',
+      name: 'wrap-vertical-item',
       layer: child.layer,
       rect_transform: {
         pivot: {
