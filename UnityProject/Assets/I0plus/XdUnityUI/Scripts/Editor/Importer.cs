@@ -1,79 +1,43 @@
 ﻿using System;
-using UnityEngine;
-using UnityEditor;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using UnityEngine.UI;
+using System.Threading.Tasks;
+using UnityEditor;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
 #if UNITY_2019_1_OR_NEWER
 using UnityEditor.U2D;
 using UnityEngine.U2D;
 #endif
-using Object = UnityEngine.Object;
 
 namespace XdUnityUI.Editor
 {
     /// <summary>
-    /// based on Baum2/Editor/Scripts/BaumImporter file.
+    ///     based on Baum2/Editor/Scripts/BaumImporter file.
     /// </summary>
     public sealed class updateDisplayProgressBar : AssetPostprocessor
     {
+        private static int progressTotal = 1;
+        private static int progressCount;
+        private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
+
         public override int GetPostprocessOrder()
         {
             return 1000;
         }
 
-        private class FileInfoComparer : IEqualityComparer<FileInfo>
-        {
-            public bool Equals(FileInfo iLhs, FileInfo iRhs)
-            {
-                if (iLhs.Name == iRhs.Name)
-                {
-                    return true;
-                }
-
-                return false;
-            }
-
-            public int GetHashCode(FileInfo fi)
-            {
-                var s = fi.Name;
-                return s.GetHashCode();
-            }
-        }
-
-        private static int progressTotal = 1;
-        private static int progressCount = 0;
-
         private static void UpdateDisplayProgressBar(string message = "")
         {
             if (progressTotal > 1)
-            {
                 EditorUtility.DisplayProgressBar("XdUnitUI Import",
-                    string.Format("{0}/{1} {2}", progressCount, progressTotal, message),
-                    ((float) progressCount / progressTotal));
-            }
-        }
-
-        private const string FolderLookMenuPath = "Assets/XdUnityUI/Auto Import Enable";
-        private static bool _autoEnableFlag = false; // デフォルトがチェック済みの時には true にする
-
-        [MenuItem(FolderLookMenuPath)]
-        public static void SampleMenu()
-        {
-            _autoEnableFlag = !_autoEnableFlag;
-            Menu.SetChecked(FolderLookMenuPath, _autoEnableFlag);
-        }
-
-        [MenuItem(FolderLookMenuPath, true)]
-        public static bool TestMenuValidate()
-        {
-            Menu.SetChecked(FolderLookMenuPath, _autoEnableFlag);
-            return true;
+                    $"{progressCount}/{progressTotal} {message}",
+                    (float) progressCount / progressTotal);
         }
 
         /// <summary>
-        /// 自動インポート
+        ///     自動インポート
         /// </summary>
         /// <param name="importedAssets"></param>
         /// <param name="deletedAssets"></param>
@@ -82,55 +46,101 @@ namespace XdUnityUI.Editor
         public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets,
             string[] movedFromAssetPaths)
         {
-            if (_autoEnableFlag)
-                Import(importedAssets, movedAssets);
+        }
+
+        [MenuItem("Assets/XdUnityUI/Import Selected Folders")]
+        public static async Task MenuImportFromSelectFolder()
+        {
+            var folderPaths = ProjectHighlightedFolders();
+            await ImportFolders(folderPaths, true, false);
+        }
+
+        [MenuItem("Assets/XdUnityUI/Import Selected Folders", true)]
+        public static bool MenuImportSelectedFolderCheck()
+        {
+            var folderPaths = ProjectHighlightedFolders();
+            return folderPaths.Any();
+        }
+
+        [MenuItem("Assets/XdUnityUI/Import Selected Folders(Layout Only)")]
+        public static async Task MenuImportSelectedFolderLayoutOnly()
+        {
+            var folderPaths = ProjectHighlightedFolders();
+            await ImportFolders(folderPaths, false, false);
+        }
+
+        [MenuItem("Assets/XdUnityUI/Import Selected Folders(Layout Only)", true)]
+        public static bool MenuImportSelectedFolderLayoutOnlyCheck()
+        {
+            var folderPaths = ProjectHighlightedFolders();
+            return folderPaths.Any();
+        }
+
+
+        [MenuItem("Assets/XdUnityUI/Specify Folder Import...")]
+        public static async Task MenuImportSpecifiedFolder()
+        {
+            var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            var folders = new List<string> {path};
+            await ImportFolders(folders, true, false);
+        }
+
+        [MenuItem("Assets/XdUnityUI/Specify Folder Import(layout only)...")]
+        public static async Task MenuImportSpecifiedFolderLayoutOnly()
+        {
+            var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            var folders = new List<string> {path};
+            await ImportFolders(folders, false, false);
         }
 
         /// <summary>
-        /// メニューから起動し、Importフォルダ内にあるファイルを消去する
+        ///     Project ウィンドウで、ハイライトされているディレクトリを取得する
         /// </summary>
-        [MenuItem("Assets/XdUnityUI/Import(delete import assets)")]
-        public static void MenuImportDeleteAssets()
+        /// <returns></returns>
+        private static IEnumerable<string> ProjectHighlightedFolders()
         {
-            MenuImport(true);
-        }
-        
-        [MenuItem("Assets/XdUnityUI/Import")]
-        public static void MenuImportNoDeleteAssets()
-        {
-            MenuImport(false);
+            var folders = new List<string>();
+
+            foreach (var obj in Selection.GetFiltered(typeof(Object), SelectionMode.Assets))
+            {
+                var path = AssetDatabase.GetAssetPath(obj);
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
+            }
+
+            return folders;
         }
 
-        public static void MenuImport( bool deleteAssetsFlag)
+
+        private static async Task ImportFolders(IEnumerable<string> importFolderPaths, bool convertImageFlag,
+            bool deleteAssetsFlag)
         {
             var importedAssets = new List<string>();
 
-            var importDirectoryPath = EditorUtil.GetImportDirectoryPath();
-            var importDirectoryMark = EditorUtil.GetImportDirectoryMark();
-
-            // ファイルの追加
-            var files = Directory.EnumerateFiles(
-                importDirectoryPath, "*", System.IO.SearchOption.AllDirectories);
-
-            foreach (var file in files)
+            foreach (var importFolderPath in importFolderPaths)
             {
-                if (Path.GetExtension(file) == ".meta" || Path.GetFileName(file) == importDirectoryMark) continue;
-                importedAssets.Add(EditorUtil.ToUnityPath(file));
+                // ディレクトリの追加
+                importedAssets.Add(importFolderPath);
+
+                // ファイルの追加
+                var files = Directory.EnumerateFiles(
+                    importFolderPath, "*", SearchOption.TopDirectoryOnly);
+
+                foreach (var file in files)
+                {
+                    var extension = Path.GetExtension(file).ToLower();
+                    if (extension == ".meta" || !convertImageFlag && extension == ".png") continue;
+                    importedAssets.Add(file);
+                }
             }
 
-            // ディレクトリの追加
-            var dirs = Directory.EnumerateDirectories(
-                importDirectoryPath, "*", SearchOption.AllDirectories);
-
-            foreach (var dir in dirs)
-            {
-                importedAssets.Add(EditorUtil.ToUnityPath(dir));
-            }
-
-            Import(importedAssets, null, deleteAssetsFlag);
+            await Import(importedAssets);
         }
 
-        private static bool IsDirectory(string path)
+        private static bool IsFolder(string path)
         {
             try
             {
@@ -151,64 +161,53 @@ namespace XdUnityUI.Editor
 
 
         /// <summary>
-        /// Assetディレクトリに追加されたファイルを確認、インポート処理を行う
+        ///     Assetディレクトリに追加されたファイルを確認、インポート処理を行う
         /// </summary>
-        /// <param name="importedAssets"></param>
+        /// <param name="importedPaths"></param>
         /// <param name="movedAssets"></param>
         /// <param name="deleteImportEntriesFlag"></param>
-        private static void Import(IReadOnlyCollection<string> importedAssets, IReadOnlyCollection<string> movedAssets,
-            bool deleteImportEntriesFlag = false)
+        private static async Task Import(IReadOnlyCollection<string> importedPaths)
         {
-            var importDirectoryPath = EditorUtil.ToUnityPath(EditorUtil.GetImportDirectoryPath());
-
-            progressTotal = importedAssets.Count;
-            if (movedAssets != null) progressCount += movedAssets.Count;
+            progressTotal = importedPaths.Count;
             if (progressTotal == 0) return;
             progressCount = 0;
 
             var changed = false;
 
             // スプライト出力フォルダの作成
-            foreach (var importedAsset in importedAssets)
+            foreach (var importedPath in importedPaths)
             {
-                // 入力アセットがインポートフォルダ内あるか
-                if (!importedAsset.Contains(importDirectoryPath)) continue;
-                if (!IsDirectory(importedAsset)) continue;
+                if (!IsFolder(importedPath)) continue;
                 // ディレクトリであった場合
-                var exportPath = EditorUtil.GetBaumSpritesFullPath(importedAsset);
-                var importPath = Path.GetFullPath(importedAsset);
-                if (Directory.Exists(exportPath))
+                var spriteOutputPath = EditorUtil.GetBaumSpritesFullPath(importedPath);
+                var importedFullPath = Path.GetFullPath(importedPath);
+                if (Directory.Exists(spriteOutputPath))
                 {
                     // すでにあるフォルダ　インポートファイルと比較して、出力先にある必要のないファイルを削除する
                     // ダブっている分は比較し、異なっている場合に上書きするようにする
-                    var exportInfo = new DirectoryInfo(exportPath);
-                    var importInfo = new DirectoryInfo(importPath);
+                    var outputFolderInfo = new DirectoryInfo(spriteOutputPath);
+                    var importFolderInfo = new DirectoryInfo(importedFullPath);
 
-                    var list1 = exportInfo.GetFiles("*.png", SearchOption.AllDirectories);
-                    var list2 = importInfo.GetFiles("*.png", SearchOption.AllDirectories);
+                    var outputFolderSpriteList = outputFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
+                    var importFolderSpriteList = importFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
 
-                    // exportフォルダにある importにはないファイルをリストアップする
-                    // 注意：
-                    // 　-no-slice -9slice付きのファイルなどは、イメージ名が変更されexportフォルダに入るので
-                    // 　差分としてでる
-                    if (deleteImportEntriesFlag)
+                    // outputフォルダにある importにはないファイルをリストアップする
+                    var deleteEntries = outputFolderSpriteList.Except(importFolderSpriteList, new FileInfoComparer());
+                    // outputフォルダ内
+                    foreach (var fileInfo in deleteEntries)
                     {
-                        var deleteEntries = list1.Except(list2, new FileInfoComparer());
-
-                        foreach (var fileInfo in deleteEntries)
-                        {
-                            var deleteFileName = fileInfo.FullName;
-                            //fileInfo.Delete();
-                            DeleteEntry(fileInfo.FullName);
-                            //File.Delete(deleteFileName + ".meta");
-                            DeleteEntry(deleteFileName + ".meta");
-                            changed = true;
-                        }
+                        var deleteFileName = fileInfo.FullName;
+                        DeleteEntry(fileInfo.FullName);
+                        DeleteEntry(deleteFileName + ".meta");
+                        changed = true;
                     }
                 }
                 else
                 {
-                    CreateSpritesDirectory(importedAsset);
+                    var folderName = Path.GetFileName(Path.GetFileName(importedPath));
+                    var folderPath = EditorUtil.GetOutputSpritesFolderPath();
+                    AssetDatabase.CreateFolder(EditorUtil.ToUnityPath(folderPath),
+                        folderName);
                     changed = true;
                 }
             }
@@ -222,145 +221,108 @@ namespace XdUnityUI.Editor
 
             // フォルダが作成され、そこに画像を出力する場合
             // Refresh後、DelayCallで画像生成することで、処理が安定した
-            EditorApplication.delayCall += () =>
+            await Task.Delay(1000);
+
+            // SpriteイメージのハッシュMapをクリアしたかどうかのフラグ
+            // importedAssetsに一気に全部の新規ファイルが入ってくる前提の処理
+            // 全スライス処理が走る前、最初にClearImageMapをする
+            var clearedImageMap = false;
+            // 画像コンバート　スライス処理
+            var messageCounter = new Dictionary<string, int>();
+            var total = 0;
+            foreach (var importedAsset in importedPaths)
             {
-                // SpriteイメージのハッシュMapをクリアしたかどうかのフラグ
-                // importedAssetsに一気に全部の新規ファイルが入ってくる前提の処理
-                // 全スライス処理が走る前、最初にClearImageMapをする
-                var clearedImageMap = false;
-                // 画像コンバート　スライス処理
-                var messageCounter = new Dictionary<string, int>();
-                var total = 0;
-                foreach (var importedAsset in importedAssets)
+                if (!importedAsset.EndsWith(".png", StringComparison.Ordinal)) continue;
+                //
+                if (!clearedImageMap)
                 {
-                    if (!importedAsset.Contains(importDirectoryPath)) continue;
-                    if (!importedAsset.EndsWith(".png", System.StringComparison.Ordinal)) continue;
-                    //
-                    if (!clearedImageMap)
-                    {
-                        TextureUtil.ClearImageMap();
-                        clearedImageMap = true;
-                    }
-
-                    // スライス処理
-                    var message = TextureUtil.SliceSprite(importedAsset);
-                    changed = true;
-                    
-                    // 元画像を削除する
-                    if (deleteImportEntriesFlag)
-                    {
-                        File.Delete(Path.GetFullPath(importedAsset));
-                        File.Delete(Path.GetFullPath(importedAsset) + ".meta");
-                        // AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
-                    }
-
-                    total++;
-                    progressCount += 1;
-                    UpdateDisplayProgressBar(message);
-
-                    // 出力されたログをカウントする
-                    if (messageCounter.ContainsKey(message))
-                    {
-                        messageCounter[message] = messageCounter[message] + 1;
-                    }
-                    else
-                    {
-                        messageCounter.Add(message, 1);
-                    }
+                    TextureUtil.ClearImageMap();
+                    clearedImageMap = true;
                 }
 
-                foreach (var keyValuePair in messageCounter)
+                // スライス処理
+                var message = TextureUtil.SliceSprite(importedAsset);
+                changed = true;
+
+                total++;
+                progressCount += 1;
+                UpdateDisplayProgressBar(message);
+
+                // 出力されたログをカウントする
+                if (messageCounter.ContainsKey(message))
+                    messageCounter[message] = messageCounter[message] + 1;
+                else
+                    messageCounter.Add(message, 1);
+            }
+
+            foreach (var keyValuePair in messageCounter)
+                Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
+
+            if (changed)
+            {
+                AssetDatabase.Refresh();
+                changed = false;
+            }
+
+            await Task.Delay(1000);
+
+            // Create Prefab
+            foreach (var assetPath in importedPaths)
+            {
+                UpdateDisplayProgressBar("layout");
+                progressCount += 1;
+                if (!assetPath.EndsWith(".layout.json", StringComparison.Ordinal)) continue;
+
+                var folderName = Path.GetFileName(assetPath).Replace(".layout.json", "");
+                var spriteRootPath =
+                    EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), folderName));
+                var fontRootPath = EditorUtil.ToUnityPath(EditorUtil.GetFontsPath());
+                var creator = new PrefabCreator(spriteRootPath, fontRootPath, assetPath);
+                var go = creator.Create();
+                var savePath =
+                    EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputPrefabsFolderPath(),
+                        folderName + ".prefab"));
+                try
                 {
-                    Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
-                }
-
-                if (changed)
-                {
-                    AssetDatabase.Refresh();
-                    changed = false;
-                }
-
-                EditorApplication.delayCall += () =>
-                {
-                    // import ディレクトリ削除
-                    foreach (var asset in importedAssets)
-                    {
-                        if (!asset.Contains(importDirectoryPath)) continue;
-                        if (!IsDirectory(asset)) continue;
-                        var fullPath = Path.GetFullPath(asset);
-                        // ディレクトリが空っぽかどうか調べる　コンバート用PNGファイルがはいっていた場合、
-                        // 変換後削除されるため、すべて変換された場合、空になる
-                        if (Directory.EnumerateFileSystemEntries(fullPath).Any()) continue;
-                        // 空であれば削除
-                        // Debug.LogFormat("[XdUnityUI] Delete Directory: {0}", EditorUtil.ToUnityPath(asset));
-                        AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
-                    }
-
-                    // Create Prefab
-                    foreach (var asset in importedAssets)
-                    {
-                        UpdateDisplayProgressBar("layout");
-                        progressCount += 1;
-                        if (!asset.Contains(importDirectoryPath)) continue;
-                        if (!asset.EndsWith(".layout.json", System.StringComparison.Ordinal)) continue;
-
-                        var name = Path.GetFileName(asset).Replace(".layout.json", "");
-                        var spriteRootPath =
-                            EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputSpritesPath(), name));
-                        var fontRootPath = EditorUtil.ToUnityPath(EditorUtil.GetFontsPath());
-                        var creator = new PrefabCreator(spriteRootPath, fontRootPath, asset);
-                        var go = creator.Create();
-                        var savePath =
-                            EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputPrefabsPath(), name + ".prefab"));
-                        try
-                        {
 #if UNITY_2018_3_OR_NEWER
-                            var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, savePath);
-                            Debug.Log("[XdUnityUI] Created prefab: " + savePath, savedAsset);
+                    var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, savePath);
+                    Debug.Log("[XdUnityUI] Created prefab: " + savePath, savedAsset);
 #else
                             Object originalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(savePath);
                             if (originalPrefab == null) originalPrefab = PrefabUtility.CreateEmptyPrefab(savePath);
                             PrefabUtility.ReplacePrefab(go, originalPrefab, ReplacePrefabOptions.ReplaceNameBased);
 #endif
-                        }
-                        catch
-                        {
-                            // 変換中例外が起きた場合もテンポラリGameObjectを削除する
-                            Object.DestroyImmediate(go);
-                            EditorUtility.ClearProgressBar();
-                            throw;
-                        }
-
-                        // 作成に成功した
-                        Object.DestroyImmediate(go);
-                        if (deleteImportEntriesFlag)
-                        {
-                            // layout.jsonを削除する
-                            AssetDatabase.DeleteAsset(EditorUtil.ToUnityPath(asset));
-                        }
-                    }
+                }
+                catch
+                {
+                    // 変換中例外が起きた場合もテンポラリGameObjectを削除する
+                    Object.DestroyImmediate(go);
                     EditorUtility.ClearProgressBar();
-                };
-            };
+                    throw;
+                }
+
+                // 作成に成功した
+                Object.DestroyImmediate(go);
+            }
+
+            EditorUtility.ClearProgressBar();
         }
 
-        private static void CreateSpritesDirectory(string asset)
+        private static void CreateSpritesFolder(string asset)
         {
             var directoryName = Path.GetFileName(Path.GetFileName(asset));
-            var directoryPath = EditorUtil.GetOutputSpritesPath();
+            var directoryPath = EditorUtil.GetOutputSpritesFolderPath();
             var directoryFullPath = Path.Combine(directoryPath, directoryName);
             if (Directory.Exists(directoryFullPath))
-            {
                 // 画像出力用フォルダに画像がのこっていればすべて削除
                 // Debug.LogFormat("[XdUnityUI] Delete Exist Sprites: {0}", EditorUtil.ToUnityPath(directoryFullPath));
-                foreach (var filePath in Directory.GetFiles(directoryFullPath, "*.png", SearchOption.TopDirectoryOnly))
+                foreach (var filePath in Directory.GetFiles(directoryFullPath, "*.png",
+                    SearchOption.TopDirectoryOnly))
                     File.Delete(filePath);
-            }
             else
-            {
                 // Debug.LogFormat("[XdUnityUI] Create Directory: {0}", EditorUtil.ToUnityPath(directoryPath) + "/" + directoryName);
-                AssetDatabase.CreateFolder(EditorUtil.ToUnityPath(directoryPath), Path.GetFileName(directoryFullPath));
-            }
+                AssetDatabase.CreateFolder(EditorUtil.ToUnityPath(directoryPath),
+                    Path.GetFileName(directoryFullPath));
         }
 
         /**
@@ -368,10 +330,10 @@ namespace XdUnityUI.Editor
         */
         private static string ImportSpritePathToOutputPath(string asset)
         {
-            var directoryName = Path.GetFileName(Path.GetDirectoryName(asset));
-            var directoryPath = Path.Combine(EditorUtil.GetOutputSpritesPath(), directoryName);
+            var folderName = Path.GetFileName(Path.GetDirectoryName(asset));
+            var folderPath = Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), folderName);
             var fileName = Path.GetFileName(asset);
-            return Path.Combine(directoryPath, fileName);
+            return Path.Combine(folderPath, fileName);
         }
 
 #if UNITY_2019_1_OR_NEWER
@@ -380,7 +342,7 @@ namespace XdUnityUI.Editor
             var filename = Path.Combine(EditorUtil.GetBaumAtlasPath(), name + ".spriteatlas");
 
             var atlas = new SpriteAtlas();
-            var settings = new SpriteAtlasPackingSettings()
+            var settings = new SpriteAtlasPackingSettings
             {
                 padding = 8,
                 enableTightPacking = false
@@ -412,5 +374,21 @@ namespace XdUnityUI.Editor
             // atlas.Add(new Object[]{iconsDirectory});
         }
 #endif
+
+        private class FileInfoComparer : IEqualityComparer<FileInfo>
+        {
+            public bool Equals(FileInfo iLhs, FileInfo iRhs)
+            {
+                if (iLhs.Name == iRhs.Name) return true;
+
+                return false;
+            }
+
+            public int GetHashCode(FileInfo fi)
+            {
+                var s = fi.Name;
+                return s.GetHashCode();
+            }
+        }
     }
 }

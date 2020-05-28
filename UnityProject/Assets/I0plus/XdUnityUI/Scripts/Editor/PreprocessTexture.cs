@@ -27,7 +27,7 @@ namespace XdUnityUI.Editor
                 importer.textureType = TextureImporterType.Sprite;
                 importer.isReadable = true;
             }
-            else if (assetPath.Contains(EditorUtil.ToUnityPath(EditorUtil.GetOutputSpritesPath())))
+            else if (assetPath.Contains(EditorUtil.ToUnityPath(EditorUtil.GetOutputSpritesFolderPath())))
             {
                 var fileName = Path.GetFileName(assetPath);
                 if (SlicedTextures == null || !SlicedTextures.ContainsKey(fileName)) return;

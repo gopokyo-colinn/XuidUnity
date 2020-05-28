@@ -21,6 +21,12 @@ namespace XdUnityUI.Editor
         private readonly string fontRootPath;
         private readonly string assetPath;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="spriteRootPath"></param>
+        /// <param name="fontRootPath"></param>
+        /// <param name="assetPath">フルパスでの指定 Unity Assetフォルダ外もよみこめる</param>
         public PrefabCreator(string spriteRootPath, string fontRootPath, string assetPath)
         {
             this.spriteRootPath = spriteRootPath;
@@ -35,7 +41,7 @@ namespace XdUnityUI.Editor
                 EditorApplication.isPlaying = false;
             }
 
-            var text = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath).text;
+            var text = System.IO.File.ReadAllText(assetPath);
             var json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
             var info = json.GetDic("info");
             Validation(info);

@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "host": {
     "app": "XD",
-    "minVersion": "21.0"
+    "minVersion": "29.0"
   },
   "icons": [
     {
@@ -24,21 +24,6 @@
       "type": "menu",
       "label": "Make 9slice. select image with name parameter '{image-slice: TOP RIGHT BOTTOM LEFT}'",
       "commandId": "pluginMake9Slice"
-    },
-    {
-      "type": "menu",
-      "label": "Re-slice. Select sliced groups",
-      "commandId": "pluginScaleAdjust"
-    },
-    {
-      "type": "menu",
-      "label": "Rendition children",
-      "commandId": "pluginRenditionChildren"
-    },
-    {
-      "type": "menu",
-      "label": "Reisize artboard",
-      "commandId": "resizeArtboard"
     }
   ]
 }

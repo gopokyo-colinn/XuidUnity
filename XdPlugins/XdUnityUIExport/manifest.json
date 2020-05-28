@@ -4,7 +4,7 @@
   "version": "0.9.0",
   "host": {
     "app": "XD",
-    "minVersion": "21.0"
+    "minVersion": "29.0"
   },
   "description": "Convert AdobeXD artboards to Unity UI Prefabs.",
   "summary": "XdUnityUI export",

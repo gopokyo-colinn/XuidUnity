@@ -38,10 +38,11 @@
  リピードグリッドの孫は、自動的に作成される子のサイズに追従する
  */
 [typeof="RepeatGrid"] > * > * {
-  /* margin-fix: l r t b*/
   match-log: "RepeadGrid child-child";
-  rect-transform-x: 0 0 0 1;
-  rect-transform-y: 0 0 0 1;
+  /*
+  rect-transform-anchor-offset-x: 0 1 0 0;
+  rect-transform-anchor-offset-y: 0 1 0 0;
+   */
 }
 
 /*
@@ -59,8 +60,8 @@
  */
 .layout-y {
   layout-group: y;
-  layout-group-control-child-size: width height;
-  layout-group-child-force-expand: width;
+  /*layout-group-control-child-size: width height;
+  layout-group-child-force-expand: width;*/
   content-size-fitter-vertical-fit: preferred-size;
 }
 
@@ -138,7 +139,7 @@
 
 .viewport-layout-x > .content {
   conent-size-fitter: x;
-  rect-transform-y: 0 0 0 1;
+  rect-transform-anchor-offset-y: 0 1 0 0;
 }
 
 .viewport-layout-y > .content {
@@ -149,15 +150,15 @@
    offset.min.x: 0
    offset.max.x: 0
    */
-  rect-transform-x: 0 0 0 1;
+  rect-transform-anchor-offset-x: 0 1 0 0;
 }
 
 .viewport-grid-x > .content {
-  rect-transform-x: 0 0 0 1;
+  rect-transform-anchor-offset-x: 0 1 0 0;
 }
 
 .viewport-grid-y > .content {
-  rect-transform-y: 0 0 0 1;
+  rect-transform-anchor-offset-y: 0 1 0 0;
 }
 
 .scrollbar-x {
@@ -187,12 +188,12 @@
   slider-handle-rect-name: ".handle";
 }
 
-.slider-x > .fill {
-  wrap: true
+.slider-x .fill {
+  wrap: true;
 }
 
-.slider-x > .handle {
-  wrap-slider-handle-x:true
+.slider-x .handle {
+  wrap-slider-handle-x:true;
 }
 
 .slider-y {
