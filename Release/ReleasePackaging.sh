@@ -1,14 +1,6 @@
 #!/bin/sh
 # FOR PACKAGING
 
-# Samples.xdの同期をする
-echo "----- sync samples.xd -----"
-SAMPLE1=./UnityProject/Assets/I0plus/XdUnityUI-ForAdobeXD/Samples/
-SAMPLE2=./XdPlugins/Samples/
-rsync --update -r --exclude=*.meta ${SAMPLE1} ${SAMPLE2}
-rsync --update -r --exclude=*.meta ${SAMPLE2} ${SAMPLE1}
-echo "done.\n"
-
 # 以下の動作はSyncToolで行うこと
 # AdobeXD developフォルダにあるプラグインソースをリポジトリに同期
 #echo "----- sync AdobeXD develop plugin folder. -----"
@@ -18,13 +10,6 @@ echo "done.\n"
 
 # リポジトリ内から AdobeXDプラグインファイルを作成する
 echo "----- make AdobeXD plugin .xdx file. -----"
-(cd ./XdPlugins && zip -q -r XdUnityUIExport.xdx XdUnityUIExport -x \*/_SYNCAPP/*)
-(cd ./XdPlugins && zip -q -r 9SliceHelper.xdx 9SliceHelper -x \*/_SYNCAPP/*)
+(cd ../Develop && zip -q -r ../Release/XdUnityUIExport.xdx ./XdUnityUIExport -x \*/types/*)
+(cd ../Develop && zip -q -r ../Release/9SliceHelper.xdx ./9SliceHelper -x \*/types/*)
 echo "done.\n"
-
-# AdobeXDプラグインをUnityプロジェクト内にコピーする
-echo "----- copy .xdx file to Unity Assets. -----"
-cp ./XdPlugins/XdUnityUIExport.xdx ./UnityProject/Assets/I0plus/XdUnityUI-ForAdobeXD/XdUnityUIExport.xdx
-cp ./XdPlugins/9SliceHelper.xdx ./UnityProject/Assets/I0plus/XdUnityUI-ForAdobeXD/9SliceHelper.xdx
-echo "done.\n"
-
