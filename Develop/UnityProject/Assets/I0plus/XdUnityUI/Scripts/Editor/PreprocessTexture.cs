@@ -18,6 +18,7 @@ namespace XdUnityUI.Editor
 
         public void OnPreprocessTexture()
         {
+            /*
             var importDirectoryPath = EditorUtil.GetImportDirectoryPath();
             if (assetPath.Contains(importDirectoryPath))
             {
@@ -27,7 +28,9 @@ namespace XdUnityUI.Editor
                 importer.textureType = TextureImporterType.Sprite;
                 importer.isReadable = true;
             }
-            else if (assetPath.Contains(EditorUtil.ToUnityPath(EditorUtil.GetOutputSpritesFolderPath())))
+            else 
+            */
+            if (assetPath.Contains(EditorUtil.ToUnityPath(EditorUtil.GetOutputSpritesFolderPath())))
             {
                 var fileName = Path.GetFileName(assetPath);
                 if (SlicedTextures == null || !SlicedTextures.ContainsKey(fileName)) return;
