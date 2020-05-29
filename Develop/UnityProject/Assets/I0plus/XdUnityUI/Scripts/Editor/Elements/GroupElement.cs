@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -20,6 +21,7 @@ namespace XdUnityUI.Editor
         protected readonly string FillColorJson;
         protected readonly Dictionary<string, object> LayoutJson;
         protected readonly Dictionary<string, object> MaskJson;
+        protected readonly Dictionary<string, object> ScrollRectJson;
         protected Dictionary<string, object> AddComponentJson;
         protected bool? RectMask2D;
 
@@ -41,6 +43,7 @@ namespace XdUnityUI.Editor
             ContentSizeFitterJson = json.GetDic("content_size_fitter");
             MaskJson = json.GetDic("mask");
             RectMask2D = json.GetBool("rect_mask_2d");
+            ScrollRectJson = json.GetDic("scroll_rect");
             FillColorJson = json.Get("fill_color");
             AddComponentJson = json.GetDic("add_component");
             ComponentsJson = json.Get<List<object>>("components");
@@ -65,12 +68,47 @@ namespace XdUnityUI.Editor
             ElementUtil.SetupLayoutElement(go, LayoutElementJson);
             ElementUtil.SetupComponents(go, ComponentsJson);
             ElementUtil.SetupMask(go, MaskJson);
-
+            ElementUtil.SetupRectMask2D(go, RectMask2D);
+            // ScrollRectを設定した時点ではみでたContentがアジャストされる　PivotがViewport内に入っていればOK
+            ElementUtil.SetupScrollRect(go, RenderedChildren[0].Item1, ScrollRectJson);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
         }
-
+        
+        public override void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
+        {
+            var self = selfAndSiblings.Find(tuple => tuple.Item2 == this);
+            var scrollRect = self.Item1.GetComponent<ScrollRect>();
+            if (scrollRect)
+            {
+                // scrollRectをもっているなら、ScrollBarを探してみる
+                var scrollbars = selfAndSiblings
+                    .Where(goElem => goElem.Item2 is ScrollbarElement) // 兄弟の中からScrollbarを探す
+                    .Select(goElem => goElem.Item1.GetComponent<Scrollbar>()) // ScrollbarコンポーネントをSelect
+                    .ToList();
+                scrollbars.ForEach(scrollbar =>
+                {
+                    switch (scrollbar.direction)
+                    {
+                        case Scrollbar.Direction.LeftToRight:
+                            scrollRect.horizontalScrollbar = scrollbar;
+                            break;
+                        case Scrollbar.Direction.RightToLeft:
+                            scrollRect.horizontalScrollbar = scrollbar;
+                            break;
+                        case Scrollbar.Direction.BottomToTop:
+                            scrollRect.verticalScrollbar = scrollbar;
+                            break;
+                        case Scrollbar.Direction.TopToBottom:
+                            scrollRect.verticalScrollbar = scrollbar;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                });
+            }
+        }
 
         protected virtual GameObject CreateSelf(RenderContext renderContext)
         {

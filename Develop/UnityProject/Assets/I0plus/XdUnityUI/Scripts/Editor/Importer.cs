@@ -149,6 +149,7 @@ namespace XdUnityUI.Editor
             catch (Exception exception)
             {
                 // ignored
+                Debug.LogError(exception.Message);
             }
 
             return false;
@@ -288,9 +289,9 @@ namespace XdUnityUI.Editor
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, savePath);
                     Debug.Log("[XdUnityUI] Created prefab: " + savePath, savedAsset);
 #else
-                            Object originalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(savePath);
-                            if (originalPrefab == null) originalPrefab = PrefabUtility.CreateEmptyPrefab(savePath);
-                            PrefabUtility.ReplacePrefab(go, originalPrefab, ReplacePrefabOptions.ReplaceNameBased);
+                    Object originalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(savePath);
+                    if (originalPrefab == null) originalPrefab = PrefabUtility.CreateEmptyPrefab(savePath);
+                    PrefabUtility.ReplacePrefab(go, originalPrefab, ReplacePrefabOptions.ReplaceNameBased);
 #endif
                 }
                 catch

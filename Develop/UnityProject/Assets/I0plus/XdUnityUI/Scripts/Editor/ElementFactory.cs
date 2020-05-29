@@ -23,14 +23,11 @@ namespace XdUnityUI.Editor
                 {"Slider", (d, p) => new SliderElement(d, p)},
                 {"Scrollbar", (d, p) => new ScrollbarElement(d, p)},
                 {"Toggle", (d, p) => new ToggleElement(d, p)},
-#if ENHANCEDSCROLLER_PRESENT
-                {"List", (d, p) => new EnhancedScrollerElement(d, p)},
-#endif
                 {"Input", (d, p) => new InputElement(d, p)},
 #if TMP_PRESENT
                 {"TextMeshPro", (d, p) => new TextMeshProElement(d, p)},
 #endif
-                {"Viewport", (d, p) => new ViewportElement(d, p)},
+                // {"Viewport", (d, p) => new ViewportElement(d, p)}, // GroupElementに統合した
                 {"Rect", (d, p) => new RectElement(d, p)}
             };
 

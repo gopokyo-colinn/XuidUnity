@@ -8,6 +8,8 @@ namespace XdUnityUI.Editor
 {
     /// <summary>
     /// ViewportElement class.
+    /// GroupElementに統合した
+    /// 削除予定
     /// </summary>
     public sealed class ViewportElement : GroupElement
     {
