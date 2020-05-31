@@ -12,37 +12,15 @@
 /*
  idについてのルールは極力つけず、classにつけるようにするのが良いのではないだろうか
  */
-
 * {
   layer: UI;
 }
 
-
-/*
- BooleanGroupはImage化する
- */
-[typeof="BooleanGroup"] {
-  image: true;
-}
-
-
 /*
  リピードグリッドの子は、Layout-elementを持つ
  */
-[typeof="RepeatGrid"] > * {
+[typeof="RepeatGrid"] * {
   unity-name: "rg-child(${childIndex})";
-  layout-element: preferred;
-}
-
-/*
- リピードグリッドの孫は、自動的に作成される子のサイズに追従する
- */
-[typeof="RepeatGrid"] > * > * {
-  match-log: "RepeadGrid child-child";
-  /*
-  rect-transform-anchor-offset-x: 0 1 0 0;
-  rect-transform-anchor-offset-y: 0 1 0 0;
-   */
 }
 
 /*
@@ -50,8 +28,8 @@
  */
 .layout-x {
   layout-group: x;
-  layout-group-control-child-size: width height;
-  layout-group-child-force-expand: width;
+  /*layout-group-control-child-size: width height;
+  layout-group-child-force-expand: width;*/
   content-size-fitter-horizontal-fit: preferred-size;
 }
 
@@ -137,12 +115,12 @@
   scroll-rect-vertical-scrollbar-name: ".scrollbar-y";
 }
 
-.viewport-layout-x > .content {
+.viewport-layout-x .content {
   conent-size-fitter: x;
   rect-transform-anchor-offset-y: 0 1 0 0;
 }
 
-.viewport-layout-y > .content {
+.viewport-layout-y .content {
   /*
    親と横幅がぴったり重なる
    anchor.min.x: 0
@@ -153,11 +131,11 @@
   rect-transform-anchor-offset-x: 0 1 0 0;
 }
 
-.viewport-grid-x > .content {
+.viewport-grid-x .content {
   rect-transform-anchor-offset-x: 0 1 0 0;
 }
 
-.viewport-grid-y > .content {
+.viewport-grid-y .content {
   rect-transform-anchor-offset-y: 0 1 0 0;
 }
 
@@ -168,7 +146,7 @@
 }
 
 .scrollbar-x > .handle {
-  margin-fix: l r t b;
+  fix: l r t b;
 }
 
 .scrollbar-y {
@@ -178,7 +156,7 @@
 }
 
 .scrollbar-y > .handle {
-  margin-fix: l r t b;
+  fix: l r t b;
 }
 
 .slider-x {
@@ -270,7 +248,6 @@
 .no-slice {
   image-slice: false;
 }
-
 
 .input, [tag-name$="input"], [tag-name$="-input"], [class$="-input"], [tag-name$="_input"], [class$="_input"] {
   input: true;

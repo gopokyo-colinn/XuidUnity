@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace XdUnityUI.Editor
 {
     /// <summary>
-    /// ElementFactory class.
-    /// based on Baum2.Editor.ElementFactory class.
+    ///     ElementFactory class.
+    ///     based on Baum2.Editor.ElementFactory class.
     /// </summary>
     public static class ElementFactory
     {
         private static readonly Dictionary<string, Func<Dictionary<string, object>, Element, Element>> Generator =
-            new Dictionary<string, Func<Dictionary<string, object>, Element, Element>>()
+            new Dictionary<string, Func<Dictionary<string, object>, Element, Element>>
             {
                 {"Root", (d, p) => new RootElement(d, p)},
                 {"Image", (d, p) => new ImageElement(d, p)},

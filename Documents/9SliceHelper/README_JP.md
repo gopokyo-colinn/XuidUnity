@@ -1,11 +1,11 @@
 # XdUnityUI 9Slice Helper
 
-![9SliceHelperIntroduction](https://user-images.githubusercontent.com/20549024/77395519-1b3ad400-6de5-11ea-8b61-89b107d48ea2.gif)
+![9SliceHelperIntroduction](https://user-images.githubusercontent.com/20549024/83342257-33205e00-a328-11ea-8cca-e78a2a33ca4c.gif)
+
 
 ## 概要
 
-ゲームでよくつかわれる、画像の9SliceをAdobeXDで(なんとか)できるようにしてみました。
-手動での設定がまだ必要です。AdobeXD プラグインAPIで操作できるようになりましたら対応します。
+9SliceをAdobeXD Pluginで(できるだけ)実現します。
 
 ### 参考
 
@@ -14,12 +14,11 @@
 
 ## 仕組み
 
-- プラグインがやること
+- プラグインでの処理
     1. 元画像を9個コピー。
-    2. スライス領域にあわせたマスクを作成する。
-    3. マスクグループを9個作成。
-- 手動で作業
-    1. 「レスポンシブサイズ変更」パラメータの変更。
+    1. スライス領域にあわせたマスクを作成。
+    1. マスクグループを9個作成。
+    1. レスポンシブリサイズパラメータの変更。
 
 ## プラグインのインストール
 
@@ -29,15 +28,15 @@
 
 ## 実行方法
 
-1. 9Slice可能な画像をAdobeXDにインポート
+1. 9Slice可能な画像をAdobeXDにインポート。
 1. インポートした画像のレイヤー名に、スライスピクセルを入力する。
     - 例: 上 20ピクセル、右 30ピクセル、下 10ピクセル、左 40ピクセル
         - ``` layer-name {image-slice: 20px 30px 10px 40px} ```
     - 例: 上右下左、同じピクセル数
         - ```layer-name {image-slice: 100px}```
-1. 画像を選択した状態で プラグインメニューより、9SliceHelper > Make 9Slice を実行。
-1. できたグループの「レスポンシブサイズ変更」パラメータを以下のように変更する。
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/350704/54037def-c3ed-eb7e-257a-e1a49ee47a44.png)
+1. 画像を選択した状態で プラグインメニューより、9SliceHelpeをクリック。
+1. 作成されたグループのレスポンシブリサイズは以下のように自動設定されます。
+    - ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/350704/54037def-c3ed-eb7e-257a-e1a49ee47a44.png)
 
 ## 関連
 - XdUnityUI

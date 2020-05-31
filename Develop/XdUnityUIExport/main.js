@@ -1512,7 +1512,7 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   if (styleFix != null) {
     // オプションが設定されたら、全ての設定が決まる(NULLではなくなる)
     const fix = getStyleFix(styleFix)
-    console.log(node.name, 'のfixが設定されました', fix)
+    // console.log(node.name, 'のfixが設定されました', fix)
     styleFixWidth = fix.width
     styleFixHeight = fix.height
     styleFixTop = fix.top
@@ -2207,7 +2207,7 @@ function getNodeNameAndStyle(node) {
     name: nodeName, // 削除予定
     style,
   }
-  // ここでキャッシュに書き込むことで、飛び出しループになることを防ぐ
+  // ここでキャッシュに書き込むことで、呼び出しループになることを防ぐ
   // 注意する箇所
   // 上： getStyleFromNodeName(nodeName, parentNode, cssRules, ...) で親への参照
   // 下： node.children.some(child => { const childStyle = getNodeNameAndStyle(child).style　で、子供への参照
@@ -2231,15 +2231,6 @@ function getNodeNameAndStyle(node) {
     //     - item_text
     // 以上のような構成になる
     nodeName = 'repeatgrid-child'
-    /*
-    const styleRepeatgridChildName = style.first(STYLE_REPEATGRID_CHILD_NAME)
-    if (styleRepeatgridChildName) {
-      nodeName = styleRepeatgridChildName
-    }
-    // 自身のChildインデックスを名前に利用する
-    const childIndex = getChildIndex(node)
-    nodeName = nodeName.replace(/\${childIndex}/, childIndex.toString())
-     */
 
     value['node_name'] = nodeName
     value['name'] = nodeName
@@ -2361,7 +2352,7 @@ function addRectTransformAnchorOffset(json, style) {
   // Styleで指定があった場合、上書きする
   const anchorOffsetX = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X)
   if (anchorOffsetX) {
-    console.log(`anchorsX:${anchorOffsetX}`)
+    // console.log(`anchorsX:${anchorOffsetX}`)
     rectTransformJson['anchor_min']['x'] = parseFloat(anchorOffsetX[0])
     rectTransformJson['anchor_max']['x'] = parseFloat(anchorOffsetX[1])
     rectTransformJson['offset_min']['x'] = parseFloat(anchorOffsetX[2])
@@ -2369,7 +2360,7 @@ function addRectTransformAnchorOffset(json, style) {
   }
   const anchorOffsetY = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y)
   if (anchorOffsetY) {
-    console.log(`anchorsY:${anchorOffsetY}`)
+    // console.log(`anchorsY:${anchorOffsetY}`)
     rectTransformJson['anchor_min']['y'] = parseFloat(anchorOffsetY[0])
     rectTransformJson['anchor_max']['y'] = parseFloat(anchorOffsetY[1])
     rectTransformJson['offset_min']['y'] = parseFloat(anchorOffsetY[2])
@@ -2672,9 +2663,7 @@ async function addImage(
     node.rotation === 0
   ) {
     // 回転している場合はできない
-    console.log(
-      '9スライス以下の画像を出力するのに、ソース画像と同サイズが渡すことができるか調べる',
-    )
+    // console.log('9スライス以下の画像を出力するのに、ソース画像と同サイズが渡すことができるか調べる')
     /**
      * @type {Group}
      */
@@ -3112,10 +3101,7 @@ async function createContent(style, json, node, funcForEachChild, root) {
     },
   })
 
-  console.log('content:')
   addRectTransformAnchorOffset(contentJson, contentStyle) // anchor設定を上書きする
-  console.log('content:', contentJson)
-
   addContentSizeFitter(contentJson, contentStyle)
   addLayer(contentJson, contentStyle)
 }
@@ -3139,7 +3125,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
 
   Object.assign(json, {
-    type: 'Viewport',
+    type: 'Group',
     name: getUnityName(node),
     fill_color: '#ffffff00', // タッチイベント取得Imageになる
   })
@@ -3159,6 +3145,13 @@ async function createViewport(json, node, root, funcForEachChild) {
   addContentSizeFitter(json, style)
   addScrollRect(json, style)
   addRectMask2d(json, style)
+
+  if (json['content']) {
+    json['content']['type'] = 'Group'
+    json['content']['elements'] = json['elements']
+    json['elements'] = [json['content']]
+    delete json['content']
+  }
 }
 
 /**
