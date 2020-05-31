@@ -15,7 +15,7 @@
 
 - To download and install
   1. https://github.com/itouh2-i0plus/XdUnityUI/releases
-  Click on "▶Assets" of the latest version to download XdUnityUI.unitypackage.
+  1. click "▶Assets" of the latest version to download XdUnityUI.unitypackage.
   1. import the XdUnityUI.unitypackage into Unity.
   The /Assets/I0plus/XdUnityUI folder will be created.
   1. install the AdobeXD plugin
@@ -38,27 +38,25 @@
 2. AdobeXD export
     1. click on the artboard name and select the artboard.
     1. click on "XdUnityUI export plugin" in the plugin menu.
-    1 "Folder" is the destination of the output folder.
-        - (installation folder)/UnityProject/I0plus/XdUnityUI/Import folder.
-    Click the "Export" button to start outputting. 
-        - Please refer to this article "When a problem occurs" for more information on cases where the output stops due to an error.
+    1. "Folder" is the destination of the output folder.
+    1. click on "Export" to start outputting. 
 
 <img src="https://user-images.githubusercontent.com/20549024/76756957-0bf6cd80-67ca-11ea-9504-7ef273613a36.gif" width="640" />
 
-3. unity conversion
-    - Go to Unity Menu > Assets > XdUnityUI > Import and the conversion will start.
+3. Unity conversion
+    - Unity Menu > Assets > XdUnityUI > Specify Folder Import
+    - Specifies the same folder as the export.
     - The created Prefab will be placed in Assets/I0plus/CreatedPrefabs.
     - The created UI images are placed in Assets/I0plus/CreatedSprites.
       - UI images are sliced.
 
 <img src="https://user-images.githubusercontent.com/20549024/76759838-d3f28900-67cf-11ea-9721-31c221cfe63a.gif" width="640" />
 
-Place the Prefab under the Canvas.
+1. place the Prefab under the Canvas.
 
 <img src="https://user-images.githubusercontent.com/20549024/76759902-f5ec0b80-67cf-11ea-9dd5-5ca556222c40.gif" width="640" />
 
-
-## Sample.
+## Samples
 
 ### Dots Scrollbar/ Horizontal layout scroll
 
@@ -109,6 +107,10 @@ Place the Prefab under the Canvas.
 | <img src="https://user-images.githubusercontent.com/20549024/76143702-f7754f80-60bc-11ea-8c02-9cf9b46b77f2.PNG" width="300" height="auto"/> | <img src="https://user-images.githubusercontent.com/20549024/76143629-5dada280-60bc-11ea-80d5-541f8d97317a.gif" width="500" height="auto"/> | <img src="https://user-images.githubusercontent.com/20549024/76143702-f7754f80-60bc-11ea-8c02-9cf9b46b77f2.PNG" width="500" height="auto"/>
 
 ## ChangeLog
+
+### [v0.9] - 2020-05-31
+- XD,Unity: Responsive resizing information is now more accurate. 
+- Unity: Import by specifying a folder.
 
 ### [v0.8] - 2020-03-16
 - XD: Fixed to output a selection.
@@ -257,32 +259,17 @@ Place the Prefab under the Canvas.
 #### Exporting images fails.
 
 - cause
-  - It may be an issue on Adobe XD. It is under investigation.
-- countermeasure
-  Select a layer and operate the image output.
-  If you select the XdUnityUI/Import folder as the output destination, make sure that the output is disabled.
-  1. change the folder and output images.
-  Output to the Import folder again.
-  1. if the above is successful, the output from the plugin will also be successful.
+  - It may be a problem on Adobe XD. It is under investigation.
 
 ### Unity conversion running.
 
-#### No conversion process is performed.
-
-- cause
-  - This is because Unity cannot detect file updates when overwriting a file after a failure.
-
-- countermeasure
-  - Delete all files in XdUnityUI/Import except for the "Lu_XdUnityUIImport""Lu_XdUnityUIImport "Lu_XdUnityUIImport.meta file.
-  - Export again.
-
-#### Conversion fails when attempting to handle characters (Text, TextMeshPro).
+#### Converting fails when trying to handle characters.
 
 - cause
   - There may be no font.
 - countermeasure
   - It will output the name of the font file you tried to find in the Console but couldn't find.
-  - Rename the font file, if possible, and copy it to the XdUnityUI/Fonts directory (the directory where the {\FONT}_XdUnityUIFonts file is located).
+  - Rename the font file, if possible, and copy it to the XdUnityUI/Fonts directory (the directory where the "So_XdUnityUIFonts file is located).
 
 #### TextMeshPro error is printed.
 
@@ -290,25 +277,12 @@ Place the Prefab under the Canvas.
   - Scripting Define Symbols does not have TMP_PRESENT.
 
 - countermeasure
+  - Install the TextMeshPro package.
   - Add TMP_PRESENT to Project Settings > Player > Scripting Define Symbols.
-     - I heard that TMP_PRESENT may not be appended after installing the TextMeshPro package. (v3.0? unconfirmed)
-
+     
 ### Conversion Results
 
-#### Responsive parameters are not converted correctly.
-
-- Cause 1
-  - The "Change Responsive Size" setting on the artboard is not turned on.
-- Measure 1.
-  - Select the artboard and select "Layout" > "Change Responsive Size".
-- Cause 2
-  - When executing the Adobe XD plugin, the responsive parameters are obtained by changing the size of the artboard and watching the change in the size of the layer. In this case, the responsive parameter cannot be determined for the layer in the repeating grid or any other layer whose size does not change.
-- Measure 2.
-  - Use the margin-fix property and specify it explicitly.
-     - Example: start-button {margin-fix: t b l r}
-  - We will support it when it becomes possible to get responsive parameters in the AdobeXD Plugin API.
-
-### No need for the image component of the artboard background
+#### No need for the image component of the artboard background
 
 - cause
   - The artboard background has been set up.
