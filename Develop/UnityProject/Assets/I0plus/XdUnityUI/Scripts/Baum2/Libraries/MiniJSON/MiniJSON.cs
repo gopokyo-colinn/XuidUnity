@@ -29,6 +29,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -76,6 +77,8 @@ namespace Baum2.MiniJSON
     /// </summary>
     public static class Json
     {
+        static CultureInfo culture = new CultureInfo("en-US");
+
         /// <summary>
         /// Parses the string json into a value
         /// </summary>
@@ -329,7 +332,7 @@ namespace Baum2.MiniJSON
 				*/
 
                 float parsedFloat;
-                float.TryParse(number, out parsedFloat);
+                float.TryParse(number, NumberStyles.Any, culture, out parsedFloat);
                 return parsedFloat;
             }
 
