@@ -33,7 +33,7 @@ namespace XdUnityUI.Editor
         public static Element Generate(Dictionary<string, object> json, Element parent)
         {
             var type = json.Get("type");
-            if (!Generator.ContainsKey(type))
+            if (type == null || !Generator.ContainsKey(type))
             {
                 Debug.LogError("[XdUnityUI] Unknown type: " + type);
                 return null;

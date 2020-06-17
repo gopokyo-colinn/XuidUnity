@@ -17,6 +17,11 @@ namespace XdUnityUI.Editor
             if (json == null || !json.ContainsKey(key)) return null;
             var value = json[key];
 
+            if (value == null)
+            {
+                return false;
+            }
+
             if (value is bool)
             {
                 return (bool) value;

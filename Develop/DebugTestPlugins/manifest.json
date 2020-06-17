@@ -12,6 +12,10 @@
       "type": "menu",
       "label": "Rendition children",
       "commandId": "pluginRenditionChildren"
+    },{
+      "type": "menu",
+      "label": "Print All Properties",
+      "commandId": "pluginPrintAllProperties"
     }
   ]
 }
