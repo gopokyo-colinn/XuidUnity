@@ -73,6 +73,14 @@
   layout-element: preferred;
 }
 
+[typeof="ScrollableGroup"] {
+   viewport: true;
+   viewport-create-content: ".content";
+   rect-mask-twod: true;
+  scroll-rect: true;
+   scroll-rect-content-name: ".content";
+ }
+
 .viewport-xy {
   viewport: true;
   viewport-create-content: ".content";

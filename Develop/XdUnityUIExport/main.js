@@ -707,21 +707,6 @@ function convertToLabel(name) {
 }
 
 /**
- * オブジェクトのもつ全てのプロパティを表示する
- * レスポンシブデザイン用プロパティが無いか調べるときに使用
- * @param {*} obj
- */
-function printAllProperties(obj) {
-  let propNames = []
-  let o = obj
-  while (o) {
-    propNames = propNames.concat(Object.getOwnPropertyNames(o))
-    o = Object.getPrototypeOf(o)
-  }
-  console.log(propNames)
-}
-
-/**
  * Alphaを除きRGBで6桁16進の色の値を取得する
  * @param {number} color
  */
@@ -2747,15 +2732,36 @@ function addContentSizeFitter(json, style) {
 
 /**
  * @param json
+ * @param {SceneNode} node
  * @param {Style} style
  */
-function addScrollRect(json, style) {
+function addScrollRect(json, node, style) {
   const styleScrollRect = style.first(STYLE_SCROLL_RECT)
   if (!styleScrollRect) return
+  let horizontal = null
+  let vertical = null
+  switch (node.scrollingType) {
+    case 'vertical':
+      horizontal = null
+      vertical = true
+      break
+    case 'horizontal':
+      horizontal = true
+      vertical = null
+      break
+    case 'panning':
+      horizontal = true
+      vertical = true
+      break
+    default:
+      break
+  }
+  if (style.hasValue(STYLE_SCROLL_RECT, 'x', STR_HORIZONTAL)) horizontal = true
+  if (style.hasValue(STYLE_SCROLL_RECT, 'y', STR_VERTICAL)) vertical = true
   Object.assign(json, {
     scroll_rect: {
-      horizontal: style.hasValue(STYLE_SCROLL_RECT, 'x', STR_HORIZONTAL),
-      vertical: style.hasValue(STYLE_SCROLL_RECT, 'y', STR_VERTICAL),
+      horizontal,
+      vertical,
     },
   })
 
@@ -2989,7 +2995,10 @@ async function createContent(style, json, node, funcForEachChild, root) {
     parent: node,
   })
 
-  if (node.constructor.name === 'Group') {
+  if (
+    node.constructor.name === 'Group' ||
+    node.constructor.name === 'ScrollableGroup'
+  ) {
     // 通常グループ､マスクグループでContentの作成
     // ContentのRectTransformは　場合によって異なる
     // ・通常グループで作成したとき親とぴったりサイズ
@@ -3131,7 +3140,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   })
 
   // ScrollRect
-  addScrollRect(json, style)
+  addScrollRect(json, node, style)
 
   await createContent(style, json, node, funcForEachChild, root)
 
@@ -3143,7 +3152,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   addParsedNames(json, node)
 
   addContentSizeFitter(json, style)
-  addScrollRect(json, style)
+  addScrollRect(json, node, style)
   addRectMask2d(json, style)
 
   if (json['content']) {
@@ -4069,6 +4078,7 @@ async function nodeRoot(renditions, outputFolder, root) {
     // console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'Artboard':
+      case 'ScrollableGroup':
       case 'Group':
       case 'RepeatGrid':
       case 'SymbolInstance':
@@ -4283,6 +4293,9 @@ async function exportXdUnityUI(roots, outputFolder) {
       .catch(error => {
         //console.log(renditions)
         console.log('画像ファイル出力エラー:' + error)
+        for (let rendition of renditions) {
+          console.log(rendition)
+        }
         // 出力失敗に関しての参考サイト
         // https://forums.adobexdplatform.com/t/details-for-io-failed/1185/14
         // Adobe ファイルのインポート・エキスポートについて

@@ -7,11 +7,11 @@ const {
   Line,
   Rectangle,
   GraphicNode,
-  selection
-} = require("scenegraph")
-const application = require("application")
-const commands = require("commands")
-const fs = require("uxp").storage.localFileSystem
+  selection,
+} = require('scenegraph')
+const application = require('application')
+const commands = require('commands')
+const fs = require('uxp').storage.localFileSystem
 
 /**
  * Shorthand for creating Elements.
@@ -22,12 +22,12 @@ const fs = require("uxp").storage.localFileSystem
 function h(tag, props, ...children) {
   let element = document.createElement(tag)
   if (props) {
-    if (props.nodeType || typeof props !== "object") {
+    if (props.nodeType || typeof props !== 'object') {
       children.unshift(props)
     } else {
       for (let name in props) {
         let value = props[name]
-        if (name === "style") {
+        if (name === 'style') {
           Object.assign(element.style, value)
         } else {
           element.setAttribute(name, value)
@@ -38,7 +38,7 @@ function h(tag, props, ...children) {
   }
   for (let child of children) {
     element.appendChild(
-      typeof child === "object" ? child : document.createTextNode(child)
+      typeof child === 'object' ? child : document.createTextNode(child),
     )
   }
   return element
@@ -50,40 +50,39 @@ function h(tag, props, ...children) {
  */
 async function alert(message, title) {
   if (title == null) {
-    title = "XD Baum2 Export"
+    title = 'XD Baum2 Export'
   }
   let dialog = h(
-    "dialog",
+    'dialog',
     h(
-      "form",
+      'form',
       {
-        method: "dialog",
+        method: 'dialog',
         style: {
-          width: 400
-        }
+          width: 400,
+        },
       },
-      h("h1", title),
-      h("hr"),
-      h("span", message),
+      h('h1', title),
+      h('hr'),
+      h('span', message),
       h(
-        "footer",
+        'footer',
         h(
-          "button",
+          'button',
           {
-            uxpVariant: "primary",
+            uxpVariant: 'primary',
             onclick(e) {
               dialog.close()
-            }
+            },
           },
-          "Close"
-        )
-      )
-    )
+          'Close',
+        ),
+      ),
+    ),
   )
   document.body.appendChild(dialog)
   return await dialog.showModal()
 }
-
 
 /**
  * @param {SceneNodeClass} node
@@ -99,17 +98,16 @@ function SetGlobalBounds(node, newGlobalBounds) {
   node.resize(newGlobalBounds.width, newGlobalBounds.height)
 }
 
-
 /**
  * Stretch変形できるものへ変換コピーする
  * @param {SceneNodeClass} item
  */
 function duplicateStretchable(item) {
   let fill = item.fill
-  if (fill != null && item.constructor.name === "Rectangle") {
+  if (fill != null && item.constructor.name === 'Rectangle') {
     // ImageFillをもったRectangleのコピー
     let rect = new Rectangle()
-    rect.name = item.name + "-stretch"
+    rect.name = item.name + '-stretch'
     SetGlobalBounds(rect, item.globalBounds) // 同じ場所に作成
     // 新規に作成することで、元のイメージがCCライブラリのイメージでもSTRETCH変形ができる
     let cloneFill = fill.clone()
@@ -146,22 +144,22 @@ function pluginDuplicateStretch(slection, root) {
 async function pluginRenditionChildren(selection, root) {
   const outputFolder = await fs.getFolder()
 
-  if (!outputFolder) return console.log("User canceled folder picker.")
+  if (!outputFolder) return console.log('User canceled folder picker.')
 
   let renditionOptions = []
   const length = selection.items[0].children.length
   for (let i = 0; i < length; i++) {
     const item = selection.items[0].children.at(i)
-    const fileName = item.name + ".png"
+    const fileName = item.name + '.png'
     const file = await outputFolder.createFile(fileName, {
-      overwrite: true
+      overwrite: true,
     })
     renditionOptions.push({
       // fileName: fileName,
       node: item,
       outputFile: file,
       type: application.RenditionType.PNG,
-      scale: 1
+      scale: 1,
     })
   }
 
@@ -170,20 +168,19 @@ async function pluginRenditionChildren(selection, root) {
     .then(results => {
       // [2]
       console.log(
-        `PNG rendition has been saved at ${results[0].outputFile.nativePath}`
+        `PNG rendition has been saved at ${results[0].outputFile.nativePath}`,
       )
     })
     .catch(error => {
-      console.log("error:" + error)
+      console.log('error:' + error)
       // https://forums.adobexdplatform.com/t/details-for-io-failed/1185/14
       // https://helpx.adobe.com/xd/kb/import-export-issues.html
       console.log(
-        "1)access denied (disk permission)\n2)readonly folder\n3)not enough disk space\n4)maximum path\n5)image size 0px"
+        '1)access denied (disk permission)\n2)readonly folder\n3)not enough disk space\n4)maximum path\n5)image size 0px',
       )
     })
-  console.log("done.")
+  console.log('done.')
 }
-
 
 async function resizeArtboard(selection, root) {
   let node = selection.items[0]
@@ -195,7 +192,6 @@ async function resizeArtboard(selection, root) {
     console.log(`${child.name}: ${bounds.height} ${drawBounds.height}`)
   })
 }
-
 
 /**
  * 全てのInteractionと、選択にあるTriggeredInteractionsを取得する プラグイン
@@ -219,15 +215,14 @@ async function getInteractionsCommand(selection, root) {
     node.triggeredInteractions.forEach(interaction => {
       console.log(
         'Trigger: ' +
-        interaction.trigger.type +
-        ' -> Action: ' +
-        interaction.action.type,
+          interaction.trigger.type +
+          ' -> Action: ' +
+          interaction.action.type,
       )
     })
   }
   console.log('done.')
 }
-
 
 /**
  * 選択したノードを画像出力する
@@ -262,7 +257,6 @@ async function testRendition(selection, root) {
       console.log(error)
     })
 }
-
 
 /**
  * 選択した複数のグループのDrawBoundsのサイズをそろえるため､ダミーの描画オブジェクトを作成する
@@ -328,8 +322,6 @@ async function pluginAddImageSizeFix(selection, root) {
   await alert('done', 'Size Fixer')
 }
 
-
-
 /**
  * 選択したグループの子供を画像出力する
  * @param selection
@@ -377,14 +369,35 @@ async function pluginRenditionChildren(selection, root) {
   console.log('done.')
 }
 
+/**
+ * オブジェクトのもつ全てのプロパティを表示する
+ * レスポンシブデザイン用プロパティが無いか調べるときに使用
+ * @param {*} obj
+ */
+function printAllProperties(obj) {
+  let propNames = []
+  let o = obj
+  while (o) {
+    propNames = propNames.concat(Object.getOwnPropertyNames(o))
+    o = Object.getPrototypeOf(o)
+  }
+  console.log(propNames)
+}
 
-
+function pluginPrintAllProperties(selection, root) {
+  const node = selection.items[0]
+  printAllProperties(node)
+  console.log(node.scrollingType)
+  console.log(node.viewport)
+  console.log(node.dynamicLayout)
+}
 
 module.exports = {
   // コマンドIDとファンクションの紐付け
   commands: {
     pluginDuplicateStretch,
     pluginRenditionChildren,
-    resizeArtboard
-  }
+    resizeArtboard,
+    pluginPrintAllProperties,
+  },
 }
