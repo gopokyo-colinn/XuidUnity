@@ -25,6 +25,8 @@ namespace XdUnityUI.Editor
                 {"Input", (d, p) => new InputElement(d, p)},
 #if TMP_PRESENT
                 {"TextMeshPro", (d, p) => new TextMeshProElement(d, p)},
+#else
+                {"TextMeshPro", (d, p) => new TextElement(d, p)},
 #endif
                 // {"Viewport", (d, p) => new ViewportElement(d, p)}, // GroupElementに統合した
                 {"Rect", (d, p) => new RectElement(d, p)}
@@ -38,6 +40,8 @@ namespace XdUnityUI.Editor
                 Debug.LogError("[XdUnityUI] Unknown type: " + type);
                 return null;
             }
+
+            // Debug.Log($"generate {type}");
 
             return Generator[type](json, parent);
         }
