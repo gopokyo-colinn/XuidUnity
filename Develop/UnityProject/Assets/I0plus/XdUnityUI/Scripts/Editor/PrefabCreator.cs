@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+
 #if TMP_PRESENT
 using TMPro;
 #endif
@@ -52,16 +53,13 @@ namespace XdUnityUI.Editor
             var baseSize = canvas.GetDic("base");
             var renderer = new RenderContext(spriteRootPath, fontRootPath, imageSize.GetVector2("w", "h").Value,
                 canvasSize.GetVector2("w", "h").Value, baseSize.GetVector2("x", "y").Value);
-            var rootElement = ElementFactory.Generate(json.GetDic("root"), null);
-            var root = rootElement.Render(renderer, null);
-            // root.AddComponent<Canvas>();
-            // root.AddComponent<GraphicRaycaster>();
-            // root.AddComponent<UIRoot>();
+            var rootJson = json.GetDic("root");
+            GameObject root = null;
+            
+            var rootElement = ElementFactory.Generate(rootJson, null);
+            root = rootElement.Render(renderer, null);
 
             Postprocess(root);
-
-            // var cache = root.AddComponent<Cache>();
-            // cache.CreateCache(root.transform);
 
             if (renderer.ToggleGroupMap.Count > 0)
             {

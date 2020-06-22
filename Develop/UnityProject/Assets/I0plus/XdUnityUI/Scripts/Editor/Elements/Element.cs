@@ -23,7 +23,7 @@ namespace XdUnityUI.Editor
         {
             Parent = parent;
             name = json.Get("name");
-            Debug.Log($"parsing {name}");
+            //Debug.Log($"parsing {name}");
             Active = json.GetBool("active");
             Layer = json.Get("layer");
             ParsedNames = json.Get<List<object>>("parsed_names");

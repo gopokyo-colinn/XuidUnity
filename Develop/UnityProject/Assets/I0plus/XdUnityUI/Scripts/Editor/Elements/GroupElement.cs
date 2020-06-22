@@ -69,8 +69,13 @@ namespace XdUnityUI.Editor
             ElementUtil.SetupComponents(go, ComponentsJson);
             ElementUtil.SetupMask(go, MaskJson);
             ElementUtil.SetupRectMask2D(go, RectMask2D);
-            // ScrollRectを設定した時点ではみでたContentがアジャストされる　PivotがViewport内に入っていればOK
-            ElementUtil.SetupScrollRect(go, RenderedChildren[0].Item1, ScrollRectJson);
+            // ScrollRectを設定した時点で、はみでたContentがアジャストされる　PivotがViewport内に入っていればOK
+            GameObject goContent = null;
+            if (RenderedChildren.Count > 0)
+            {
+                goContent = RenderedChildren[0].Item1;
+            }
+            ElementUtil.SetupScrollRect(go, goContent, ScrollRectJson);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;

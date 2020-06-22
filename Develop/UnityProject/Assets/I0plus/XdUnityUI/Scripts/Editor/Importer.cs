@@ -125,19 +125,34 @@ namespace XdUnityUI.Editor
                 // ディレクトリの追加
                 importedAssets.Add(importFolderPath);
 
+                var folders = Directory.EnumerateDirectories(importFolderPath);
+                importedAssets.AddRange(folders);
+
                 // ファイルの追加
                 var files = Directory.EnumerateFiles(
-                    importFolderPath, "*", SearchOption.TopDirectoryOnly);
+                    importFolderPath, "*", SearchOption.AllDirectories);
 
                 foreach (var file in files)
                 {
+                    if (!convertImageFlag && !file.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
                     var extension = Path.GetExtension(file).ToLower();
-                    if (extension == ".meta" || !convertImageFlag && extension == ".png") continue;
+                    if (extension == ".meta") continue;
                     importedAssets.Add(file);
                 }
             }
 
+            if (importedAssets.Count > 100)
+            {
+                var result = EditorUtility.DisplayDialog("Import", $"Importing {importedAssets.Count} files.\n Continue?", "Continue", "Cancel");
+                if (!result) return;
+            }
+
             await Import(importedAssets);
+            EditorUtility.DisplayDialog("Import", $"Done.", "Ok");
         }
 
         private static bool IsFolder(string path)
@@ -272,19 +287,21 @@ namespace XdUnityUI.Editor
             {
                 UpdateDisplayProgressBar("layout");
                 progressCount += 1;
-                if (!assetPath.EndsWith(".layout.json", StringComparison.Ordinal)) continue;
-
-                var folderName = Path.GetFileName(assetPath).Replace(".layout.json", "");
-                var spriteRootPath =
-                    EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), folderName));
-                var fontRootPath = EditorUtil.ToUnityPath(EditorUtil.GetFontsPath());
-                var creator = new PrefabCreator(spriteRootPath, fontRootPath, assetPath);
-                var go = creator.Create();
-                var savePath =
-                    EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputPrefabsFolderPath(),
-                        folderName + ".prefab"));
+                GameObject go = null;
                 try
                 {
+                    if (!assetPath.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var folderName = Path.GetFileName(assetPath).Replace(".layout.json", "");
+                    Debug.Log($"[XdUnityUI] in process:{folderName}");
+                    var spriteRootPath =
+                        EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), folderName));
+                    var fontRootPath = EditorUtil.ToUnityPath(EditorUtil.GetFontsPath());
+                    var creator = new PrefabCreator(spriteRootPath, fontRootPath, assetPath);
+                    go = creator.Create();
+                    var savePath =
+                        EditorUtil.ToUnityPath(Path.Combine(EditorUtil.GetOutputPrefabsFolderPath(),
+                            folderName + ".prefab"));
 #if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, savePath);
                     Debug.Log("[XdUnityUI] Created prefab: " + savePath, savedAsset);
@@ -294,11 +311,13 @@ namespace XdUnityUI.Editor
                     PrefabUtility.ReplacePrefab(go, originalPrefab, ReplacePrefabOptions.ReplaceNameBased);
 #endif
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Debug.LogAssertion("[XdUnityUI] "+ex.Message+"\n"+ex.StackTrace);
                     // 変換中例外が起きた場合もテンポラリGameObjectを削除する
                     Object.DestroyImmediate(go);
                     EditorUtility.ClearProgressBar();
+                    EditorUtility.DisplayDialog("Import Failed", ex.Message, "Close");
                     throw;
                 }
 

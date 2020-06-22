@@ -655,7 +655,10 @@ namespace XdUnityUI.Editor
             }
 
             var scrollRectComponent = goViewport.AddComponent<ScrollRect>();
-            scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
+            if (goContent != null)
+            {
+                scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
+            }
             scrollRectComponent.viewport = goViewport.GetComponent<RectTransform>(); // 自分自身がViewportになる
             scrollRectComponent.vertical = false;
             scrollRectComponent.horizontal = false;

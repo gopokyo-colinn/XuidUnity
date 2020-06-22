@@ -530,11 +530,14 @@ class GlobalBounds {
   constructor(node) {
     this.visible = node.visible
     this.bounds = getGlobalDrawBounds(node) // TODO: あいまいに使用されているため削除する
-    this.global_draw_bounds = getGlobalDrawBounds(node)
     this.global_bounds = getGlobalBounds(node)
-    this.masked_global_draw_bounds = null
-    this.masked_global_bounds = null
-    if (node.mask) {
+    this.global_draw_bounds = getGlobalDrawBounds(node)
+    this.content_global_bounds = this.global_bounds
+    this.content_global_draw_bounds = this.global_draw_bounds
+    this.viewport_content_global_bounds = this.global_bounds
+    this.viewport_content_global_draw_bounds = this.global_draw_bounds
+    if (hasContentChildren(node)) {
+      /*
       //** @type {Group}
       let group = node
       // console.log('マスク持ちをみつけた', node)
@@ -544,14 +547,26 @@ class GlobalBounds {
       let childrenCalcDrawBounds = new CalcBounds()
       // セルサイズを決めるため最大サイズを取得する
       group.children.forEach(node => {
-        const { style } = getNodeNameAndStyle(node)
+        const {style} = getNodeNameAndStyle(node)
         // コンポーネントにする場合は除く
         if (style.first(STYLE_COMPONENT)) return
         childrenCalcBounds.addBounds(node.globalBounds)
         childrenCalcDrawBounds.addBounds(node.globalDrawBounds)
       })
-      this.masked_global_bounds = childrenCalcBounds.bounds
-      this.masked_global_draw_bounds = childrenCalcDrawBounds.bounds
+      */
+      // TODO: Mask（もしくはViewport）をふくむ、含まないがいるのではないだろうか
+      //  マスクありでBoundsが欲しいとき → 全体コンテンツBoundsがほしいとき　とくに、Childrenが大幅にかたよっているときなど
+      //  マスク抜きでBoundsが欲しいとき → List内コンテンツのPaddingの計算
+      const content = node.children.filter(child => child !== node.mask)
+      const contentBounds = calcGlobalBounds(content)
+      this.content_global_bounds = contentBounds.global_bounds
+      this.content_global_draw_bounds = contentBounds.global_draw_bounds
+
+      const viewportContent = content.concat(getViewport(node))
+      const viewportContentBounds = calcGlobalBounds(viewportContent)
+      this.viewport_content_global_bounds = viewportContentBounds.global_bounds
+      this.viewport_content_global_draw_bounds =
+        viewportContentBounds.global_draw_bounds
     }
   }
 }
@@ -804,6 +819,25 @@ function getGlobalDrawBounds(node) {
 
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
+ * @param {SceneNodeClass} node
+ * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
+ */
+function getBeforeGlobalBounds(node) {
+  const hashBounds = globalResponsiveBounds
+  let bounds = null
+  if (hashBounds != null) {
+    const hBounds = hashBounds[node.guid]
+    if (hBounds && hBounds.before) {
+      bounds = Object.assign({}, hBounds.before.global_bounds)
+    }
+  }
+  if (bounds) return bounds
+  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  return null
+}
+
+/**
+ * リサイズされる前のグローバル座標とサイズを取得する
  * ハッシュからデータを取得する
  * @param {SceneNodeClass} node
  * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
@@ -825,21 +859,78 @@ function getBeforeGlobalDrawBounds(node) {
 }
 
 /**
- * リサイズされる前のグローバル座標とサイズを取得する
  * @param {SceneNodeClass} node
- * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
+ * @return {Bounds}
  */
-function getBeforeGlobalBounds(node) {
+function getBeforeContentGlobalBounds(node) {
   const hashBounds = globalResponsiveBounds
   let bounds = null
   if (hashBounds != null) {
     const hBounds = hashBounds[node.guid]
     if (hBounds && hBounds.before) {
-      bounds = Object.assign({}, hBounds.before.global_bounds)
+      bounds = Object.assign({}, hBounds.before.content_global_bounds)
     }
   }
   if (bounds) return bounds
-  throw 'リサイズ前のGlobalBoundsの情報がありません' + node.name
+  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  return null
+}
+
+/**
+ * @param {SceneNodeClass} node
+ * @return {Bounds}
+ */
+function getBeforeContentGlobalDrawBounds(node) {
+  const hashBounds = globalResponsiveBounds
+  let bounds = null
+  if (hashBounds != null) {
+    const hBounds = hashBounds[node.guid]
+    if (hBounds && hBounds.before) {
+      bounds = Object.assign({}, hBounds.before.content_global_draw_bounds)
+    }
+  }
+  if (bounds) return bounds
+  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  return null
+}
+
+/**
+ * @param {SceneNodeClass} node
+ * @return {Bounds}
+ */
+function getBeforeViewportContentGlobalBounds(node) {
+  const hashBounds = globalResponsiveBounds
+  let bounds = null
+  if (hashBounds != null) {
+    const hBounds = hashBounds[node.guid]
+    if (hBounds && hBounds.before) {
+      bounds = Object.assign({}, hBounds.before.viewport_content_global_bounds)
+    }
+  }
+  if (bounds) return bounds
+  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  return null
+}
+
+/**
+ * @param {SceneNodeClass} node
+ * @return {Bounds}
+ */
+function getBeforeViewportContentGlobalDrawBounds(node) {
+  const hashBounds = globalResponsiveBounds
+  let bounds = null
+  if (hashBounds != null) {
+    const hBounds = hashBounds[node.guid]
+    if (hBounds && hBounds.before) {
+      bounds = Object.assign(
+        {},
+        hBounds.before.viewport_content_global_draw_bounds,
+      )
+    }
+  }
+  if (bounds) return bounds
+  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  return null
 }
 
 /**
@@ -1022,13 +1113,13 @@ function sortElementsByPositionDesc(jsonElements) {
 function getLayoutFromRepeatGrid(repeatGrid, style) {
   let layoutJson = {}
   const repeatGridBounds = getBeforeGlobalBounds(repeatGrid)
-  const nodesBounds = getNodeListBeforeGlobalBounds(repeatGrid.children, null)
+  const nodesBounds = calcGlobalBounds(repeatGrid.children.filter(node => true))
   Object.assign(layoutJson, {
     method: 'grid',
     padding: {
-      left: nodesBounds.bounds.x - repeatGridBounds.x,
+      left: nodesBounds.global_bounds.x - repeatGridBounds.x,
       right: 0,
-      top: nodesBounds.bounds.y - repeatGridBounds.y,
+      top: nodesBounds.global_bounds.y - repeatGridBounds.y,
       bottom: 0,
     },
     spacing_x: repeatGrid.paddingX * globalScale, // 横の隙間
@@ -1054,26 +1145,41 @@ function getLayoutFromRepeatGrid(repeatGrid, style) {
 /**
  * 子供(コンポーネント化するもの･withoutNodeを除く)の全体サイズと
  * 子供の中での最大Width、Heightを取得する
- * @param {SceneNodeList} nodeList
- * @param {SceneNodeClass} withoutNode
- * @returns {{node_max_height: number, node_max_width: number, bounds: Bounds}}
+ * 注意：保存されたBounds情報をつかわず、現在のサイズを取得する
+ * @param {Array<SceneNode>} nodes
+ * @returns {{node_max_height: number, node_max_width: number, global_bounds: Bounds, global_draw_bounds: Bounds}}
  */
-function getNodeListBeforeGlobalBounds(nodeList, withoutNode = null) {
-  //ToDo: jsonの子供情報Elementsも､node.childrenも両方つかっているが現状しかたなし
+function calcGlobalBounds(nodes) {
+  if (!nodes || nodes.length === 0) return null
   let childrenCalcBounds = new CalcBounds()
+  let childrenCalcDrawBounds = new CalcBounds()
   // セルサイズを決めるため最大サイズを取得する
   let childrenMinMaxSize = new MinMaxSize()
-  nodeList.forEach(node => {
+
+  function addNode(node) {
+    /* 以下のコードは、nodeが、親のマスクにはいっているかどうかの判定のためのテストコード
+    if (!testBounds(viewportBounds, childBounds)) {
+      console.log(child.name + 'はViewportにはいっていない')
+      return false // 処理しない
+    }
+     */
     const { style } = getNodeNameAndStyle(node)
     // コンポーネントにする場合は除く
     if (style.first(STYLE_COMPONENT)) return
-    if (node === withoutNode) return // 除くものかチェック　MaskはたいていBoundsの中に入れる
-    const childBounds = getBeforeGlobalBounds(node)
+    const childBounds = node.globalDrawBounds
     childrenCalcBounds.addBounds(childBounds)
+    const childDrawBounds = node.globalDrawBounds
+    childrenCalcDrawBounds.addBounds(childDrawBounds)
     childrenMinMaxSize.addSize(childBounds.width, childBounds.height)
-  })
+  }
+
+  for (let node of nodes) {
+    addNode(node)
+  }
+
   return {
-    bounds: childrenCalcBounds.bounds,
+    global_bounds: childrenCalcBounds.bounds,
+    global_draw_bounds: childrenCalcDrawBounds.bounds,
     node_max_width: childrenMinMaxSize.maxWidth * globalScale,
     node_max_height: childrenMinMaxSize.maxHeight * globalScale,
   }
@@ -1089,7 +1195,9 @@ function getNodeListBeforeGlobalBounds(nodeList, withoutNode = null) {
 function getPaddingAndCellMaxSize(parentNode, maskNode, nodeChildren) {
   // Paddingを取得するため､子供(コンポーネント化するもの･maskを除く)のサイズを取得する
   // ToDo: jsonの子供情報Elementsも､node.childrenも両方つかっているが現状しかたなし
-  let childrenCalcBounds = getNodeListBeforeGlobalBounds(nodeChildren, maskNode)
+  let childrenCalcBounds = calcGlobalBounds(
+    nodeChildren.filter(node => node !== maskNode),
+  )
   //
   // Paddingの計算
   let viewportBounds = getBeforeGlobalDrawBounds(parentNode) // 描画でのサイズを取得する　影など増えた分も考慮したPaddingを取得する
@@ -1456,20 +1564,22 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
   const beforeGlobalBounds = bounds.before.global_bounds
   const beforeGlobalDrawBounds = bounds.before.global_draw_bounds
-  const parentBeforeGlobalBounds = parentBounds.before.global_bounds
-  const parentBeforeGlobalDrawBounds = parentBounds.before.global_draw_bounds
+  const parentBeforeGlobalBounds = parentBounds.before.content_global_bounds
+  const parentBeforeGlobalDrawBounds =
+    parentBounds.before.content_global_draw_bounds
 
   const afterGlobalBounds = bounds.after.global_bounds
   const afterGlobalDrawBounds = bounds.after.global_draw_bounds
-  const parentAfterGlobalBounds = parentBounds.after.global_bounds
-  const parentAfterGlobalDrawBounds = parentBounds.after.global_draw_bounds
+  const parentAfterGlobalBounds = parentBounds.after.content_global_bounds
+  const parentAfterGlobalDrawBounds =
+    parentBounds.after.content_global_draw_bounds
 
   const beforeBounds = calcDrawBounds
     ? beforeGlobalDrawBounds
     : beforeGlobalBounds
   const afterBounds = calcDrawBounds ? afterGlobalDrawBounds : afterGlobalBounds
 
-  //masked_global_boundsは、親がマスク持ちグループである場合、グループ全体のBoundsになる
+  //content_global_boundsは、親がマスク持ちグループである場合、グループ全体のBoundsになる
   const parentBeforeBounds = calcDrawBounds
     ? parentBeforeGlobalDrawBounds
     : parentBeforeGlobalBounds
@@ -1510,9 +1620,13 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   const verticalConstraints = node.verticalConstraints
 
   if (!horizontalConstraints || !verticalConstraints) {
-    // BooleanGroupの子供等、情報がとれないものがある
+    // BooleanGroupの子供,RepeatGridの子供等、情報がとれないものがある
     // console.log(`${node.name} constraints情報がありません`)
   }
+
+  //console.log(`${node.name} constraints`)
+  //console.log(horizontalConstraints)
+  //console.log(verticalConstraints)
 
   const beforeLeft = parentBeforeBounds.x - beforeBounds.x
   const afterLeft = parentAfterBounds.x - afterBounds.x
@@ -1613,8 +1727,9 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
   let anchorMax = { x: null, y: null } // right, top
 
   // レスポンシブパラメータが不確定のままきた場合
-  // リピートグリッド以下のコンポーネント等 NULLになる
+  // RepeatGrid以下のコンポーネント,NULLになる
   if (styleFixWidth === null || styleFixHeight === null) {
+    // console.log("fix情報がありませんでした", node.name)
     const beforeCenter = beforeBounds.x + beforeBounds.width / 2
     const parentBeforeCenter =
       parentBeforeBounds.x + parentBeforeBounds.width / 2
@@ -2531,20 +2646,23 @@ async function addImage(
 
   let fileExtension = '.png'
 
-  const image9SliceValues = style.values(STYLE_IMAGE_SLICE)
+  const styleImageSliceValues = style.values(STYLE_IMAGE_SLICE)
+  const localStyleImageSliceValues = localStyle
+    ? localStyle.values(STYLE_IMAGE_SLICE)
+    : null
   // 明確にfalseと指定してある場合にNO SLICEとする
   if (
-    !checkAsBool(style.first(STYLE_IMAGE_SLICE)) ||
-    (localStyle && !checkAsBool(localStyle.first(STYLE_IMAGE_SLICE)))
+    (styleImageSliceValues && !checkAsBool(styleImageSliceValues[0])) ||
+    (localStyle && !checkAsBool(localStyleImageSliceValues[0]))
   ) {
     // fileExtension = '-noslice.png'
     sliceOption = { slice: 'none' }
   } else {
     // sliceオプションチェック
     if (
-      image9SliceValues &&
-      image9SliceValues.length > 0 &&
-      checkAsBool(image9SliceValues[0])
+      styleImageSliceValues &&
+      styleImageSliceValues.length > 0 &&
+      checkAsBool(styleImageSliceValues[0])
     ) {
       if (node.rotation !== 0) {
         console.log(
@@ -2559,14 +2677,20 @@ async function addImage(
          3番目の値が省略された場合には、1番目の値と同じ。
          2番目の値が省略された場合には、1番目の値と同じ。
          */
-        const paramLength = image9SliceValues.length
-        let top = parseInt(image9SliceValues[0]) * globalScale
+        const paramLength = styleImageSliceValues.length
+        let top = parseInt(styleImageSliceValues[0]) * globalScale
         let right =
-          paramLength > 1 ? parseInt(image9SliceValues[1]) * globalScale : top
+          paramLength > 1
+            ? parseInt(styleImageSliceValues[1]) * globalScale
+            : top
         let bottom =
-          paramLength > 2 ? parseInt(image9SliceValues[2]) * globalScale : top
+          paramLength > 2
+            ? parseInt(styleImageSliceValues[2]) * globalScale
+            : top
         let left =
-          paramLength > 3 ? parseInt(image9SliceValues[3]) * globalScale : right
+          paramLength > 3
+            ? parseInt(styleImageSliceValues[3]) * globalScale
+            : right
 
         // DrawBoundsで大きくなった分を考慮する　(影などで大きくなる)
         const beforeBounds = getBeforeGlobalBounds(node)
@@ -2643,7 +2767,7 @@ async function addImage(
 
   if (
     !optionImageNoExport &&
-    image9SliceValues &&
+    styleImageSliceValues &&
     node.isContainer &&
     node.rotation === 0
   ) {
@@ -2965,6 +3089,38 @@ function addComponents(json, style) {
 }
 
 /**
+ * そのノードがContentをもつかどうか
+ * Contentとは、Childrenをもっていて、なにかでMaskされているグループのこと
+ * ・MaskedGroup
+ * ・RepeatGrid
+ * @param {SceneNodeClass} node
+ * @return {boolean}
+ */
+function hasContentChildren(node) {
+  const { style } = getNodeNameAndStyle(node)
+  const styleViewportCreateContent = style.first(STYLE_VIEWPORT_CREATE_CONTENT)
+  if (styleViewportCreateContent) return true
+  if (node.mask) return true
+  if (node.constructor.name === 'RepeatGrid') return true
+  return false
+}
+
+/**
+ * Viewportの役割をもつノードを返す
+ * Maskをもっている場合はMask
+ * @param node
+ * @return {null|SceneNode|{show_mask_graphic: boolean}|string|*}
+ */
+function getViewport(node) {
+  const { style } = getNodeNameAndStyle(node)
+  const styleViewport = style.first(STYLE_VIEWPORT)
+  if (checkAsBool(styleViewport)) return node
+  if (node.mask) return node.mask
+  if (node.constructor.name === 'RepeatGrid') return node
+  return null
+}
+
+/**
  * Contentグループの作成
  * 主にスクロール用　アイテム用コンテナ
  * @param style
@@ -2976,7 +3132,8 @@ function addComponents(json, style) {
  */
 async function createContent(style, json, node, funcForEachChild, root) {
   // Content
-  // Viewportは必ずcontentを持つ
+  // Mask以下、ScrollGroup以下のコンポーネントをまとめるグループ
+  // - サイズは固定
   let createContentName = 'content'
   const styleViewportCreateContent = style.first(STYLE_VIEWPORT_CREATE_CONTENT)
   if (styleViewportCreateContent) {
@@ -2995,6 +3152,10 @@ async function createContent(style, json, node, funcForEachChild, root) {
     parent: node,
   })
 
+  // contentのBounds　RepeatGridか、Group・ScrollableGroupかで、作成方法がかわる
+  /**
+   * @type {Bounds}
+   */
   if (
     node.constructor.name === 'Group' ||
     node.constructor.name === 'ScrollableGroup'
@@ -3010,10 +3171,7 @@ async function createContent(style, json, node, funcForEachChild, root) {
       console.log('***error viewport:マスクがみつかりませんでした')
       maskNode = node
     }
-    let calcContentBounds = new CalcBounds()
     await funcForEachChild(null, child => {
-      const childBounds = getBeforeGlobalBounds(child)
-      calcContentBounds.addBounds(childBounds) // maskもContentBoundsの処理にいれる
       return child !== maskNode // maskNodeはFalse 処理をしない
     })
 
@@ -3023,7 +3181,6 @@ async function createContent(style, json, node, funcForEachChild, root) {
     for (let childJson of json.elements) {
     }
 
-    const maskBounds = getBeforeGlobalBounds(maskNode)
     const maskBoundsCM = getDrawBoundsCMInBase(maskNode, root)
 
     Object.assign(json, {
@@ -3033,11 +3190,6 @@ async function createContent(style, json, node, funcForEachChild, root) {
       h: maskBoundsCM.height,
     })
 
-    Object.assign(
-      contentJson,
-      getBoundsInBase(calcContentBounds.bounds, maskBounds), // 相対座標で渡す
-    )
-
     // これはコンテントのレイアウトオプションで実行すべき
     addLayout(contentJson, node, maskNode, node.children, contentStyle)
   } else if (node.constructor.name === 'RepeatGrid') {
@@ -3046,21 +3198,13 @@ async function createContent(style, json, node, funcForEachChild, root) {
     // 縦スクロールを意図しているか　→ Content.RectTransformは横サイズぴったり　縦に伸びる
     // 横スクロールを意図しているか　→ Content.RectTransformは縦サイズぴったり　横に伸びる
     // こちらが確定できないため
-    let calcContentBounds = new CalcBounds()
     /** @type {RepeatGrid} */
     let viewportNode = node
     const viewportBounds = getBeforeGlobalBounds(viewportNode)
-    calcContentBounds.addBounds(viewportBounds)
     // AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある
     // そういったものを省くための処理
     // Contentの領域も計算する
     await funcForEachChild(null, child => {
-      const childBounds = getBeforeGlobalBounds(child)
-      if (!testBounds(viewportBounds, childBounds)) {
-        console.log(child.name + 'はViewportにはいっていない')
-        return false // 処理しない
-      }
-      calcContentBounds.addBounds(childBounds)
       return true // 処理する
     })
 
@@ -3073,11 +3217,6 @@ async function createContent(style, json, node, funcForEachChild, root) {
       h: maskBoundsCM.height,
     })
 
-    Object.assign(
-      contentJson,
-      getBoundsInBase(calcContentBounds.bounds, viewportBounds),
-    )
-
     let gridLayoutJson = getLayoutFromRepeatGrid(viewportNode, contentStyle)
     if (gridLayoutJson != null) {
       Object.assign(contentJson, {
@@ -3086,23 +3225,36 @@ async function createContent(style, json, node, funcForEachChild, root) {
     }
   }
 
+  const contentBounds = getBeforeViewportContentGlobalDrawBounds(node)
+
+  Object.assign(contentJson, contentBounds)
+
   // ContentのRectTransformを決める
   // addRectTransformができない　→ Recttransformのキャッシュをもっていないため
-  const contentX = contentJson['x']
-  const contentY = contentJson['y']
-  const contentWidth = contentJson['width']
-  const contentHeight = contentJson['height']
+  const nodeBounds = getBeforeGlobalDrawBounds(node)
+  const contentX = contentBounds.x
+  const contentY = contentBounds.y
+  const contentWidth = contentBounds.width
+  const contentHeight = contentBounds.height
+  //const contentWidth = nodeBounds.width
+  //const contentHeight = nodeBounds.height
   const contentStyleFix = getStyleFix(contentStyle.values(STYLE_MARGIN_FIX))
 
   let pivot = { x: 0, y: 1 } // top-left
   let anchorMin = { x: 0, y: 1 }
   let anchorMax = { x: 0, y: 1 }
-  let offsetMin = { x: contentX, y: -contentHeight - contentY }
-  let offsetMax = { x: contentWidth + contentX, y: -contentY }
+  let offsetMin = {
+    x: contentX - nodeBounds.x,
+    y: -(contentY - nodeBounds.y + contentHeight),
+  }
+  let offsetMax = {
+    x: contentX - nodeBounds.x + contentWidth,
+    y: -(contentY - nodeBounds.y),
+  }
   Object.assign(contentJson, {
     rect_transform: {
       fix: contentStyleFix,
-      pivot, // ContentのPivotはX,Yで渡す　他のところは文字列になっている
+      pivot,
       anchor_min: anchorMin,
       anchor_max: anchorMax,
       offset_min: offsetMin,
@@ -3490,20 +3642,21 @@ async function createScrollbar(json, node, funcForEachChild) {
   }
   let handle_class = style.first(STYLE_SCROLLBAR_HANDLE_NAME)
   if (handle_class != null) {
-    handle_class = handle_class
     Object.assign(scrollbarJson, {
       handle_class,
     })
   }
 
   const bounds = getBeforeGlobalBounds(node)
-  const childlenBounds = getNodeListBeforeGlobalBounds(node.children)
-  const spacingX = bounds.width - childlenBounds.bounds.width
-  const spacingY = bounds.height - childlenBounds.bounds.height
+  /*
+  const childrenBounds = getBeforeContentGlobalDrawBounds(node)
+  const spacingX = bounds.width - childrenBounds.width
+  const spacingY = bounds.height - childrenBounds.height
   Object.assign(scrollbarJson, {
     child_spacing_x: spacingX,
     child_spacing_y: spacingY,
   })
+   */
 
   await funcForEachChild()
 
@@ -3559,13 +3712,15 @@ async function createSlider(json, node, funcForEachChild) {
   }
 
   const bounds = getBeforeGlobalBounds(node)
-  const childlenBounds = getNodeListBeforeGlobalBounds(node.children)
+  /*
+  const childlenBounds = calcGlobalBounds(node.children.filter(_ => true))
   const spacingX = bounds.width - childlenBounds.bounds.width
   const spacingY = bounds.height - childlenBounds.bounds.height
   Object.assign(sliderJson, {
     child_spacing_x: spacingX,
     child_spacing_y: spacingY,
   })
+   */
 
   await funcForEachChild()
 
