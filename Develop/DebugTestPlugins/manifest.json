@@ -16,6 +16,10 @@
       "type": "menu",
       "label": "Print All Properties",
       "commandId": "pluginPrintAllProperties"
+    },{
+      "type": "menu",
+      "label": "Print Check Properties",
+      "commandId": "pluginPrintCheckProperties"
     }
   ]
 }

@@ -387,9 +387,16 @@ function printAllProperties(obj) {
 function pluginPrintAllProperties(selection, root) {
   const node = selection.items[0]
   printAllProperties(node)
-  console.log(node.scrollingType)
-  console.log(node.viewport)
-  console.log(node.dynamicLayout)
+}
+
+function pluginPrintCheckProperties(selection, root) {
+  const node = selection.items[0]
+  console.log("scrollingType:",node.scrollingType)
+  console.log("viewport:",node.viewport)
+  console.log("dynamicLayout:",node.dynamicLayout)
+
+  console.log("horizontalConstraints:",node.horizontalConstraints)
+  console.log("verticalConstraints:",node.verticalConstraints)
 }
 
 module.exports = {
@@ -399,5 +406,6 @@ module.exports = {
     pluginRenditionChildren,
     resizeArtboard,
     pluginPrintAllProperties,
+    pluginPrintCheckProperties,
   },
 }
