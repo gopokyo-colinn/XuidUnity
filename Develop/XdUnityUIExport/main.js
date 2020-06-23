@@ -78,6 +78,7 @@ const STR_CONTENT = 'content'
 const STR_VERTICAL = 'vertical'
 const STR_HORIZONTAL = 'horizontal'
 const STR_PREFERRED = 'preferred'
+const STR_GRID = 'grid'
 
 // オプション文字列　全て小文字 数字を含まない
 // OPTION名に H V　X Yといった、高さ方向をしめすものはできるだけ出さないようにする
@@ -1105,17 +1106,36 @@ function sortElementsByPositionDesc(jsonElements) {
 }
 
 /**
- * リピートグリッドから、GridLayoutGroup用パラメータを取得する
+ * リピートグリッドから、レイアウト情報を設定する
  * @param {RepeatGrid} repeatGrid
  * @param {Style} style
- * @return {{}}
  */
-function getLayoutFromRepeatGrid(repeatGrid, style) {
+function addLayoutFromRepeatGrid(json, repeatGrid, style) {
+  if (style == null) return
+
+  const styleLayoutGroup = style.first(STYLE_LAYOUT_GROUP)
+  if (!checkAsBool(styleLayoutGroup)) return
+
+  let method = null
+  switch (styleLayoutGroup) {
+    case 'x':
+    case STR_HORIZONTAL:
+      method = STR_HORIZONTAL
+      break
+    case 'y':
+    case STR_VERTICAL:
+      method = STR_VERTICAL
+      break
+    default:
+      method = STR_GRID
+      break
+  }
+
   let layoutJson = {}
   const repeatGridBounds = getBeforeGlobalBounds(repeatGrid)
   const nodesBounds = calcGlobalBounds(repeatGrid.children.filter(node => true))
   Object.assign(layoutJson, {
-    method: 'grid',
+    method,
     padding: {
       left: nodesBounds.global_bounds.x - repeatGridBounds.x,
       right: 0,
@@ -1129,17 +1149,7 @@ function getLayoutFromRepeatGrid(repeatGrid, style) {
   })
   addLayoutParam(layoutJson, style)
 
-  if (style != null) {
-    if (style.hasValue(STYLE_LAYOUT_GROUP, 'x', STR_HORIZONTAL)) {
-      // gridLayoutJson を Horizontalに変える
-      layoutJson['method'] = STR_HORIZONTAL
-    } else if (style.hasValue(STYLE_LAYOUT_GROUP, 'y', STR_VERTICAL)) {
-      // gridLayoutJson を Verticalに変える
-      layoutJson['method'] = STR_VERTICAL
-    }
-  }
-
-  return layoutJson
+  json['layout'] = layoutJson
 }
 
 /**
@@ -3201,10 +3211,9 @@ async function createContent(style, json, node, funcForEachChild, root) {
     /** @type {RepeatGrid} */
     let viewportNode = node
     const viewportBounds = getBeforeGlobalBounds(viewportNode)
-    // AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある
-    // そういったものを省くための処理
-    // Contentの領域も計算する
     await funcForEachChild(null, child => {
+      // TODO:AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある
+      // そういったものを省くかどうか検討
       return true // 処理する
     })
 
@@ -3217,12 +3226,7 @@ async function createContent(style, json, node, funcForEachChild, root) {
       h: maskBoundsCM.height,
     })
 
-    let gridLayoutJson = getLayoutFromRepeatGrid(viewportNode, contentStyle)
-    if (gridLayoutJson != null) {
-      Object.assign(contentJson, {
-        layout: gridLayoutJson,
-      })
-    }
+    addLayoutFromRepeatGrid(contentJson, viewportNode, contentStyle)
   }
 
   const contentBounds = getBeforeViewportContentGlobalDrawBounds(node)

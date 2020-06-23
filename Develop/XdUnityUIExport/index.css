@@ -16,12 +16,6 @@
   layer: UI;
 }
 
-/*
- リピードグリッドの子は、Layout-elementを持つ
- */
-[typeof="RepeatGrid"] * {
-  unity-name: "rg-child(${childIndex})";
-}
 
 /*
  横にならべる
@@ -72,6 +66,24 @@
 .layout-rect {
   layout-element: preferred;
 }
+
+
+/*
+ リピードグリッドはViewport扱い
+ */
+[typeof="RepeatGrid"] {
+  viewport: true;
+  viewport-create-content: ".content";
+  rect-mask-twod: true;
+}
+
+/*
+ リピードグリッドの子は、Layout-elementを持つ
+ */
+[typeof="RepeatGrid"] * {
+  unity-name: "rg-child(${childIndex})";
+}
+
 
 [typeof="ScrollableGroup"] {
    viewport: true;
