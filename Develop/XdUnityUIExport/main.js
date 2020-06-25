@@ -87,15 +87,15 @@ const STYLE_BLANK = 'blank'
 const STYLE_BUTTON = 'button'
 const STYLE_BUTTON_TRANSITION = 'button-transition'
 const STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_NAME =
-  'button-transition-target-graphic-name'
+  'button-transition-target-graphic'
 const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
-  'button-transition-highlighted-sprite-name'
+  'button-transition-highlighted-sprite-target'
 const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_NAME =
-  'button-transition-pressed-sprite-name'
+  'button-transition-pressed-sprite-target'
 const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_NAME =
-  'button-transition-selected-sprite-name'
+  'button-transition-selected-sprite-target'
 const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_NAME =
-  'button-transition-disabled-sprite-name'
+  'button-transition-disabled-sprite-target'
 const STYLE_CANVAS_GROUP = 'canvas-group' // 削除予定
 const STYLE_COMMENT_OUT = 'comment-out'
 const STYLE_COMPONENT = 'component'
@@ -134,50 +134,50 @@ const STYLE_REPEATGRID_ATTACH_IMAGE_DATA_SERIES =
   'repeatgrid-attach-image-data-series'
 const STYLE_SCROLLBAR = 'scrollbar'
 const STYLE_SCROLLBAR_DIRECTION = 'scrollbar-direction'
-const STYLE_SCROLLBAR_HANDLE_NAME = 'scrollbar-handle-name'
+const STYLE_SCROLLBAR_HANDLE_NAME = 'scrollbar-handle-target'
 const STYLE_SCROLL_RECT = 'scroll-rect'
-const STYLE_SCROLL_RECT_CONTENT_NAME = 'scroll-rect-content-name'
+const STYLE_SCROLL_RECT_CONTENT_NAME = 'scroll-rect-content-target'
 const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_NAME =
-  'scroll-rect-horizontal-scrollbar-name'
+  'scroll-rect-horizontal-scrollbar-target'
 const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_NAME =
-  'scroll-rect-vertical-scrollbar-name'
+  'scroll-rect-vertical-scrollbar-target'
 const STYLE_SLIDER = 'slider'
 const STYLE_SLIDER_DIRECTION = 'slider-direction'
-const STYLE_SLIDER_FILL_RECT_NAME = 'slider-fill-rect-name'
-const STYLE_SLIDER_HANDLE_RECT_NAME = 'slider-handle-rect-name'
+const STYLE_SLIDER_FILL_RECT_NAME = 'slider-fill-rect-target'
+const STYLE_SLIDER_HANDLE_RECT_NAME = 'slider-handle-rect-target'
 const STYLE_TEXT = 'text'
 const STYLE_TEXTMP = 'textmp' // textmeshpro
 const STYLE_TEXT_CONTENT = 'text-content'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
-const STYLE_TOGGLE_GRAPHIC_NAME = 'toggle-graphic-name'
+const STYLE_TOGGLE_GRAPHIC_NAME = 'toggle-graphic-target'
 const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_NAME =
-  'toggle-transition-target-graphic-name'
+  'toggle-transition-target-graphic-target'
 const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
-  'toggle-transition-highlighted-sprite-name'
+  'toggle-transition-highlighted-sprite-target'
 const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_NAME =
-  'toggle-transition-pressed-sprite-name'
+  'toggle-transition-pressed-sprite-target'
 const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_NAME =
-  'toggle-transition-selected-sprite-name'
+  'toggle-transition-selected-sprite-target'
 const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_NAME =
-  'toggle-transition-disabled-sprite-name'
+  'toggle-transition-disabled-sprite-target'
 const STYLE_TOGGLE_GROUP = 'toggle-group'
 const STYLE_INPUT = 'input'
 const STYLE_INPUT_TRANSITION = 'input-transition'
-const STYLE_INPUT_GRAPHIC_NAME = 'input-graphic-name'
-const STYLE_INPUT_TARGET_GRAPHIC_NAME = 'input-transition-target-graphic-name'
+const STYLE_INPUT_GRAPHIC_NAME = 'input-graphic-target'
+const STYLE_INPUT_TARGET_GRAPHIC_NAME = 'input-transition-target-graphic-target'
 const STYLE_INPUT_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
-  'input-transition-highlighted-sprite-name'
+  'input-transition-highlighted-sprite-target'
 const STYLE_INPUT_TRANSITION_PRESSED_SPRITE_NAME =
-  'input-transition-pressed-sprite-name'
+  'input-transition-pressed-sprite-target'
 const STYLE_INPUT_TRANSITION_SELECTED_SPRITE_NAME =
-  'input-transition-selected-sprite-name'
+  'input-transition-selected-sprite-target'
 const STYLE_INPUT_TRANSITION_DISABLED_SPRITE_NAME =
-  'input-transition-disabled-sprite-name'
-const STYLE_INPUT_TEXT_COMPONENT_NAME = 'input-text-component-name'
-const STYLE_INPUT_PLACEHOLDER_NAME = 'input-placeholder-name'
-const STYLE_VIEWPORT = 'viewport'
-const STYLE_VIEWPORT_CREATE_CONTENT = 'viewport-create-content'
+  'input-transition-disabled-sprite-target'
+const STYLE_INPUT_TEXT_COMPONENT_NAME = 'input-text-component-target'
+const STYLE_INPUT_PLACEHOLDER_NAME = 'input-placeholder-target'
+const STYLE_CREATE_CONTENT = 'create-content'
+const STYLE_CREATE_CONTENT_NAME = 'create-content-name'
 const STYLE_V_ALIGN = 'v-align' //テキストの縦方向のアライメント XDの設定に追記される
 const STYLE_ADD_COMPONENT = 'add-component'
 const STYLE_MASK = 'mask'
@@ -372,8 +372,8 @@ class CssDeclarations {
     values[0] = value
   }
 
-  checkBool(property) {
-    return checkAsBool(this.first(property))
+  firstAsBool(property) {
+    return asBool(this.first(property))
   }
 }
 
@@ -1007,7 +1007,7 @@ function searchFileName(renditions, fileName) {
  * @param r
  * @returns {boolean}
  */
-function checkAsBool(r) {
+function asBool(r) {
   if (typeof r == 'string') {
     const val = r.toLowerCase()
     if (val === 'false' || val === '0' || val === 'null') return false
@@ -1114,7 +1114,7 @@ function addLayoutFromRepeatGrid(json, repeatGrid, style) {
   if (style == null) return
 
   const styleLayoutGroup = style.first(STYLE_LAYOUT_GROUP)
-  if (!checkAsBool(styleLayoutGroup)) return
+  if (!asBool(styleLayoutGroup)) return
 
   let method = null
   switch (styleLayoutGroup) {
@@ -2178,8 +2178,8 @@ class Style {
     return false
   }
 
-  checkBool(property) {
-    return checkAsBool(this.first(property))
+  firstAsBool(property) {
+    return asBool(this.first(property))
   }
 
   /**
@@ -2243,7 +2243,7 @@ function getStyleFromNode(node) {
       selector.matchRule(
         node,
         null,
-        rule.declarations.checkBool(STYLE_CHECK_LOG),
+        rule.declarations.firstAsBool(STYLE_CHECK_LOG),
       )
     ) {
       // console.log('マッチした宣言をスタイルに追加', rule)
@@ -2282,6 +2282,13 @@ function getChildIndex(node) {
     }
   }
   return -1
+}
+
+function isLasthild(node) {
+  const parentNode = node.parent
+  if (!parentNode) return null
+  const lastIndex = parentNode.children.length - 1
+  return parentNode.children.at(lastIndex) === node
 }
 
 /**
@@ -2407,7 +2414,7 @@ function makeLayoutJson(root) {
 function addActive(json, style) {
   if (style.first('active')) {
     Object.assign(json, {
-      active: checkAsBool(style.first('active')),
+      active: style.firstAsBool('active'),
     })
   }
 }
@@ -2662,8 +2669,8 @@ async function addImage(
     : null
   // 明確にfalseと指定してある場合にNO SLICEとする
   if (
-    (styleImageSliceValues && !checkAsBool(styleImageSliceValues[0])) ||
-    (localStyle && !checkAsBool(localStyleImageSliceValues[0]))
+    (styleImageSliceValues && !asBool(styleImageSliceValues[0])) ||
+    (localStyle && !asBool(localStyleImageSliceValues[0]))
   ) {
     // fileExtension = '-noslice.png'
     sliceOption = { slice: 'none' }
@@ -2672,7 +2679,7 @@ async function addImage(
     if (
       styleImageSliceValues &&
       styleImageSliceValues.length > 0 &&
-      checkAsBool(styleImageSliceValues[0])
+      asBool(styleImageSliceValues[0])
     ) {
       if (node.rotation !== 0) {
         console.log(
@@ -2757,7 +2764,7 @@ async function addImage(
   const styleRayCastTarget = style.first(STYLE_RAYCAST_TARGET)
   if (styleRayCastTarget != null) {
     Object.assign(imageJson, {
-      raycast_target: checkAsBool(styleRayCastTarget),
+      raycast_target: asBool(styleRayCastTarget),
     })
   }
 
@@ -2809,7 +2816,7 @@ async function addImage(
     }
   }
 
-  if (!checkAsBool(style.first(STYLE_BLANK))) {
+  if (!asBool(style.first(STYLE_BLANK))) {
     Object.assign(imageJson, {
       source_image: fileName,
     })
@@ -3108,7 +3115,7 @@ function addComponents(json, style) {
  */
 function hasContentChildren(node) {
   const { style } = getNodeNameAndStyle(node)
-  const styleViewportCreateContent = style.first(STYLE_VIEWPORT_CREATE_CONTENT)
+  const styleViewportCreateContent = style.first(STYLE_CREATE_CONTENT_NAME)
   if (styleViewportCreateContent) return true
   if (node.mask) return true
   if (node.constructor.name === 'RepeatGrid') return true
@@ -3123,8 +3130,8 @@ function hasContentChildren(node) {
  */
 function getViewport(node) {
   const { style } = getNodeNameAndStyle(node)
-  const styleViewport = style.first(STYLE_VIEWPORT)
-  if (checkAsBool(styleViewport)) return node
+  const styleViewport = style.first(STYLE_CREATE_CONTENT)
+  if (asBool(styleViewport)) return node
   if (node.mask) return node.mask
   if (node.constructor.name === 'RepeatGrid') return node
   return null
@@ -3141,14 +3148,12 @@ function getViewport(node) {
  * @returns {Promise<void>}
  */
 async function createContent(style, json, node, funcForEachChild, root) {
+  if( !style.firstAsBool(STYLE_CREATE_CONTENT) ) return;
   // Content
   // Mask以下、ScrollGroup以下のコンポーネントをまとめるグループ
   // - サイズは固定
-  let createContentName = 'content'
-  const styleViewportCreateContent = style.first(STYLE_VIEWPORT_CREATE_CONTENT)
-  if (styleViewportCreateContent) {
-    createContentName = styleViewportCreateContent
-  }
+
+  const createContentName = style.first(STYLE_CREATE_CONTENT_NAME) || "content"
 
   // contentのアサインと名前設定
   Object.assign(json, {
@@ -3245,6 +3250,8 @@ async function createContent(style, json, node, funcForEachChild, root) {
   const contentStyleFix = getStyleFix(contentStyle.values(STYLE_MARGIN_FIX))
 
   let pivot = { x: 0, y: 1 } // top-left
+
+  // TODO:以下をaddRectTransformでできないか
   let anchorMin = { x: 0, y: 1 }
   let anchorMax = { x: 0, y: 1 }
   let offsetMin = {
@@ -3559,9 +3566,7 @@ function addWrap(json, node, style) {
 async function createGroup(json, node, root, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
 
-  /**
-   * @type {Group}
-   */
+  /** @type {Group} */
   const nodeGroup = node
 
   const type = 'Group'
@@ -3575,22 +3580,11 @@ async function createGroup(json, node, root, funcForEachChild) {
     h: boundsCM.height, // XdUnityUIではつかわないが､情報としていれる RectElementで使用
     elements: [], // Groupは空でもelementsをもっていないといけない
   })
-  await funcForEachChild()
 
-  // おそらく以下のコードはつかわれていない
-  const styleAddContent = style.first('add-content')
-  if (styleAddContent) {
-    const sourceNode = searchNode(styleAddContent)
-    const nodeBounds = getBeforeGlobalBounds(node)
-    const duplicated = duplicateStretchable(sourceNode)
-    duplicated.name = duplicated.name + ' copy'
-    duplicated.removeFromParent()
-    nodeGroup.addChildAfter(duplicated, nodeGroup.children.at(0))
-    SetGlobalBounds(duplicated, nodeBounds)
-  }
-
-  if (node.mask) {
-    addMask(json)
+  await createContent(style, json, node, funcForEachChild, root)
+  if (!json['content']) {
+    // contentが存在しない場合、funcForEachChildが実行されていないため通常の実行をする
+    await funcForEachChild()
   }
 
   // 基本
@@ -3606,8 +3600,18 @@ async function createGroup(json, node, root, funcForEachChild) {
   addLayoutElement(json, node, style)
   addLayout(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
+  addScrollRect(json, node, style)
+  addRectMask2d(json, style)
 
-  addWrap(json, node, style) // エレメントに操作のため、処理は最後にする
+  addWrap(json, node, style) // エレメント操作のため、処理は最後にする
+
+  //contentが作成されていた場合、入れ替える
+  if (json['content']) {
+    json['content']['type'] = 'Group'
+    json['content']['elements'] = json['elements']
+    json['elements'] = [json['content']]
+    delete json['content']
+  }
 }
 
 /**
@@ -3899,7 +3903,7 @@ async function createImage(
 
   const unityName = getUnityName(node)
   // もしボタンオプションがついているのなら　ボタンを生成してその子供にイメージをつける
-  if (style.checkBool(STYLE_BUTTON)) {
+  if (style.firstAsBool(STYLE_BUTTON)) {
     // イメージはコンポーネントにするべき? -> グループの場合もあるのでコンポーネントにできない
     //TODO: ただし指定はできても良いはず
     await createButton(json, node, root, null)
@@ -4062,9 +4066,9 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   // - TEXT化オプションがFALSE
   // スライスしないオプションで出力する
   if (
-    style.checkBool(STYLE_IMAGE) ||
-    style.checkBool(STYLE_IMAGE_SLICE) ||
-    (!style.checkBool(STYLE_TEXT) && !style.checkBool(STYLE_TEXTMP))
+    style.firstAsBool(STYLE_IMAGE) ||
+    style.firstAsBool(STYLE_IMAGE_SLICE) ||
+    (!style.firstAsBool(STYLE_TEXT) && !style.firstAsBool(STYLE_TEXTMP))
   ) {
     const localStyle = new Style()
     localStyle.setFirst(STYLE_IMAGE_SLICE, 'false')
@@ -4082,7 +4086,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   const boundsCM = getBoundsCMInBase(node, artboard)
 
   let type = 'Text'
-  if (style.checkBool(STYLE_TEXTMP)) {
+  if (style.firstAsBool(STYLE_TEXTMP)) {
     type = 'TextMeshPro'
   }
 
@@ -4182,7 +4186,7 @@ async function nodeRoot(renditions, outputFolder, root) {
     let { style } = getNodeNameAndStyle(node)
 
     // コメントアウトチェック
-    if (style.checkBool(STYLE_COMMENT_OUT)) {
+    if (style.firstAsBool(STYLE_COMMENT_OUT)) {
       return
     }
 
@@ -4243,8 +4247,8 @@ async function nodeRoot(renditions, outputFolder, root) {
       case 'SymbolInstance':
         {
           if (
-            style.checkBool(STYLE_IMAGE) ||
-            style.checkBool(STYLE_IMAGE_SLICE)
+            style.firstAsBool(STYLE_IMAGE) ||
+            style.firstAsBool(STYLE_IMAGE_SLICE)
           ) {
             // console.log('groupでのSTYLE_IMAGE処理 子供のコンテンツ変更は行うが、イメージ出力はしない')
             enableWriteToLayoutJson = false //TODO: 関数にわたす引数にならないか
@@ -4255,27 +4259,29 @@ async function nodeRoot(renditions, outputFolder, root) {
             await createImage(json, node, root, outputFolder, renditions)
             return
           }
-          if (style.checkBool(STYLE_BUTTON)) {
+          if (style.firstAsBool(STYLE_BUTTON)) {
             await createButton(json, node, root, funcForEachChild)
             return
           }
-          if (style.checkBool(STYLE_SLIDER)) {
+          if (style.firstAsBool(STYLE_SLIDER)) {
             await createSlider(json, node, funcForEachChild)
             return
           }
-          if (style.checkBool(STYLE_SCROLLBAR)) {
+          if (style.firstAsBool(STYLE_SCROLLBAR)) {
             await createScrollbar(json, node, funcForEachChild)
             return
           }
-          if (style.checkBool(STYLE_TOGGLE)) {
+          if (style.firstAsBool(STYLE_TOGGLE)) {
             await createToggle(json, node, root, funcForEachChild)
             return
           }
-          if (style.checkBool(STYLE_VIEWPORT)) {
+          /*
+          if (style.firstAsBool(STYLE_CREATE_CONTENT)) {
             await createViewport(json, node, root, funcForEachChild)
             return
           }
-          if (style.checkBool(STYLE_INPUT)) {
+          */
+          if (style.firstAsBool(STYLE_INPUT)) {
             await createInput(json, node, root, funcForEachChild)
             return
           }
@@ -4416,7 +4422,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     for (let root of roots) {
       traverseNode(root, node => {
         const { node_name: nodeName, style } = getNodeNameAndStyle(node)
-        if (style.checkBool(STYLE_COMMENT_OUT)) {
+        if (style.firstAsBool(STYLE_COMMENT_OUT)) {
           return false // 子供には行かないようにする
         }
         try {
@@ -4432,8 +4438,8 @@ async function exportXdUnityUI(roots, outputFolder) {
         // 自身は可視にし、子供の不可視情報は生かす
         // 本来は sourceImageをNaturalWidth,Heightで出力する
         if (
-          style.checkBool(STYLE_IMAGE) ||
-          style.checkBool(STYLE_IMAGE_SLICE) != null ||
+          style.firstAsBool(STYLE_IMAGE) ||
+          style.firstAsBool(STYLE_IMAGE_SLICE) != null ||
           node.constructor.name == 'RepeatGrid'
         ) {
           return false
@@ -4825,10 +4831,12 @@ async function pluginExportXdUnityUI(selection, root) {
     await alert(e.message, 'error')
   }
   console.log('export baum2 done.')
+  /*
   // データをもとに戻すため､意図的にエラーをスローする
   if (!optionChangeContentOnly) {
     throw 'throw error for UNDO'
   }
+   */
 }
 
 /**
@@ -5140,6 +5148,9 @@ class CssSelector {
             const nodeChildIndex = getChildIndex(node) + 1
             if (nthChild !== nodeChildIndex) return false
             break
+          case 'last-child':
+            if (!isLasthild(node)) return false
+            break
           case 'root':
             if (node.parent) return false // 親があるのならマッチしない
             break
@@ -5197,6 +5208,7 @@ const CssSelectorParser = require('./node_modules/css-selector-parser/lib/css-se
 let cssSelectorParser = new CssSelectorParser()
 //cssSelectorParser.registerSelectorPseudos('has')
 cssSelectorParser.registerNumericPseudos('nth-child')
+cssSelectorParser.registerSelectorPseudos('last-child')
 cssSelectorParser.registerNestingOperators('>', '+', '~', ' ')
 cssSelectorParser.registerAttrEqualityMods('^', '$', '*', '~')
 cssSelectorParser.enableSubstitutes()
