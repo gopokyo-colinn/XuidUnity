@@ -451,8 +451,8 @@ namespace XdUnityUI.Editor
                 layoutGroup.childAlignment = childAlignment.Value;
             }
 
-            var controlChildSize = layoutJson.Get("control_child_size");
-            if (!String.IsNullOrEmpty(controlChildSize))
+            var controlChildSize = layoutJson.GetArray("control_child_size");
+            if (controlChildSize != null)
             {
                 if (controlChildSize.Contains("width"))
                     layoutGroup.childControlWidth = true;
@@ -460,8 +460,8 @@ namespace XdUnityUI.Editor
                     layoutGroup.childControlHeight = true;
             }
 
-            var controlChildScale = layoutJson.Get("use_child_scale");
-            if (!String.IsNullOrEmpty(controlChildScale))
+            var controlChildScale = layoutJson.GetArray("use_child_scale");
+            if (controlChildScale != null)
             {
 #if UNITY_2019_1_OR_NEWER
                 if (controlChildScale.Contains("width"))
@@ -471,13 +471,13 @@ namespace XdUnityUI.Editor
 #endif
             }
 
-            var childForceExpand = layoutJson.Get("child_force_expand");
-            if (!String.IsNullOrEmpty(childForceExpand))
+            var childForceExpand = layoutJson.GetArray("child_force_expand");
+            if (childForceExpand != null)
             {
                 if (childForceExpand.Contains("width"))
                     layoutGroup.childForceExpandWidth = true;
                 if (childForceExpand.Contains("height"))
-                    layoutGroup.childForceExpandWidth = true;
+                    layoutGroup.childForceExpandHeight = true;
             }
 
             return layoutGroup;
@@ -659,6 +659,7 @@ namespace XdUnityUI.Editor
             {
                 scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
             }
+
             scrollRectComponent.viewport = goViewport.GetComponent<RectTransform>(); // 自分自身がViewportになる
             scrollRectComponent.vertical = false;
             scrollRectComponent.horizontal = false;

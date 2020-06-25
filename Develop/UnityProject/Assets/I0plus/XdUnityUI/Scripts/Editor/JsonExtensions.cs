@@ -66,6 +66,16 @@ namespace XdUnityUI.Editor
 
             return json[key] as T;
         }
+        
+        public static List<object> GetArray(this Dictionary<string, object> json, string key)
+        {
+            if (json == null || !json.ContainsKey(key))
+            {
+                return null;
+            }
+
+            return json[key] as List<object>;
+        }
 
         public static Dictionary<string, object> GetDic(this Dictionary<string, object> json, string key)
         {
