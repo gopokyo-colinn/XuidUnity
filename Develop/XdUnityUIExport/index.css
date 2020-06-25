@@ -92,9 +92,19 @@
 }
 
 .padding {
+  layout-group: y;
+  layout-group-child-force-expand: width height;
   create-content: true;
   create-content-name: ".content";
-  create-content-exclude-last-child: true;
+}
+
+/*
+.padding以下の一番下のレイヤーは画像化、コンポーネント化する
+first-childになる
+ */
+.padding > *:first-child {
+  component: true;
+  image: true;
 }
 
 .viewport-xy {
@@ -312,7 +322,7 @@
   input-transition-selected-sprite-target: ".selected-image";
   input-transition-disabled-sprite-target: ".disabled-image";
   input-target-graphic: ".target-image"; /* ONのときのチェック画像 */
-  input-text-component-target: ".text";
+  input-text-target: ".input-text";
   input-placeholder-target: ".placeholder";
 }
 
