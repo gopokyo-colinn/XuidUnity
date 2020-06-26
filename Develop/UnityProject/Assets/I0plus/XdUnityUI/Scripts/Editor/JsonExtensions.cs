@@ -54,7 +54,8 @@ namespace XdUnityUI.Editor
                 return null;
             }
 
-            return (int) (float) json[key];
+            var value = json[key];
+            return (value is float f) ? (int) f : (int?) null;
         }
 
         public static T Get<T>(this Dictionary<string, object> json, string key) where T : class
@@ -65,6 +66,16 @@ namespace XdUnityUI.Editor
             }
 
             return json[key] as T;
+        }
+        
+        public static List<object> GetArray(this Dictionary<string, object> json, string key)
+        {
+            if (json == null || !json.ContainsKey(key))
+            {
+                return null;
+            }
+
+            return json[key] as List<object>;
         }
 
         public static Dictionary<string, object> GetDic(this Dictionary<string, object> json, string key)

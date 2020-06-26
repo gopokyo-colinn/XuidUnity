@@ -419,18 +419,15 @@ namespace XdUnityUI.Editor
             layoutGroup.childForceExpandWidth = false;
             layoutGroup.childForceExpandHeight = false;
 
-            if (layoutJson.ContainsKey("padding"))
+            var padding = layoutJson.GetDic("padding");
+            if (padding != null)
             {
-                var padding = layoutJson.GetDic("padding");
                 var left = padding.GetInt("left");
                 var right = padding.GetInt("right");
                 var top = padding.GetInt("top");
                 var bottom = padding.GetInt("bottom");
-                if (left != null && right != null && top != null && bottom != null)
-                {
-                    var paddingRectOffset = new RectOffset(left.Value, right.Value, top.Value, bottom.Value);
-                    layoutGroup.padding = paddingRectOffset;
-                }
+                var paddingRectOffset = new RectOffset(left ?? 0, right ?? 0, top ?? 0, bottom ?? 0);
+                layoutGroup.padding = paddingRectOffset;
             }
 
             if (method == "horizontal")
@@ -451,8 +448,8 @@ namespace XdUnityUI.Editor
                 layoutGroup.childAlignment = childAlignment.Value;
             }
 
-            var controlChildSize = layoutJson.Get("control_child_size");
-            if (!String.IsNullOrEmpty(controlChildSize))
+            var controlChildSize = layoutJson.GetArray("control_child_size");
+            if (controlChildSize != null)
             {
                 if (controlChildSize.Contains("width"))
                     layoutGroup.childControlWidth = true;
@@ -460,8 +457,8 @@ namespace XdUnityUI.Editor
                     layoutGroup.childControlHeight = true;
             }
 
-            var controlChildScale = layoutJson.Get("use_child_scale");
-            if (!String.IsNullOrEmpty(controlChildScale))
+            var controlChildScale = layoutJson.GetArray("use_child_scale");
+            if (controlChildScale != null)
             {
 #if UNITY_2019_1_OR_NEWER
                 if (controlChildScale.Contains("width"))
@@ -471,13 +468,13 @@ namespace XdUnityUI.Editor
 #endif
             }
 
-            var childForceExpand = layoutJson.Get("child_force_expand");
-            if (!String.IsNullOrEmpty(childForceExpand))
+            var childForceExpand = layoutJson.GetArray("child_force_expand");
+            if (childForceExpand != null)
             {
                 if (childForceExpand.Contains("width"))
                     layoutGroup.childForceExpandWidth = true;
                 if (childForceExpand.Contains("height"))
-                    layoutGroup.childForceExpandWidth = true;
+                    layoutGroup.childForceExpandHeight = true;
             }
 
             return layoutGroup;
@@ -659,6 +656,7 @@ namespace XdUnityUI.Editor
             {
                 scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
             }
+
             scrollRectComponent.viewport = goViewport.GetComponent<RectTransform>(); // 自分自身がViewportになる
             scrollRectComponent.vertical = false;
             scrollRectComponent.horizontal = false;

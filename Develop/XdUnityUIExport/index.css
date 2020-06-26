@@ -16,7 +16,6 @@
   layer: UI;
 }
 
-
 /*
  横にならべる
  */
@@ -30,6 +29,8 @@
 /*
  縦にならべる
  */
+.vertical-stack,
+.stack-y,
 .layout-y {
   layout-group: y;
   /*layout-group-control-child-size: width height;
@@ -67,80 +68,100 @@
   layout-element: preferred;
 }
 
-
 /*
  リピードグリッドはViewport扱い
  */
-[typeof="RepeatGrid"] {
-  viewport: true;
-  viewport-create-content: ".content";
+[typeof='RepeatGrid'] {
+  create-content: true;
+  create-content-name: '.content';
   rect-mask-twod: true;
 }
 
 /*
  リピードグリッドの子は、Layout-elementを持つ
  */
-[typeof="RepeatGrid"] * {
-  unity-name: "rg-child(${childIndex})";
+[typeof='RepeatGrid'] > * {
+  unity-name: 'rg-child(${childIndex})';
 }
 
-
-[typeof="ScrollableGroup"] {
-   viewport: true;
-   viewport-create-content: ".content";
-   rect-mask-twod: true;
+[typeof='ScrollableGroup'] {
+  create-content: true;
+  create-content-name: '.content';
+  rect-mask-twod: true;
   scroll-rect: true;
-   scroll-rect-content-name: ".content";
- }
+  scroll-rect-content-target: '.content';
+}
+
+.padding {
+  layout-group: y;
+  layout-group-child-control-size: width height;
+  layout-group-child-force-expand: width height;
+}
+
+.padding > * {
+  layout-element: if-no-layout-properties preferred;
+  layout-element-preferred-width: bounds;
+  layout-element-preferred-height: bounds;
+}
+
+/*
+.padding直下の一番下のレイヤーは画像化、コンポーネント化する
+最下のレイヤー
+first-childになる
+ */
+.padding > *:first-child {
+  component: true;
+  image: true;
+}
 
 .viewport-xy {
-  viewport: true;
-  viewport-create-content: ".content";
+  create-content: true;
+  create-content-name: '.content';
   rect-mask-twod: true;
   scroll-rect: x y;
-  scroll-rect-content-name: ".content";
+  scroll-rect-content-target: '.content';
 }
 
 .viewport-layout-x {
-  viewport: true;
-  viewport-create-content: ".content.layout-x";
+  create-content: true;
+  create-content-name: '.content.layout-x';
   rect-mask-twod: true;
   scroll-rect: x;
-  scroll-rect-content-name: ".content";
+  scroll-rect-content-target: '.content';
 }
 
 .viewport-layout-y {
-  viewport: true;
-  viewport-create-content: ".content.layout-y";
+  create-content: true;
+  create-content-name: '.content.layout-y';
   rect-mask-twod: true;
   scroll-rect: y;
-  scroll-rect-content-name: ".content";
+  scroll-rect-content-target: '.content';
 }
 
 .viewport-grid-x {
-  viewport: true;
-  viewport-create-content: ".content.layout-grid-x";
+  create-content: true;
+  create-content-name: '.content.layout-grid-x';
   rect-mask-twod: true;
   scroll-rect: x;
-  scroll-rect-content-name: ".content";
-  scroll-rect-horizontal-scrollbar-name: ".scrollbar-x";
+  scroll-rect-content-target: '.content';
+  scroll-rect-horizontal-scrollbar-target: '.scrollbar-x';
 }
 
 .viewport-grid-y {
-  viewport: true;
-  viewport-create-content: ".content.layout-grid-y";
+  create-content: true;
+  create-content-name: '.content.layout-grid-y';
   rect-mask-twod: true;
   scroll-rect: y;
-  scroll-rect-content-name: ".content";
-  scroll-rect-vertical-scrollbar-name: ".scrollbar-y";
+  scroll-rect-content-target: '.content';
+  scroll-rect-vertical-scrollbar-target: '.scrollbar-y';
 }
 
-.viewport-layout-x .content {
+.viewport-layout-x > .content {
   conent-size-fitter: x;
   rect-transform-anchor-offset-y: 0 1 0 0;
 }
 
-.viewport-layout-y .content {
+.viewport-layout-y > .content {
   /*
    親と横幅がぴったり重なる
    anchor.min.x: 0
@@ -151,18 +172,18 @@
   rect-transform-anchor-offset-x: 0 1 0 0;
 }
 
-.viewport-grid-x .content {
+.viewport-grid-x > .content {
   rect-transform-anchor-offset-x: 0 1 0 0;
 }
 
-.viewport-grid-y .content {
+.viewport-grid-y > .content {
   rect-transform-anchor-offset-y: 0 1 0 0;
 }
 
 .scrollbar-x {
   scrollbar: true;
   scrollbar-direction: ltr;
-  scrollbar-handle-name: ".handle";
+  scrollbar-handle-target: '.handle';
 }
 
 .scrollbar-x > .handle {
@@ -172,7 +193,7 @@
 .scrollbar-y {
   scrollbar: true;
   scrollbar-direction: btt;
-  scrollbar-handle-name: ".handle";
+  scrollbar-handle-target: '.handle';
 }
 
 .scrollbar-y > .handle {
@@ -182,31 +203,31 @@
 .slider-x {
   slider: true;
   slider-direction: ltr;
-  slider-fill-rect-name: ".fill";
-  slider-handle-rect-name: ".handle";
+  slider-fill-rect-target: '.fill';
+  slider-handle-rect-target: '.handle';
 }
 
-.slider-x .fill {
+.slider-x > .fill {
   wrap: true;
 }
 
-.slider-x .handle {
-  wrap-slider-handle-x:true;
+.slider-x > .handle {
+  wrap-slider-handle-x: true;
 }
 
 .slider-y {
   slider: true;
   slider-direction: btt;
-  slider-fill-rect-name: ".fill";
-  slider-handle-rect-name: ".handle";
+  slider-fill-rect-target: '.fill';
+  slider-handle-rect-target: '.handle';
 }
 
 .slider-y > .fill {
-  wrap: true
+  wrap: true;
 }
 
 .slider-y > .handle {
-  wrap-slider-handle-y:true
+  wrap-slider-handle-y: true;
 }
 
 .dots-scrollbar {
@@ -227,37 +248,62 @@
   component: true;
 }
 
-.image, [tag-name='image'], [tag-name$='-image'], [class$="-image"], [tag-name$='_image'], [class$="_image"] {
+.image,
+[tag-name='image'],
+[tag-name$='-image'],
+[tag-name$='_image'],
+[class$='-image'],
+[class$='_image'] {
   image: true;
 }
 
-.text, [tag-name='text'], [tag-name$='-text'], [class$="-text"], [tag-name$='_text'], [class$="_text"] {
+.text,
+[tag-name='text'],
+[tag-name$='-text'],
+[tag-name$='_text'],
+[class$='-text'],
+[class$='_text'] {
   text: true;
 }
 
-.textmp, [tag-name='textmp'], [tag-name$='-textmp'], [class$="-textmp"], [tag-name$='_textmp'], [class$="_textmp"] {
+.textmp,
+[tag-name='textmp'],
+[tag-name$='-textmp'],
+[tag-name$='_textmp'],
+[class$='-textmp'],
+[class$='_textmp'] {
   textmp: true;
 }
 
-.button, [tag-name='button'], [tag-name$='-button'], [class$="-button"], [tag-name$='_button'], [class$="_button"] {
+.button,
+[tag-name='button'],
+[tag-name$='-button'],
+[tag-name$='_button'],
+[class$='-button'],
+[class$='_button'] {
   button: true;
   button-transition: color-tint;
-  button-transition-target-graphic-name: ".target-image";
-  button-transition-highlighted-sprite-name: ".highlighted-image";
-  button-transition-pressed-sprite-name: ".pressed-image";
-  button-transition-selected-sprite-name: ".selected-image";
-  button-transition-disabled-sprite-name: ".disabled-image";
+  button-transition-target-graphic: '.target-image';
+  button-transition-highlighted-sprite-target: '.highlighted-image';
+  button-transition-pressed-sprite-target: '.pressed-image';
+  button-transition-selected-sprite-target: '.selected-image';
+  button-transition-disabled-sprite-target: '.disabled-image';
 }
 
-.toggle, [tag-name$="toggle"], [tag-name$="-toggle"], [class$="-toggle"], [tag-name$="_toggle"], [class$="_toggle"] {
+.toggle,
+[tag-name$='toggle'],
+[tag-name$='-toggle'],
+[tag-name$='_toggle'],
+[class$='-toggle'],
+[class$='_toggle'] {
   toggle: true;
   toggle-transition: color-tint;
-  toggle-transition-target-graphic-name: ".target-image";
-  toggle-transition-highlighted-sprite-name: ".highlighted-image";
-  toggle-transition-pressed-sprite-name: ".pressed-image";
-  toggle-transition-selected-sprite-name: ".selected-image";
-  toggle-transition-disabled-sprite-name: ".disabled-image";
-  toggle-graphic-name: ".checked-image"; /* ONのときのチェック画像 */
+  toggle-transition-target-graphic: '.target-image';
+  toggle-transition-highlighted-sprite-target: '.highlighted-image';
+  toggle-transition-pressed-sprite-target: '.pressed-image';
+  toggle-transition-selected-sprite-target: '.selected-image';
+  toggle-transition-disabled-sprite-target: '.disabled-image';
+  toggle-graphic-target: '.checked-image'; /* ONのときのチェック画像 */
 }
 
 .transition-sprite-swap {
@@ -269,17 +315,22 @@
   image-slice: false;
 }
 
-.input, [tag-name$="input"], [tag-name$="-input"], [class$="-input"], [tag-name$="_input"], [class$="_input"] {
+.input,
+[tag-name$='input'],
+[tag-name$='-input'],
+[tag-name$='_input'],
+[class$='-input'],
+[class$='_input'] {
   input: true;
   input-transition: color-tint;
-  input-transition-target-graphic-name: ".target-image";
-  input-transition-highlighted-sprite-name: ".highlighted-image";
-  input-transition-pressed-sprite-name: ".pressed-image";
-  input-transition-selected-sprite-name: ".selected-image";
-  input-transition-disabled-sprite-name: ".disabled-image";
-  input-target-graphic-name: ".target-image"; /* ONのときのチェック画像 */
-  input-text-component-name: ".text";
-  input-placeholder-name: ".placeholder";
+  input-transition-target-graphic: '.target-image';
+  input-transition-highlighted-sprite-target: '.highlighted-image';
+  input-transition-pressed-sprite-target: '.pressed-image';
+  input-transition-selected-sprite-target: '.selected-image';
+  input-transition-disabled-sprite-target: '.disabled-image';
+  input-target-graphic: '.target-image'; /* ONのときのチェック画像 */
+  input-text-target: '.input-text';
+  input-placeholder-target: '.placeholder';
 }
 
 .mask-image {
