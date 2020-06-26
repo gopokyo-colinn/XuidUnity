@@ -54,7 +54,8 @@ namespace XdUnityUI.Editor
                 return null;
             }
 
-            return (int) (float) json[key];
+            var value = json[key];
+            return (value is float f) ? (int) f : (int?) null;
         }
 
         public static T Get<T>(this Dictionary<string, object> json, string key) where T : class
