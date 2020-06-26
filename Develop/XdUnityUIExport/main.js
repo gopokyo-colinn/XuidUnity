@@ -148,7 +148,7 @@ const STYLE_SLIDER_FILL_RECT_NAME = 'slider-fill-rect-target'
 const STYLE_SLIDER_HANDLE_RECT_NAME = 'slider-handle-rect-target'
 const STYLE_TEXT = 'text'
 const STYLE_TEXTMP = 'textmp' // textmeshpro
-const STYLE_TEXT_CONTENT = 'text-content'
+const STYLE_TEXT_STRING = 'text-string'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
 const STYLE_TOGGLE_GRAPHIC_NAME = 'toggle-graphic-target'
@@ -272,6 +272,7 @@ function createCssVars(cssRules) {
  * ruleブロック selectorとdeclaration部に分ける
  * 正規表現テスト https://regex101.com/r/QIifBs/
  * @param {string} text
+ * @param errorThrow
  * @return {{selector:CssSelector, declarations:CssDeclarations, at_rule:string }[]}
  */
 function parseCss(text, errorThrow = true) {
@@ -280,12 +281,14 @@ function parseCss(text, errorThrow = true) {
   text = text.replace(/\/\*[\s\S]*?\*\//g, str => {
     let replace = ''
     for (let c of str) {
-      if (c == '\n') replace += c
+      if (c === '\n') replace += c
     }
     return replace
   })
   // declaration部がなくてもSelectorだけで取得できるようにする　NodeNameのパースに使うため
-  const tokenizer = /(?<at_rule>\s*@[^;]+;\s*)|((?<selector>(("([^"\\]|\\.)*")|[^{"]+)+)({(?<decl_block>(("([^"\\]|\\.)*")|[^}"]*)*)}\s*)?)/gi
+  // const tokenizer = /(?<at_rule>\s*@[^;]+;\s*)|((?<selector>(("([^"\\]|\\.)*")|[^{"]+)+)({(?<decl_block>(("([^"\\]|\\.)*")|[^}"]*)*)}\s*)?)/gi
+  // シングルクオーテーション
+  const tokenizer = /(?<at_rule>\s*@[^;]+;\s*)|((?<selector>(('([^'\\]|\\.)*')|[^{']+)+)({(?<decl_block>(('([^'\\]|\\.)*')|[^}']*)*)}\s*)?)/gi
   const rules = []
   let token
   while ((token = tokenizer.exec(text))) {
@@ -558,9 +561,7 @@ class GlobalBounds {
           }
         }
          */
-        const { style } = getNodeNameAndStyle(child)
-        if (style.firstAsBool(STYLE_COMPONENT)) return false
-        return child !== node.mask
+        return isContentChild(child)
       })
       const contentBounds = calcGlobalBounds(contents)
       this.content_global_bounds = contentBounds.global_bounds
@@ -1240,7 +1241,7 @@ function getPadding(node) {
  */
 function calcLayout(json, viewportNode, maskNode, nodeChildren) {
   const padding = getPadding(viewportNode)
-  console.log('padding:', padding)
+  // console.log('padding:', padding)
   let jsonLayout = {
     padding,
   }
@@ -2841,7 +2842,7 @@ async function addImage(
 
       // mask イメージを出力する場合、maskをそのままRenditionできないため
       // Maskグループそのものイメージを出力している
-      if (renditionNode.parent && renditionNode.parent.mask == renditionNode) {
+      if (renditionNode.parent && renditionNode.parent.mask === renditionNode) {
         renditionNode = renditionNode.parent
       }
 
@@ -2973,7 +2974,7 @@ function addLayout(json, viewportNode, maskNode, children, style) {
     })
   }
 
-  console.log('addLayout:', layoutJson)
+  // console.log('addLayout:', layoutJson)
 
   Object.assign(json, {
     layout: layoutJson,
@@ -3044,6 +3045,19 @@ function addLayoutParam(layoutJson, style) {
  * @param {Style} style
  */
 function addLayoutElement(json, node, style) {
+  let first = style.first(STYLE_LAYOUT_ELEMENT)
+  if (first === 'if-no-layout-properties') {
+    if (
+      style.firstAsBool(STYLE_TEXT) ||
+      style.firstAsBool(STYLE_TEXTMP) ||
+      style.firstAsBool(STYLE_IMAGE) ||
+      style.firstAsBool(STYLE_LAYOUT_GROUP)
+    ) {
+      first = false
+    }
+  }
+  if( !asBool(first)) return
+
   if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'ignore-layout')) {
     Object.assign(json, {
       layout_element: {
@@ -3134,6 +3148,18 @@ function hasContentChildren(node) {
 }
 
 /**
+ *
+ * @param {SceneNodeClass} node
+ * @return {boolean}
+ */
+function isContentChild(node) {
+  const { style } = getNodeNameAndStyle(node)
+  if (style.firstAsBool(STYLE_COMPONENT)) return false
+  if (node.parent.mask === node) return false
+  return hasContentChildren(node.parent)
+}
+
+/**
  * Viewportの役割をもつノードを返す
  * Maskをもっている場合はMask
  * @param node
@@ -3166,7 +3192,9 @@ function addContent(style, json, node) {
   // contentのアサインと名前設定
   Object.assign(json, {
     content: {
+      type: 'Group',
       name: createContentName,
+      elements: [],
     },
   })
   let contentJson = json[STR_CONTENT]
@@ -3175,9 +3203,7 @@ function addContent(style, json, node) {
     parent: node,
   })
 
-  let viewportBoundsCM = null
   // contentのBounds　RepeatGridか、Group・ScrollableGroupかで、作成方法がかわる
-
   if (
     node.constructor.name === 'Group' ||
     node.constructor.name === 'ScrollableGroup'
@@ -3204,12 +3230,12 @@ function addContent(style, json, node) {
     console.log('***error: createContentで対応していない型です')
   }
 
-  const contentBounds = getBeforeViewportContentGlobalDrawBounds(node)
+  const contentBounds = getBeforeContentGlobalDrawBounds(node)
 
   Object.assign(contentJson, contentBounds)
 
   // ContentのRectTransformを決める
-  // addRectTransformができない　→ Recttransformのキャッシュをもっていないため
+  // addRectTransformができない　→ RectTransformのキャッシュをもっていないため
   const nodeBounds = getBeforeGlobalDrawBounds(node)
   const contentX = contentBounds.x
   const contentY = contentBounds.y
@@ -3568,6 +3594,10 @@ async function createGroup(json, node, root, funcForEachChild) {
     elements: [], // Groupは空でもelementsをもっていないといけない
   })
 
+  // funcForEachChildの前にContentを作成しておく
+  // funcForEachChild実行時に、contentグループに入れていくため、事前準備が必要
+  addContent(style, json, node)
+
   let maskNode = node.mask || node
   await funcForEachChild(null, child => {
     // TODO:AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある
@@ -3593,15 +3623,17 @@ async function createGroup(json, node, root, funcForEachChild) {
 
   addWrap(json, node, style) // エレメント操作のため、処理は最後にする
 
-  addContent(style, json, node)
   //contentが作成されていた場合、入れ替える
   if (json['content']) {
+    /*
     // contentのタイプはGroup
     json['content']['type'] = 'Group'
     // 子供を全て移動
     json['content']['elements'] = json['elements']
     //
     json['elements'] = [json['content']]
+     */
+    json.elements.push(json['content'])
     delete json['content']
   }
 }
@@ -4031,7 +4063,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   let nodeText = node
 
   // コンテンツ書き換え対応
-  const styleTextContent = style.first(STYLE_TEXT_CONTENT)
+  const styleTextContent = style.first(STYLE_TEXT_STRING)
   if (styleTextContent) {
     /** @type {SymbolInstance} */
     const si = nodeText.parent
@@ -4217,7 +4249,11 @@ async function nodeRoot(renditions, outputFolder, root) {
           nodeStack.pop()
           // なにも入っていない場合はelementsに追加しない
           if (enableWriteToLayoutJson && Object.keys(childJson).length > 0) {
-            json.elements.push(childJson)
+            let pushTo = json.elements
+            if (isContentChild(child) && json.content) {
+              pushTo = json.content.elements
+            }
+            pushTo.push(childJson)
           }
         }
       }
