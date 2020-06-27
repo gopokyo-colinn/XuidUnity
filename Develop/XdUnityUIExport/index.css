@@ -29,12 +29,11 @@
 /*
  縦にならべる
  */
-.vertical-stack,
-.stack-y,
-.layout-y {
+.vertical-stack {
   layout-group: y;
-  /*layout-group-control-child-size: width height;
-  layout-group-child-force-expand: width;*/
+  layout-group-control-child-size: width height;
+  /*layout-group-child-force-expand: width;*/
+  content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
 }
 
@@ -95,7 +94,6 @@
 .padding {
   layout-group: y;
   layout-group-child-control-size: width height;
-  layout-group-child-force-expand: width height;
 }
 
 .padding > * {

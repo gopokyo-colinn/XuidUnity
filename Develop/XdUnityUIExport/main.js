@@ -115,7 +115,7 @@ const STYLE_LAYOUT_ELEMENT = 'layout-element'
 const STYLE_LAYOUT_GROUP = 'layout-group' //子供を自動的にどうならべるかのオプション
 const STYLE_LAYOUT_GROUP_CHILD_ALIGNMENT = 'layout-group-child-alignment'
 const STYLE_LAYOUT_GROUP_CHILD_FORCE_EXPAND = 'layout-group-child-force-expand'
-const STYLE_LAYOUT_GROUP_CONTROL_CHILD_SIZE = 'layout-group-control-child-size'
+const STYLE_LAYOUT_GROUP_CHILD_CONTROL_SIZE = 'layout-group-child-control-size'
 const STYLE_LAYOUT_GROUP_SPACING_X = 'layout-group-spacing-x'
 const STYLE_LAYOUT_GROUP_SPACING_Y = 'layout-group-spacing-y'
 const STYLE_LAYOUT_GROUP_START_AXIS = 'layout-group-start-axis'
@@ -567,11 +567,15 @@ class GlobalBounds {
       this.content_global_bounds = contentBounds.global_bounds
       this.content_global_draw_bounds = contentBounds.global_draw_bounds
 
-      const viewportContents = contents.concat(getViewport(node))
-      const viewportContentsBounds = calcGlobalBounds(viewportContents)
-      this.viewport_content_global_bounds = viewportContentsBounds.global_bounds
-      this.viewport_content_global_draw_bounds =
-        viewportContentsBounds.global_draw_bounds
+      const viewport = getViewport(node)
+      if (viewport) {
+        const viewportContents = contents.concat(viewport)
+        const viewportContentsBounds = calcGlobalBounds(viewportContents)
+        this.viewport_content_global_bounds =
+          viewportContentsBounds.global_bounds
+        this.viewport_content_global_draw_bounds =
+          viewportContentsBounds.global_draw_bounds
+      }
     }
   }
 }
@@ -1210,7 +1214,7 @@ function calcGlobalBounds(nodes) {
  * @param {SceneNodeList} nodeChildren
  * @returns {{top: number, left: number, bottom: number, right: number}}
  */
-function getPadding(node) {
+function calcPadding(node) {
   let bounds = getBeforeGlobalDrawBounds(node) // 描画でのサイズを取得する　影など増えた分も考慮したPaddingを取得する
   const contentBounds = getBeforeContentGlobalDrawBounds(node)
   // Paddingの計算
@@ -1240,7 +1244,7 @@ function getPadding(node) {
  * @param {SceneNodeList} nodeChildren
  */
 function calcLayout(json, viewportNode, maskNode, nodeChildren) {
-  const padding = getPadding(viewportNode)
+  const padding = calcPadding(viewportNode)
   // console.log('padding:', padding)
   let jsonLayout = {
     padding,
@@ -2667,7 +2671,7 @@ async function addImage(
     hashStringLength++
   }
 
-  let sliceOption = { slice: 'auto' }
+  let imageOptionJson = { slice: 'auto' }
 
   let fileExtension = '.png'
 
@@ -2681,7 +2685,7 @@ async function addImage(
     (localStyle && !asBool(localStyleImageSliceValues[0]))
   ) {
     // fileExtension = '-noslice.png'
-    sliceOption = { slice: 'none' }
+    imageOptionJson = { slice: 'none' }
   } else {
     // sliceオプションチェック
     if (
@@ -2733,7 +2737,7 @@ async function addImage(
 
         // fileExtension = '-9slice,' + offset + '.png'
 
-        sliceOption = {
+        imageOptionJson = {
           slice: 'border',
           border: {
             top,
@@ -2854,13 +2858,13 @@ async function addImage(
         scale: renditionScale,
       })
 
-      const sliceFile = await outputFolder.createFile(
+      const imageOptionFile = await outputFolder.createFile(
         fileName + fileExtension + '.json',
         {
           overwrite: true,
         },
       )
-      await sliceFile.write(JSON.stringify(sliceOption, null, '  '))
+      await imageOptionFile.write(JSON.stringify(imageOptionJson, null, '  '))
     }
   }
 }
@@ -2991,16 +2995,16 @@ function addLayoutParam(layoutJson, style) {
   const styleChildAlignment = style.first(STYLE_LAYOUT_GROUP_CHILD_ALIGNMENT)
   if (styleChildAlignment) {
     Object.assign(layoutJson, {
-      control_child_size: styleChildAlignment,
+      child_alignment: styleChildAlignment,
     })
   }
 
-  const styleControlChildSize = style.values(
-    STYLE_LAYOUT_GROUP_CONTROL_CHILD_SIZE,
+  const styleChildControlSize = style.values(
+    STYLE_LAYOUT_GROUP_CHILD_CONTROL_SIZE,
   )
-  if (styleControlChildSize) {
+  if (styleChildControlSize) {
     Object.assign(layoutJson, {
-      control_child_size: styleControlChildSize,
+      child_control_size: styleChildControlSize,
     })
   }
 
@@ -3056,7 +3060,7 @@ function addLayoutElement(json, node, style) {
       first = false
     }
   }
-  if( !asBool(first)) return
+  if (!asBool(first)) return
 
   if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'ignore-layout')) {
     Object.assign(json, {
@@ -3142,6 +3146,7 @@ function addComponents(json, style) {
 function hasContentChildren(node) {
   const { style } = getNodeNameAndStyle(node)
   if (style.firstAsBool(STYLE_CREATE_CONTENT)) return true
+  if (style.firstAsBool(STYLE_LAYOUT_GROUP)) return true
   if (node.mask) return true
   if (node.constructor.name === 'RepeatGrid') return true
   return false
@@ -4431,21 +4436,11 @@ async function exportXdUnityUI(roots, outputFolder) {
         // レイアウトファイルの出力
         await layoutFile.write(layoutJsonString)
       }
-      /*
-      if (outputFolder) {
-        const layoutFile = await outputFolder.createFile(layoutFileName, {
-          overwrite: true,
-        })
-        // レイアウトファイルの出力
-        await layoutFile.write(layoutJsonString)
-      }
-      */
     }
     console.log('----- done -----')
   }
 
-  // すべて可視にする
-  // 背景のぼかしをすべてオフにする　→　ボカシがはいっていると､その画像が書き込まれるため
+  // createRenditionsの前にすべて可視にする
   if (!optionChangeContentOnly) {
     for (let root of roots) {
       traverseNode(root, node => {
@@ -4453,22 +4448,21 @@ async function exportXdUnityUI(roots, outputFolder) {
         if (style.firstAsBool(STYLE_COMMENT_OUT)) {
           return false // 子供には行かないようにする
         }
-        try {
-          if (!node.visible) node.visible = true
-          if (node.blur != null) {
-            // ぼかしをオフ　ぼかした絵がそのまま画像になるため
-            node.blur = null
+        if (!node.visible) {
+          if (!selection.isInEditContext(node)) {
+            console.log(
+              `***error: could not change visible parameter. not in edit context ${node.name}`,
+            )
+          } else {
+            node.visible = true
           }
-        } catch (e) {
-          console.log('***error ' + nodeName + ': blur off failed.')
         }
         // IMAGEであった場合、そのグループの不可視情報はそのまま活かすため
         // 自身は可視にし、子供の不可視情報は生かす
         // 本来は sourceImageをNaturalWidth,Heightで出力する
         if (
           style.firstAsBool(STYLE_IMAGE) ||
-          style.firstAsBool(STYLE_IMAGE_SLICE) != null ||
-          node.constructor.name == 'RepeatGrid'
+          style.firstAsBool(STYLE_IMAGE_SLICE)
         ) {
           return false
         }
@@ -4859,12 +4853,11 @@ async function pluginExportXdUnityUI(selection, root) {
     await alert(e.message, 'error')
   }
   console.log('export baum2 done.')
-  /*
+
   // データをもとに戻すため､意図的にエラーをスローする
   if (!optionChangeContentOnly) {
     throw 'throw error for UNDO'
   }
-   */
 }
 
 /**
