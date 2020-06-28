@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 using OnionRing;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using Object = UnityEngine.Object;
 
 namespace XdUnityUI.Editor
@@ -18,8 +20,14 @@ namespace XdUnityUI.Editor
         /// https://qiita.com/Katumadeyaruhiko/items/c2b9b4ccdfe51df4ad4a
         /// </summary>
         /// <param name="sourceTexture"></param>
+        /// <param name="destY"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="destX"></param>
         /// <returns></returns>
-        private static Texture2D CreateReadableTexture2D(Texture2D sourceTexture)
+        private static Texture2D CreateReadableTexture2D(
+            Texture sourceTexture,
+            int? destX, int? destY, int? width, int? height)
         {
             // オプションをRenderTextureReadWrite.sRGBに変更した
             var renderTexture = RenderTexture.GetTemporary(
@@ -30,11 +38,26 @@ namespace XdUnityUI.Editor
                 RenderTextureReadWrite.sRGB);
 
             Graphics.Blit(sourceTexture, renderTexture);
+
+            // 現在アクティブなレンダーテクスチャを退避
             var previous = RenderTexture.active;
             RenderTexture.active = renderTexture;
-            var readableTexture = new Texture2D(sourceTexture.width, sourceTexture.height);
-            readableTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            // テクスチャを作成
+            var readableTexture = new Texture2D(width ?? sourceTexture.width, height ?? sourceTexture.height);
+            // テクスチャをクリア
+            var pixels = readableTexture.GetPixels32();
+            var clearColor = new Color32(0, 0, 0, 0);
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = clearColor;
+            }
+            readableTexture.SetPixels32(pixels);
+            // コピー
+            readableTexture.ReadPixels(new Rect(0, 0, sourceTexture.width, sourceTexture.height),
+                destX ?? 0,
+                destY ?? 0);
             readableTexture.Apply();
+            // レンダーテクスチャをもとに戻す
             RenderTexture.active = previous;
             RenderTexture.ReleaseTemporary(renderTexture);
             return readableTexture;
@@ -147,103 +170,83 @@ namespace XdUnityUI.Editor
         {
             // Debug.Log($"[XdUnityUI] {sourceImagePath}");
             var directoryName = Path.GetFileName(Path.GetDirectoryName(sourceImagePath));
-            var outputDirectoryPath = Path.Combine(EditorUtil.GetOutputSpritesFolderPath(), directoryName);
+            var outputDirectoryPath = Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), directoryName);
             var sourceImageFileName = Path.GetFileName(sourceImagePath);
+
+            // オプションJSONの読み込み
+            Dictionary<string, object> json = null;
+            var filePath = Path.Combine(outputDirectoryPath, sourceImageFileName);
+            var imageJsonPath = sourceImagePath + ".json";
+            if (File.Exists(imageJsonPath))
+            {
+                var text = File.ReadAllText(imageJsonPath);
+                json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
+            }
+
             // PNGを読み込み、同じサイズのTextureを作成する
-            var texture = CreateReadableTexture2D(CreateTextureFromPng(sourceImagePath));
+            var sourceTexture = CreateTextureFromPng(sourceImagePath);
+            var optionJson = json.GetDic("copy_rect");
+            var texture = CreateReadableTexture2D(sourceTexture,
+                optionJson?.GetInt("offset_x"),
+                optionJson?.GetInt("offset_y"),
+                optionJson?.GetInt("width"),
+                optionJson?.GetInt("height")
+            );
+
             // LoadAssetAtPathをつかったテクスチャ読み込み サイズが2のべき乗になる　JPGも読める
-            //var texture = CreateReadableTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>(asset));
+            // var texture = CreateReadableTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>(asset));
             if (PreprocessTexture.SlicedTextures == null)
                 PreprocessTexture.SlicedTextures = new Dictionary<string, SlicedTexture>();
 
-            var noSlice = sourceImageFileName.EndsWith("-noslice.png", StringComparison.OrdinalIgnoreCase);
-            if (noSlice)
+            if (json != null)
             {
-                var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
-                sourceImageFileName = sourceImageFileName.Replace("-noslice.png", ".png");
-                var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
-                PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                var pngData = texture.EncodeToPNG();
-                var imageHash = texture.imageContentsHash;
-                Object.DestroyImmediate(slicedTexture.Texture);
-                return CheckWrite(newPath, pngData, imageHash);
-            }
-
-            const string pattern = "-9slice,([0-9]+)px,([0-9]+)px,([0-9]+)px,([0-9]+)px\\.png";
-            var matches = Regex.Match(sourceImageFileName, pattern);
-            if (matches.Length > 0)
-            {
-                // 上・右・下・左の端から内側へのオフセット量
-                var top = Int32.Parse(matches.Groups[1].Value);
-                var right = Int32.Parse(matches.Groups[2].Value);
-                var bottom = Int32.Parse(matches.Groups[3].Value);
-                var left = Int32.Parse(matches.Groups[4].Value);
-
-                var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
-                sourceImageFileName = Regex.Replace(sourceImageFileName, pattern, ".png");
-                var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
-
-                PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                var pngData = texture.EncodeToPNG();
-                var imageHash = texture.imageContentsHash;
-                Object.DestroyImmediate(slicedTexture.Texture);
-                return CheckWrite(newPath, pngData, imageHash);
-            }
-
-            {
-                var filePath = Path.Combine(outputDirectoryPath, sourceImageFileName);
-                var imageJsonPath = sourceImagePath + ".json";
-                if (File.Exists(imageJsonPath))
+                var slice = json.Get("slice");
+                switch (slice.ToLower())
                 {
-                    var text = File.ReadAllText(imageJsonPath);
-                    var json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
-                    var slice = json.Get("slice");
-                    switch (slice.ToLower())
+                    case "auto":
+                        break;
+                    case "none":
                     {
-                        case "auto":
-                            break;
-                        case "none":
-                        {
-                            var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
-                            var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
-                            PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                            var pngData = texture.EncodeToPNG();
-                            var imageHash = texture.imageContentsHash;
-                            Object.DestroyImmediate(slicedTexture.Texture);
-                            return CheckWrite(newPath, pngData, imageHash);
-                        }
-                        case "border":
-                        {
-                            var border = json.GetDic("border");
-                            if (border == null) break; // borderパラメータがなかった
+                        var slicedTexture = new SlicedTexture(texture, new Boarder(0, 0, 0, 0));
+                        var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
+                        PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
+                        var pngData = texture.EncodeToPNG();
+                        var imageHash = texture.imageContentsHash;
+                        Object.DestroyImmediate(slicedTexture.Texture);
+                        return CheckWrite(newPath, pngData, imageHash);
+                    }
+                    case "border":
+                    {
+                        var border = json.GetDic("slice_border");
+                        if (border == null) break; // borderパラメータがなかった
 
-                            // 上・右・下・左の端から内側へのオフセット量
-                            var top = border.GetInt("top").Value;
-                            var right = border.GetInt("right").Value;
-                            var bottom = border.GetInt("bottom").Value;
-                            var left = border.GetInt("left").Value;
+                        // 上・右・下・左の端から内側へのオフセット量
+                        var top = border.GetInt("top") ?? 0;
+                        var right = border.GetInt("right") ?? 0;
+                        var bottom = border.GetInt("bottom") ?? 0;
+                        var left = border.GetInt("left") ?? 0;
 
-                            var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
-                            sourceImageFileName = Regex.Replace(sourceImageFileName, pattern, ".png");
-                            var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
+                        var slicedTexture = new SlicedTexture(texture, new Boarder(left, bottom, right, top));
+                        var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
 
-                            PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                            var pngData = texture.EncodeToPNG();
-                            var imageHash = texture.imageContentsHash;
-                            Object.DestroyImmediate(slicedTexture.Texture);
-                            return CheckWrite(newPath, pngData, imageHash);
-                        }
+                        PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
+                        var pngData = texture.EncodeToPNG();
+                        var imageHash = texture.imageContentsHash;
+                        Object.DestroyImmediate(slicedTexture.Texture);
+                        return CheckWrite(newPath, pngData, imageHash);
                     }
                 }
-                {
-                    // JSONがない場合、slice:auto であった場合
-                    var slicedTexture = TextureSlicer.Slice(texture);
-                    PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                    var pngData = slicedTexture.Texture.EncodeToPNG();
-                    var imageHash = texture.imageContentsHash;
-                    Object.DestroyImmediate(slicedTexture.Texture);
-                    return CheckWrite(filePath, pngData, imageHash);
-                }
+            }
+
+            {
+                // JSONがない場合、slice:auto
+                // ToDo:ここはnoneにするべき
+                var slicedTexture = TextureSlicer.Slice(texture);
+                PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
+                var pngData = slicedTexture.Texture.EncodeToPNG();
+                var imageHash = texture.imageContentsHash;
+                Object.DestroyImmediate(slicedTexture.Texture);
+                return CheckWrite(filePath, pngData, imageHash);
             }
             // Debug.LogFormat("[XdUnityUI] Slice: {0} -> {1}", EditorUtil.ToUnityPath(asset), EditorUtil.ToUnityPath(newPath));
         }

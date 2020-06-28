@@ -48,7 +48,7 @@ let optionChangeContentOnly = false
 
 /**
  * レスポンシブパラメータを保存する
- * @type {ResponsiveParameter[]}
+ * @type {BoundsToRectTransform[]}
  */
 
 let globalResponsiveBounds = null
@@ -87,15 +87,15 @@ const STYLE_ALIGN = 'align' // テキストの縦横のアライメントの設�
 const STYLE_BLANK = 'blank'
 const STYLE_BUTTON = 'button'
 const STYLE_BUTTON_TRANSITION = 'button-transition'
-const STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_NAME =
+const STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC =
   'button-transition-target-graphic'
-const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
+const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_TARGET =
   'button-transition-highlighted-sprite-target'
-const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_NAME =
+const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_TARGET =
   'button-transition-pressed-sprite-target'
-const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_NAME =
+const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_TARGET =
   'button-transition-selected-sprite-target'
-const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_NAME =
+const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_TARGET =
   'button-transition-disabled-sprite-target'
 const STYLE_CANVAS_GROUP = 'canvas-group' // 削除予定
 const STYLE_COMMENT_OUT = 'comment-out'
@@ -110,12 +110,15 @@ const STYLE_IMAGE = 'image'
 const STYLE_IMAGE_SCALE = 'image-scale'
 const STYLE_IMAGE_SLICE = 'image-slice' // 9スライス ドット数を指定する
 const STYLE_IMAGE_TYPE = 'image-type' // sliced/tiled/simple/filled
+const STYLE_IMAGE_FIT_PARENT_BOUNDS = 'image-fit-parent-bounds' // 親と同じ大きさで画像を作成する
 const STYLE_LAYER = 'layer'
 const STYLE_LAYOUT_ELEMENT = 'layout-element'
+const STYLE_LAYOUT_ELEMENT_PREFERRED_WIDTH = 'layout-element-preferred-width'
+const STYLE_LAYOUT_ELEMENT_PREFERRED_HEIGHT = 'layout-element-preferred-height'
 const STYLE_LAYOUT_GROUP = 'layout-group' //子供を自動的にどうならべるかのオプション
 const STYLE_LAYOUT_GROUP_CHILD_ALIGNMENT = 'layout-group-child-alignment'
 const STYLE_LAYOUT_GROUP_CHILD_FORCE_EXPAND = 'layout-group-child-force-expand'
-const STYLE_LAYOUT_GROUP_CONTROL_CHILD_SIZE = 'layout-group-control-child-size'
+const STYLE_LAYOUT_GROUP_CHILD_CONTROL_SIZE = 'layout-group-child-control-size'
 const STYLE_LAYOUT_GROUP_SPACING_X = 'layout-group-spacing-x'
 const STYLE_LAYOUT_GROUP_SPACING_Y = 'layout-group-spacing-y'
 const STYLE_LAYOUT_GROUP_START_AXIS = 'layout-group-start-axis'
@@ -135,52 +138,51 @@ const STYLE_REPEATGRID_ATTACH_IMAGE_DATA_SERIES =
   'repeatgrid-attach-image-data-series'
 const STYLE_SCROLLBAR = 'scrollbar'
 const STYLE_SCROLLBAR_DIRECTION = 'scrollbar-direction'
-const STYLE_SCROLLBAR_HANDLE_NAME = 'scrollbar-handle-target'
+const STYLE_SCROLLBAR_HANDLE_TARGET = 'scrollbar-handle-target'
 const STYLE_SCROLL_RECT = 'scroll-rect'
 const STYLE_SCROLL_RECT_CONTENT_NAME = 'scroll-rect-content-target'
-const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_NAME =
+const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_TARGET =
   'scroll-rect-horizontal-scrollbar-target'
-const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_NAME =
+const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_TARGET =
   'scroll-rect-vertical-scrollbar-target'
 const STYLE_SLIDER = 'slider'
 const STYLE_SLIDER_DIRECTION = 'slider-direction'
-const STYLE_SLIDER_FILL_RECT_NAME = 'slider-fill-rect-target'
-const STYLE_SLIDER_HANDLE_RECT_NAME = 'slider-handle-rect-target'
+const STYLE_SLIDER_FILL_RECT_TARGET = 'slider-fill-rect-target'
+const STYLE_SLIDER_HANDLE_RECT_TARGET = 'slider-handle-rect-target'
 const STYLE_TEXT = 'text'
 const STYLE_TEXTMP = 'textmp' // textmeshpro
 const STYLE_TEXT_STRING = 'text-string'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
-const STYLE_TOGGLE_GRAPHIC_NAME = 'toggle-graphic-target'
-const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_NAME =
+const STYLE_TOGGLE_GRAPHIC_TARGET = 'toggle-graphic-target'
+const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_TARGET =
   'toggle-transition-target-graphic-target'
-const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
+const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_TARGET =
   'toggle-transition-highlighted-sprite-target'
-const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_NAME =
+const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_TARGET =
   'toggle-transition-pressed-sprite-target'
-const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_NAME =
+const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_TARGET =
   'toggle-transition-selected-sprite-target'
-const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_NAME =
+const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_TARGET =
   'toggle-transition-disabled-sprite-target'
 const STYLE_TOGGLE_GROUP = 'toggle-group'
 const STYLE_INPUT = 'input'
 const STYLE_INPUT_TRANSITION = 'input-transition'
 const STYLE_INPUT_GRAPHIC_NAME = 'input-graphic-target'
 const STYLE_INPUT_TARGET_GRAPHIC_NAME = 'input-transition-target-graphic-target'
-const STYLE_INPUT_TRANSITION_HIGHLIGHTED_SPRITE_NAME =
+const STYLE_INPUT_TRANSITION_HIGHLIGHTED_SPRITE_TARGET =
   'input-transition-highlighted-sprite-target'
-const STYLE_INPUT_TRANSITION_PRESSED_SPRITE_NAME =
+const STYLE_INPUT_TRANSITION_PRESSED_SPRITE_TARGET =
   'input-transition-pressed-sprite-target'
-const STYLE_INPUT_TRANSITION_SELECTED_SPRITE_NAME =
+const STYLE_INPUT_TRANSITION_SELECTED_SPRITE_TARGET =
   'input-transition-selected-sprite-target'
-const STYLE_INPUT_TRANSITION_DISABLED_SPRITE_NAME =
+const STYLE_INPUT_TRANSITION_DISABLED_SPRITE_TARGET =
   'input-transition-disabled-sprite-target'
-const STYLE_INPUT_TEXT_COMPONENT_NAME = 'input-text-target'
-const STYLE_INPUT_PLACEHOLDER_NAME = 'input-placeholder-target'
+const STYLE_INPUT_TEXT_TARGET = 'input-text-target'
+const STYLE_INPUT_PLACEHOLDER_TARGET = 'input-placeholder-target'
 const STYLE_CREATE_CONTENT = 'create-content'
+const STYLE_CREATE_CONTENT_BOUNDS = 'create-content-bounds'
 const STYLE_CREATE_CONTENT_NAME = 'create-content-name'
-const STYLE_CREATE_CONTENT_EXCLUDE_LAST_CHILD =
-  'create-content-exclude-last-child'
 const STYLE_V_ALIGN = 'v-align' //テキストの縦方向のアライメント XDの設定に追記される
 const STYLE_ADD_COMPONENT = 'add-component'
 const STYLE_MASK = 'mask'
@@ -241,7 +243,7 @@ async function loadCssRules(currentFolder, filename) {
       }
     }
   }
-  console.log(file.name, 'loaded.')
+  console.log(`- ${file.name} loaded.`)
   return parsed
 }
 
@@ -318,7 +320,7 @@ function parseCss(text, errorThrow = true) {
         //const errorLastIndex = text.lastIndexOf("\n",token.index)
         const errorLine = text.substring(token.index - 30, token.index + 30)
         const errorText =
-          `CSSのパースに失敗しました: ${lines.length}行目:${errorLine}\n` +
+          `CSSのパースに失敗した: ${lines.length}行目:${errorLine}\n` +
           e.message
         console.log(errorText)
         // console.log(e.stack)
@@ -389,7 +391,8 @@ class CssDeclarations {
  */
 function parseCssDeclarationBlock(declarationBlock) {
   declarationBlock = declarationBlock.trim()
-  const tokenizer = /(?<property>[^:";\s]+)\s*:\s*|(?<value>"(?<string>([^"\\]|\\.)*)"|var\([^\)]+\)|[^";:\s]+)/gi
+  // const tokenizer = /(?<property>[^:";\s]+)\s*:\s*|(?<value>"(?<string>([^"\\]|\\.)*)"|var\([^\)]+\)|[^";:\s]+)/gi
+  const tokenizer = /(?<property>[^:';\s]+)\s*:\s*|(?<value>'(?<string>([^'\\]|\\.)*)'|var\([^\)]+\)|[^';:\s]+)/gi
   /** @type {string[][]}　*/
   let values = {}
   /** @type {string[]}　*/
@@ -408,7 +411,7 @@ function parseCssDeclarationBlock(declarationBlock) {
       }
       if (!currentValues) {
         // Propertyが無いのに値がある場合
-        throw 'DeclarationBlockのパースに失敗しました'
+        throw 'DeclarationBlockのパースに失敗した'
       }
       currentValues.push(value)
     }
@@ -425,7 +428,7 @@ function parseCssDeclarationBlock(declarationBlock) {
  * @param nodeName
  * @return {{classNames:string[], id:string, tagName:string, declarations:CssDeclarations}}
  */
-function parseNodeName(nodeName) {
+function cssParseNodeName(nodeName) {
   nodeName = nodeName.trim()
   const cache = cacheParseNodeName[nodeName]
   if (cache) {
@@ -535,58 +538,46 @@ class GlobalBounds {
    * @param {SceneNodeClass} node
    */
   constructor(node) {
+    if (node == null) return
     this.visible = node.visible
-    this.bounds = getGlobalDrawBounds(node) // TODO: あいまいに使用されているため削除する
     this.global_bounds = getGlobalBounds(node)
     this.global_draw_bounds = getGlobalDrawBounds(node)
-    /*
-    this.content_global_bounds = this.global_bounds
-    this.content_global_draw_bounds = this.global_draw_bounds
-    this.viewport_content_global_bounds = this.global_bounds
-    this.viewport_content_global_draw_bounds = this.global_draw_bounds
-     */
     if (hasContentChildren(node)) {
-      // TODO: Mask（もしくはViewport）をふくむ、含まないがいるのではないだろうか
+      // Mask（もしくはViewport）をふくむ、含まないで、それぞれのBoundsが必要
       //  マスクありでBoundsが欲しいとき → 全体コンテンツBoundsがほしいとき　とくに、Childrenが大幅にかたよっているときなど
       //  マスク抜きでBoundsが欲しいとき → List内コンテンツのPaddingの計算
       const { style } = getNodeNameAndStyle(node)
-      const isExcludeLastChild = style.firstAsBool(
-        STYLE_CREATE_CONTENT_EXCLUDE_LAST_CHILD,
-      )
       const contents = node.children.filter(child => {
-        /*
-        if (isExcludeLastChild) {
-          if (node.children.at(node.children.length - 1) === child) {
-            return false
-          }
-        }
-         */
         return isContentChild(child)
       })
       const contentBounds = calcGlobalBounds(contents)
       this.content_global_bounds = contentBounds.global_bounds
       this.content_global_draw_bounds = contentBounds.global_draw_bounds
 
-      const viewportContents = contents.concat(getViewport(node))
-      const viewportContentsBounds = calcGlobalBounds(viewportContents)
-      this.viewport_content_global_bounds = viewportContentsBounds.global_bounds
-      this.viewport_content_global_draw_bounds =
-        viewportContentsBounds.global_draw_bounds
+      const viewport = getViewport(node)
+      if (viewport) {
+        const viewportContents = contents.concat(viewport)
+        const viewportContentsBounds = calcGlobalBounds(viewportContents)
+        this.viewport_content_global_bounds =
+          viewportContentsBounds.global_bounds
+        this.viewport_content_global_draw_bounds =
+          viewportContentsBounds.global_draw_bounds
+      }
     }
   }
 }
 
-class ResponsiveParameter {
+class BoundsToRectTransform {
   constructor(node) {
     this.node = node
   }
 
-  updateBefore() {
+  updateBeforeBounds() {
     // Before
     this.before = new GlobalBounds(this.node)
   }
 
-  updateAfter() {
+  updateAfterBounds() {
     this.after = new GlobalBounds(this.node)
 
     {
@@ -672,11 +663,11 @@ class ResponsiveParameter {
       this.after.global_draw_bounds.ey - this.after.global_draw_bounds.y
   }
 
-  updateRestore() {
+  updateRestoreBounds() {
     this.restore = new GlobalBounds(this.node)
   }
 
-  update(hashResponsiveParameter) {
+  calcRectTransform(hashResponsiveParameter) {
     // DrawBoundsでのレスポンシブパラメータ(場合によっては不正確)
     this.responsiveParameter = calcRectTransform(
       this.node,
@@ -837,10 +828,16 @@ function getBeforeGlobalBounds(node) {
     }
   }
   if (bounds) return bounds
-  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  console.log(
+    '**error** リサイズ前のGlobalBoundsの情報がありません' + node.name,
+  )
   return null
 }
 
+function getBeforeTextFontSize(node) {
+  const hBounds = globalResponsiveBounds[node.guid]
+  return hBounds.before.global_draw_bounds.text.fontSize
+}
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
  * ハッシュからデータを取得する
@@ -855,11 +852,11 @@ function getBeforeGlobalDrawBounds(node) {
   if (hashBounds) {
     const hBounds = hashBounds[node.guid]
     if (hBounds && hBounds.before) {
-      bounds = Object.assign({}, hBounds.before.bounds)
+      bounds = Object.assign({}, hBounds.before.global_draw_bounds)
     }
   }
   if (bounds) return bounds
-  //throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
+  throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
   return null
 }
 
@@ -877,7 +874,9 @@ function getBeforeContentGlobalBounds(node) {
     }
   }
   if (bounds) return bounds
-  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  console.log(
+    '**error** リサイズ前のGlobalBoundsの情報がありません' + node.name,
+  )
   return null
 }
 
@@ -895,7 +894,9 @@ function getBeforeContentGlobalDrawBounds(node) {
     }
   }
   if (bounds) return bounds
-  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  console.log(
+    '**error** リサイズ前のGlobalBoundsの情報がありません' + node.name,
+  )
   return null
 }
 
@@ -913,7 +914,9 @@ function getBeforeViewportContentGlobalBounds(node) {
     }
   }
   if (bounds) return bounds
-  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  console.log(
+    '**error** リサイズ前のGlobalBoundsの情報がありません' + node.name,
+  )
   return null
 }
 
@@ -934,7 +937,9 @@ function getBeforeViewportContentGlobalDrawBounds(node) {
     }
   }
   if (bounds) return bounds
-  console.log('error*** リサイズ前のGlobalBoundsの情報がありません' + node.name)
+  console.log(
+    '**error** リサイズ前のGlobalBoundsの情報がありません' + node.name,
+  )
   return null
 }
 
@@ -1210,7 +1215,7 @@ function calcGlobalBounds(nodes) {
  * @param {SceneNodeList} nodeChildren
  * @returns {{top: number, left: number, bottom: number, right: number}}
  */
-function getPadding(node) {
+function calcPadding(node) {
   let bounds = getBeforeGlobalDrawBounds(node) // 描画でのサイズを取得する　影など増えた分も考慮したPaddingを取得する
   const contentBounds = getBeforeContentGlobalDrawBounds(node)
   // Paddingの計算
@@ -1240,7 +1245,7 @@ function getPadding(node) {
  * @param {SceneNodeList} nodeChildren
  */
 function calcLayout(json, viewportNode, maskNode, nodeChildren) {
-  const padding = getPadding(viewportNode)
+  const padding = calcPadding(viewportNode)
   // console.log('padding:', padding)
   let jsonLayout = {
     padding,
@@ -1465,7 +1470,7 @@ function getUnityName(node) {
     return unityName
   }
 
-  const parsed = parseNodeName(getNodeName(node))
+  const parsed = cssParseNodeName(getNodeName(node))
   if (parsed) {
     if (parsed.id) return parsed.id
     if (parsed.tagName) return parsed.tagName
@@ -1949,14 +1954,14 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 /**
  * root以下のノードのレスポンシブパラメータ作成
  * @param {SceneNodeClass} root
- * @return {ResponsiveParameter[]}
+ * @return {BoundsToRectTransform[]}
  */
 async function makeResponsiveBounds(root) {
   let hashBounds = {}
   // 現在のboundsを取得する
   traverseNode(root, node => {
-    let param = new ResponsiveParameter(node)
-    param.updateBefore()
+    let param = new BoundsToRectTransform(node)
+    param.updateBeforeBounds()
     hashBounds[node.guid] = param
   })
 
@@ -1983,8 +1988,8 @@ async function makeResponsiveBounds(root) {
   traverseNode(root, node => {
     let bounds =
       hashBounds[node.guid] ||
-      (hashBounds[node.guid] = new ResponsiveParameter(node))
-    bounds.updateAfter()
+      (hashBounds[node.guid] = new BoundsToRectTransform(node))
+    bounds.updateAfterBounds()
   })
 
   // Artboardのサイズを元に戻す
@@ -1995,12 +2000,12 @@ async function makeResponsiveBounds(root) {
 
   // 元に戻ったときのbounds
   traverseNode(root, node => {
-    hashBounds[node.guid].updateRestore()
+    hashBounds[node.guid].updateRestoreBounds()
   })
 
   // レスポンシブパラメータの生成
   for (let key in hashBounds) {
-    hashBounds[key].update(hashBounds) // ここまでに生成されたデータが必要
+    hashBounds[key].calcRectTransform(hashBounds) // ここまでに生成されたデータが必要
   }
 
   return hashBounds
@@ -2080,7 +2085,7 @@ function getCssIdFromNodeName(node) {
   if (node == null) {
     return null
   }
-  const parsed = parseNodeName(getNodeName(node))
+  const parsed = cssParseNodeName(getNodeName(node))
   if (parsed && parsed.id) return parsed.id
   return null
 }
@@ -2181,7 +2186,8 @@ class Style {
   }
 
   firstAsBool(property) {
-    return asBool(this.first(property))
+    const first = this.first(property)
+    return asBool(first)
   }
 
   /**
@@ -2232,7 +2238,7 @@ function getStyleFromNode(node) {
   let style = new Style()
   let localCss = null
   try {
-    localCss = parseNodeName(node.name)
+    localCss = cssParseNodeName(node.name)
   } catch (e) {
     //node.nameがパースできなかった
   }
@@ -2286,17 +2292,46 @@ function getChildIndex(node) {
   return -1
 }
 
+/**
+ * @param node
+ * @return {boolean}
+ */
 function isFirstChild(node) {
-  const parentNode = node.parent
-  if (!parentNode) return null
-  return parentNode.children.at(0) === node
+  const parent = node.parent
+  if (!parent) return false
+  return parent.children.at(0) === node
 }
 
 function isLastChild(node) {
-  const parentNode = node.parent
-  if (!parentNode) return null
-  const lastIndex = parentNode.children.length - 1
-  return parentNode.children.at(lastIndex) === node
+  const parent = node.parent
+  if (!parent) return false
+  const lastIndex = parent.children.length - 1
+  return parent.children.at(lastIndex) === node
+}
+
+/**
+ * 親と同じBoundsかどうか
+ * Padding、*-Stackで、nodeが背景になっているかどうかの判定につかう
+ * paddingがマイナスだと判定できない
+ * @param node
+ * @return {boolean|boolean}
+ */
+function sameParentBounds(node) {
+  const parent = node.parent
+  if (!parent) return false
+  // 判定に使う値は、cacheにあるものを使わない
+  // 同じかどうかわかれば良いので、getGlobalBounds関数もつかわなくて良い
+  // ただ、Artboardのリサイズには対応できない
+  const bounds = node.globalBounds
+  const parentBounds = parent.globalBounds
+  if (!bounds || !parentBounds) return false
+  // TODO:誤差を許容する判定をつかわなくてよいか
+  return (
+    bounds.x === parentBounds.x &&
+    bounds.y === parentBounds.y &&
+    bounds.width === parentBounds.width &&
+    bounds.height === parentBounds.height
+  )
 }
 
 /**
@@ -2573,7 +2608,7 @@ function addState(json, style) {
  * @param {SceneNodeClass} node
  */
 function addParsedNames(json, node) {
-  const parsedName = parseNodeName(node.name)
+  const parsedName = cssParseNodeName(node.name)
   // console.log(`${node.name}からクラスを書き出す`)
   if (!parsedName) return
 
@@ -2628,67 +2663,15 @@ function checkPreserveAspect(json, style) {
   return stylePreserveAspect || styleLockAspect
 }
 
-/**
- *
- * @param json
- * @param {SceneNodeClass} node
- * @param root
- * @param outputFolder
- * @param renditions
- * @param localStyle {Style}  後付できるスタイルパラメータ
- * @return {Promise<void>}
- */
-async function addImage(
-  json,
-  node,
-  root,
-  outputFolder,
-  renditions,
-  localStyle = null,
-) {
-  let { node_name, style } = getNodeNameAndStyle(node)
-  const unityName = getUnityName(node)
+function getImageSliceOptionJson(styleImageSliceValues, node) {
+  let imageOptionJson = { slice: 'auto' }
 
-  // 今回出力するためのユニークな名前をつける
-  const parentName = getNodeName(node.parent)
-
-  let hashStringLength = 5
-  // ファイル名が長すぎるとエラーになる可能性もある
-  let fileName = replaceToFileName(unityName, true)
-  while (true) {
-    const guidStr = '+' + node.guid.slice(0, hashStringLength)
-    // すでに同じものがあるか検索
-    const found = searchFileName(renditions, fileName + guidStr)
-    if (!found) {
-      // みつからなかった場合完了
-      fileName += guidStr
-      break
-    }
-    hashStringLength++
-  }
-
-  let sliceOption = { slice: 'auto' }
-
-  let fileExtension = '.png'
-
-  const styleImageSliceValues = style.values(STYLE_IMAGE_SLICE)
-  const localStyleImageSliceValues = localStyle
-    ? localStyle.values(STYLE_IMAGE_SLICE)
-    : null
-  // 明確にfalseと指定してある場合にNO SLICEとする
-  if (
-    (styleImageSliceValues && !asBool(styleImageSliceValues[0])) ||
-    (localStyle && !asBool(localStyleImageSliceValues[0]))
-  ) {
-    // fileExtension = '-noslice.png'
-    sliceOption = { slice: 'none' }
+  // 明確にfalseと指定してある場合にNO SLICEとする asBoolでは 0もFalseになっていまう
+  if (styleImageSliceValues && styleImageSliceValues[0] === 'false') {
+    Object.assign(imageOptionJson, { slice: 'none' })
   } else {
-    // sliceオプションチェック
-    if (
-      styleImageSliceValues &&
-      styleImageSliceValues.length > 0 &&
-      asBool(styleImageSliceValues[0])
-    ) {
+    // sliceのパラメータが明記してあるか
+    if (styleImageSliceValues && styleImageSliceValues.length > 0) {
       if (node.rotation !== 0) {
         console.log(
           'warning*** 回転しているノードの9スライス指定は無効になります',
@@ -2721,30 +2704,87 @@ async function addImage(
         const beforeBounds = getBeforeGlobalBounds(node)
         const beforeDrawBounds = getBeforeGlobalDrawBounds(node)
 
-        let offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
-        console.log('slice:' + offset)
-
+        //console.log('slice:' + top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px')
         top -= beforeDrawBounds.y - beforeBounds.y
         bottom += beforeDrawBounds.ey - beforeBounds.ey
         left -= beforeDrawBounds.x - beforeBounds.x
         right += beforeDrawBounds.ex - beforeBounds.ex
 
-        offset = top + 'px,' + right + 'px,' + bottom + 'px,' + left + 'px'
-
-        // fileExtension = '-9slice,' + offset + '.png'
-
-        sliceOption = {
+        Object.assign(imageOptionJson, {
           slice: 'border',
-          border: {
+          slice_border: {
             top,
             bottom,
             right,
             left,
           },
-        }
+        })
         // console.log('slice:' + offset)
       }
     }
+  }
+
+  return imageOptionJson
+}
+
+/**
+ * 親のサイズで画像を生成する
+ * ToDo:スライスや、ImageScaleをまだ考慮していない
+ * @param node
+ * @return {null|{copy_rect: {width: number, height: number}}}
+ */
+function getImageRectOptionJson(node) {
+  const { style } = getNodeNameAndStyle(node)
+  if (style.firstAsBool(STYLE_IMAGE_FIT_PARENT_BOUNDS)) {
+    const bounds = getBeforeGlobalDrawBounds(node)
+    const parentBounds = getBeforeGlobalDrawBounds(node.parent)
+    return {
+      copy_rect: {
+        offset_x: bounds.x - parentBounds.x,
+        offset_y: bounds.y - parentBounds.y,
+        width: parentBounds.width,
+        height: parentBounds.height,
+      },
+    }
+  }
+  return null
+}
+
+/**
+ *
+ * @param json
+ * @param {SceneNodeClass} node
+ * @param root
+ * @param outputFolder
+ * @param renditions
+ * @param localStyle {Style}  後付できるスタイルパラメータ
+ * @return {Promise<void>}
+ */
+async function addImage(
+  json,
+  node,
+  root,
+  outputFolder,
+  renditions,
+  localStyle = null,
+) {
+  let { node_name, style } = getNodeNameAndStyle(node)
+  const unityName = getUnityName(node)
+
+  // 今回出力するためのユニークな名前をつける
+  let hashStringLength = 5
+  // ファイル名が長すぎるとエラーになる可能性もある
+  let fileName = replaceToFileName(unityName, true)
+  while (true) {
+    const guidStr = '+' + node.guid.slice(0, hashStringLength)
+    // すでに同じものがあるか検索
+    const found = searchFileName(renditions, fileName + guidStr)
+    if (!found) {
+      // みつからなかった場合完了
+      fileName += guidStr
+      break
+    }
+    hashStringLength++
   }
 
   const drawBounds = getDrawBoundsCMInBase(node, root)
@@ -2790,12 +2830,7 @@ async function addImage(
   let renditionNode = node
   let renditionScale = globalScale
 
-  if (
-    !optionImageNoExport &&
-    styleImageSliceValues &&
-    node.isContainer &&
-    node.rotation === 0
-  ) {
+  if (!optionImageNoExport && node.isContainer && node.rotation === 0) {
     // 回転している場合はできない
     // console.log('9スライス以下の画像を出力するのに、ソース画像と同サイズが渡すことができるか調べる')
     /**
@@ -2829,6 +2864,7 @@ async function addImage(
       source_image: fileName,
     })
     if (outputFolder && !optionImageNoExport) {
+      let fileExtension = '.png'
       // 画像出力登録
       // この画像サイズが、0になっていた場合出力に失敗する
       // 例：レスポンシブパラメータを取得するため、リサイズする→しかし元にもどらなかった
@@ -2854,13 +2890,25 @@ async function addImage(
         scale: renditionScale,
       })
 
-      const sliceFile = await outputFolder.createFile(
+      // image-sliceパラメータ　ローカル（名前内）で設定されたもの優先
+      const styleImageSliceValues = localStyle
+        ? localStyle.values(STYLE_IMAGE_SLICE)
+        : style.values(STYLE_IMAGE_SLICE)
+
+      const imageOptionJson = getImageSliceOptionJson(
+        styleImageSliceValues,
+        node,
+      )
+      const rectOptionJson = getImageRectOptionJson(node)
+      Object.assign(imageOptionJson, rectOptionJson)
+
+      const imageOptionFile = await outputFolder.createFile(
         fileName + fileExtension + '.json',
         {
           overwrite: true,
         },
       )
-      await sliceFile.write(JSON.stringify(sliceOption, null, '  '))
+      await imageOptionFile.write(JSON.stringify(imageOptionJson, null, '  '))
     }
   }
 }
@@ -2871,6 +2919,7 @@ async function addImage(
  * @param {Style} style
  */
 function addContentSizeFitter(json, style) {
+  if (!style.firstAsBool(STYLE_CONTENT_SIZE_FITTER)) return
   const contentSizeFitterJson = getContentSizeFitterParam(style)
   if (contentSizeFitterJson != null) {
     Object.assign(json, {
@@ -2924,7 +2973,7 @@ function addScrollRect(json, node, style) {
     })
   }
   const vertical_scrollbar_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_NAME),
+    style.first(STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_TARGET),
   )
   if (vertical_scrollbar_class) {
     Object.assign(scrollRectJson, {
@@ -2932,7 +2981,7 @@ function addScrollRect(json, node, style) {
     })
   }
   const horizontal_scrollbar_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_NAME),
+    style.first(STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_TARGET),
   )
   if (horizontal_scrollbar_class) {
     Object.assign(scrollRectJson, {
@@ -2991,16 +3040,16 @@ function addLayoutParam(layoutJson, style) {
   const styleChildAlignment = style.first(STYLE_LAYOUT_GROUP_CHILD_ALIGNMENT)
   if (styleChildAlignment) {
     Object.assign(layoutJson, {
-      control_child_size: styleChildAlignment,
+      child_alignment: styleChildAlignment,
     })
   }
 
-  const styleControlChildSize = style.values(
-    STYLE_LAYOUT_GROUP_CONTROL_CHILD_SIZE,
+  const styleChildControlSize = style.values(
+    STYLE_LAYOUT_GROUP_CHILD_CONTROL_SIZE,
   )
-  if (styleControlChildSize) {
+  if (styleChildControlSize) {
     Object.assign(layoutJson, {
-      control_child_size: styleControlChildSize,
+      child_control_size: styleChildControlSize,
     })
   }
 
@@ -3038,51 +3087,69 @@ function addLayoutParam(layoutJson, style) {
   }
 }
 
+function hasLayoutProperties(style) {
+  return (
+    style.firstAsBool(STYLE_TEXT) ||
+    style.firstAsBool(STYLE_TEXTMP) ||
+    style.firstAsBool(STYLE_IMAGE) ||
+    style.firstAsBool(STYLE_LAYOUT_GROUP)
+  )
+}
+
 /**
  *
  * @param {{}} json
  * @param {SceneNodeClass} node
  * @param {Style} style
+ * @param overwriteGlobalDrawBounds 上書きするGlobalDrawBounds値
  */
-function addLayoutElement(json, node, style) {
+function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
   let first = style.first(STYLE_LAYOUT_ELEMENT)
   if (first === 'if-no-layout-properties') {
-    if (
-      style.firstAsBool(STYLE_TEXT) ||
-      style.firstAsBool(STYLE_TEXTMP) ||
-      style.firstAsBool(STYLE_IMAGE) ||
-      style.firstAsBool(STYLE_LAYOUT_GROUP)
-    ) {
+    if (hasLayoutProperties(style)) {
       first = false
     }
   }
-  if( !asBool(first)) return
+  if (!asBool(first)) return
+
+  const layoutElementJson = {}
 
   if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'ignore-layout')) {
-    Object.assign(json, {
-      layout_element: {
-        ignore_layout: true,
-      },
+    Object.assign(layoutElementJson, {
+      ignore_layout: true,
     })
   }
 
-  const bounds = getBeforeGlobalDrawBounds(node)
-  if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'min')) {
-    Object.assign(json, {
-      layout_element: {
-        min_width: bounds.width,
-        min_height: bounds.height,
-      },
-    })
+  let drawBounds = overwriteGlobalDrawBounds
+  if (drawBounds == null) drawBounds = getBeforeGlobalDrawBounds(node)
+
+  function getValue(name) {
+    switch (name) {
+      case 'draw-bounds-width':
+        return drawBounds.width
+      case 'draw-bounds-height':
+        return drawBounds.height
+      default:
+        console.log(`**error** unknown value${name}`)
+        break
+    }
+    return null
   }
-  if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'preferred')) {
-    Object.assign(json, {
-      layout_element: {
-        preferred_width: bounds.width,
-        preferred_height: bounds.height,
-      },
-    })
-  }
+
+  let preferred_width = getValue(
+    style.first(STYLE_LAYOUT_ELEMENT_PREFERRED_WIDTH),
+  )
+  let preferred_height = getValue(
+    style.first(STYLE_LAYOUT_ELEMENT_PREFERRED_HEIGHT),
+  )
+  Object.assign(layoutElementJson, {
+    preferred_width,
+    preferred_height,
+  })
+
+  Object.assign(json, {
+    layout_element: layoutElementJson,
+  })
 }
 
 /**
@@ -3142,8 +3209,8 @@ function addComponents(json, style) {
 function hasContentChildren(node) {
   const { style } = getNodeNameAndStyle(node)
   if (style.firstAsBool(STYLE_CREATE_CONTENT)) return true
+  if (style.firstAsBool(STYLE_LAYOUT_GROUP)) return true
   if (node.mask) return true
-  if (node.constructor.name === 'RepeatGrid') return true
   return false
 }
 
@@ -3197,11 +3264,13 @@ function addContent(style, json, node) {
       elements: [],
     },
   })
-  let contentJson = json[STR_CONTENT]
-  const contentStyle = getStyleFromNode({
+
+  const contentNode = {
     name: createContentName,
     parent: node,
-  })
+  }
+  let contentJson = json[STR_CONTENT]
+  const contentStyle = getStyleFromNode(contentNode)
 
   // contentのBounds　RepeatGridか、Group・ScrollableGroupかで、作成方法がかわる
   if (
@@ -3227,20 +3296,29 @@ function addContent(style, json, node) {
     // こちらが確定できないため
     addLayoutFromRepeatGrid(contentJson, node, contentStyle)
   } else {
-    console.log('***error: createContentで対応していない型です')
+    console.log('**error** createContentで対応していない型です')
   }
 
-  const contentBounds = getBeforeContentGlobalDrawBounds(node)
+  let contentDrawBounds = null
+  const styleCreateContentBounds = style.first(STYLE_CREATE_CONTENT_BOUNDS)
+  switch (styleCreateContentBounds) {
+    case 'viewport-content-global-draw-bounds':
+      contentDrawBounds = getBeforeViewportContentGlobalDrawBounds(node)
+      break
+    default:
+      contentDrawBounds = getBeforeContentGlobalDrawBounds(node)
+      break
+  }
 
-  Object.assign(contentJson, contentBounds)
+  Object.assign(contentJson, contentDrawBounds)
 
   // ContentのRectTransformを決める
   // addRectTransformができない　→ RectTransformのキャッシュをもっていないため
   const nodeBounds = getBeforeGlobalDrawBounds(node)
-  const contentX = contentBounds.x
-  const contentY = contentBounds.y
-  const contentWidth = contentBounds.width
-  const contentHeight = contentBounds.height
+  const contentX = contentDrawBounds.x
+  const contentY = contentDrawBounds.y
+  const contentWidth = contentDrawBounds.width
+  const contentHeight = contentDrawBounds.height
   const contentStyleFix = getStyleFix(contentStyle.values(STYLE_MARGIN_FIX))
 
   const rect_transform = calcRect(
@@ -3261,33 +3339,9 @@ function addContent(style, json, node) {
     rect_transform,
   })
 
-  /*
-  let pivot = { x: 0, y: 1 } // top-left
-  // TODO:以下をaddRectTransformでできないか
-  let anchorMin = { x: 0, y: 1 }
-  let anchorMax = { x: 0, y: 1 }
-  let offsetMin = {
-    x: contentX - nodeBounds.x,
-    y: -(contentY - nodeBounds.y + contentHeight),
-  }
-  let offsetMax = {
-    x: contentX - nodeBounds.x + contentWidth,
-    y: -(contentY - nodeBounds.y),
-  }
-  Object.assign(contentJson, {
-    rect_transform: {
-      fix: contentStyleFix,
-      pivot,
-      anchor_min: anchorMin,
-      anchor_max: anchorMax,
-      offset_min: offsetMin,
-      offset_max: offsetMax,
-    },
-  })
-   */
-
   addRectTransformAnchorOffset(contentJson, contentStyle) // anchor設定を上書きする
   addContentSizeFitter(contentJson, contentStyle)
+  addLayoutElement(contentJson, contentNode, contentStyle, contentDrawBounds) // DrawBoundsを渡す
   addLayer(contentJson, contentStyle)
 }
 
@@ -3391,8 +3445,8 @@ async function createInput(json, node, root, funcForEachChild) {
   })
   await funcForEachChild()
   let target_graphic_class = style.first(STYLE_INPUT_TARGET_GRAPHIC_NAME)
-  let text_component_class = style.first(STYLE_INPUT_TEXT_COMPONENT_NAME)
-  let placeholder_class = style.first(STYLE_INPUT_PLACEHOLDER_NAME)
+  let text_component_class = style.first(STYLE_INPUT_TEXT_TARGET)
+  let placeholder_class = style.first(STYLE_INPUT_PLACEHOLDER_TARGET)
   Object.assign(json, {
     input: {
       target_graphic_class,
@@ -3672,7 +3726,7 @@ async function createScrollbar(json, node, funcForEachChild) {
       direction,
     })
   }
-  let handle_class = style.first(STYLE_SCROLLBAR_HANDLE_NAME)
+  let handle_class = style.first(STYLE_SCROLLBAR_HANDLE_TARGET)
   if (handle_class != null) {
     Object.assign(scrollbarJson, {
       handle_class,
@@ -3730,13 +3784,13 @@ async function createSlider(json, node, funcForEachChild) {
     })
   }
 
-  let fill_rect_name = style.first(STYLE_SLIDER_FILL_RECT_NAME)
+  let fill_rect_name = style.first(STYLE_SLIDER_FILL_RECT_TARGET)
   if (fill_rect_name != null) {
     Object.assign(sliderJson, {
       fill_rect_name,
     })
   }
-  let handle_rect_name = style.first(STYLE_SLIDER_HANDLE_RECT_NAME)
+  let handle_rect_name = style.first(STYLE_SLIDER_HANDLE_RECT_TARGET)
   if (handle_rect_name != null) {
     Object.assign(sliderJson, {
       handle_rect_name,
@@ -3795,7 +3849,7 @@ async function createToggle(json, node, root, funcForEachChild) {
     })
   }
 
-  const graphic_class = style.first(STYLE_TOGGLE_GRAPHIC_NAME)
+  const graphic_class = style.first(STYLE_TOGGLE_GRAPHIC_TARGET)
   if (graphic_class) {
     Object.assign(toggleJson, {
       graphic_class,
@@ -3807,29 +3861,29 @@ async function createToggle(json, node, root, funcForEachChild) {
 
   let styleToggleTransition = style.first(STYLE_TOGGLE_TRANSITION)
   if (styleToggleTransition) {
-    const target_graphic_class = style.first(
-      STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_NAME,
+    const target_graphic_target = style.first(
+      STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_TARGET,
     )
-    const highlighted_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_NAME,
+    const highlighted_sprite_target = style.first(
+      STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_TARGET,
     )
-    const pressed_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_NAME,
+    const pressed_sprite_target = style.first(
+      STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_TARGET,
     )
-    const selected_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_NAME,
+    const selected_sprite_target = style.first(
+      STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_TARGET,
     )
-    const disabled_sprite_class = style.first(
-      STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_NAME,
+    const disabled_sprite_target = style.first(
+      STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_TARGET,
     )
     Object.assign(toggleJson, {
-      target_graphic_class,
+      target_graphic_target,
       transition: styleToggleTransition,
       sprite_state: {
-        highlighted_sprite_class,
-        pressed_sprite_class,
-        selected_sprite_class,
-        disabled_sprite_class,
+        highlighted_sprite_target,
+        pressed_sprite_target,
+        selected_sprite_target,
+        disabled_sprite_target,
       },
     })
   }
@@ -3864,36 +3918,41 @@ async function createButton(json, node, root, funcForEachChild) {
 
   addBoundsCM(json, getDrawBoundsCMInBase(node, root))
   if (funcForEachChild) await funcForEachChild() // 子供を作成するかどうか選択できる createImageから呼び出された場合は子供の処理をしない
-  let styleButtonTransition = style.first(STYLE_BUTTON_TRANSITION)
+
+  const target_graphic = style.first(STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC)
+  const highlighted_sprite_target = style.first(
+    STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_TARGET,
+  )
+  const pressed_sprite_target = style.first(
+    STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_TARGET,
+  )
+  const selected_sprite_target = style.first(
+    STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_TARGET,
+  )
+  const disabled_sprite_target = style.first(
+    STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_TARGET,
+  )
+
+  const buttonJson = {
+    target_graphic,
+    sprite_state: {
+      highlighted_sprite_target,
+      pressed_sprite_target,
+      selected_sprite_target,
+      disabled_sprite_target,
+    },
+  }
+
+  const styleButtonTransition = style.first(STYLE_BUTTON_TRANSITION)
   if (styleButtonTransition) {
-    const target_graphic_class = style.first(
-      STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC_NAME,
-    )
-    const highlighted_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_NAME,
-    )
-    const pressed_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_NAME,
-    )
-    const selected_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_NAME,
-    )
-    const disabled_sprite_class = style.first(
-      STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_NAME,
-    )
-    Object.assign(json, {
-      button: {
-        target_graphic_class,
-        transition: styleButtonTransition,
-        sprite_state: {
-          highlighted_sprite_class,
-          pressed_sprite_class,
-          selected_sprite_class,
-          disabled_sprite_class,
-        },
-      },
+    Object.assign(buttonJson, {
+      transition: styleButtonTransition,
     })
   }
+
+  Object.assign(json, {
+    button: buttonJson,
+  })
 
   // 基本パラメータ
   addActive(json, style)
@@ -4088,7 +4147,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   // ラスタライズオプションチェック
   // - ラスタライズオプションがTRUE
   // - TEXT化オプションがFALSE
-  // スライスしないオプションで出力する
+  // 文字はスライスしないオプションで出力する
   if (
     style.firstAsBool(STYLE_IMAGE) ||
     style.firstAsBool(STYLE_IMAGE_SLICE) ||
@@ -4146,7 +4205,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
       textType: textType,
       font: nodeText.fontFamily,
       style: nodeText.fontStyle,
-      size: getBeforeGlobalDrawBounds(nodeText).text.fontSize * globalScale, // アートボードの伸縮でfontSizeが変わってしまうため、保存してある情報を使う
+      size: getBeforeTextFontSize(nodeText) * globalScale, // アートボードの伸縮でfontSizeが変わってしまうため、保存してある情報を使う
       color: nodeText.fill.toHex(true),
       align: hAlign + vAlign,
       vh: boundsCM.height,
@@ -4303,12 +4362,6 @@ async function nodeRoot(renditions, outputFolder, root) {
             await createToggle(json, node, root, funcForEachChild)
             return
           }
-          /*
-        if (style.firstAsBool(STYLE_CREATE_CONTENT)) {
-          await createViewport(json, node, root, funcForEachChild)
-          return
-        }
-        */
           if (style.firstAsBool(STYLE_INPUT)) {
             await createInput(json, node, root, funcForEachChild)
             return
@@ -4333,7 +4386,7 @@ async function nodeRoot(renditions, outputFolder, root) {
         await funcForEachChild()
         break
       default:
-        console.log('***error type:' + constructorName)
+        console.log('**error** type:' + constructorName)
         await funcForEachChild()
         break
     }
@@ -4352,7 +4405,7 @@ async function nodeRoot(renditions, outputFolder, root) {
  */
 function nodeToFolderName(node) {
   let name = node.name
-  const parsed = parseNodeName(getNodeName(node))
+  const parsed = cssParseNodeName(getNodeName(node))
   if (parsed) {
     if (parsed.id) name = parsed.id
     else if (parsed.tagName) name = parsed.tagName
@@ -4377,7 +4430,7 @@ async function exportXdUnityUI(roots, outputFolder) {
   globalResponsiveBounds = {}
 
   for (let root of roots) {
-    console.log(`----- ${root.name} -----`)
+    console.log(`### ${root.name}`)
     globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
     const artboardCssFilename = replaceToFileName(root.name) + '.css'
     try {
@@ -4389,7 +4442,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         globalCssRules = globalCssRules.concat(artboardCssRoles)
       }
     } catch (e) {
-      // console.log(`***error failed to load: ${artboardCssFilename}`)
+      // console.log(`**error** failed to load: ${artboardCssFilename}`)
       //console.log(e.message)
       //console.log(e.stack)
     }
@@ -4411,7 +4464,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         return entry.name == subFolderName
       })
       if (!subFolder) {
-        console.log(`create output folder:${subFolderName}`)
+        console.log(`- create output folder:${subFolderName}`)
         subFolder = await outputFolder.createFolder(subFolderName)
       }
       if (subFolder.isFile) {
@@ -4431,21 +4484,11 @@ async function exportXdUnityUI(roots, outputFolder) {
         // レイアウトファイルの出力
         await layoutFile.write(layoutJsonString)
       }
-      /*
-      if (outputFolder) {
-        const layoutFile = await outputFolder.createFile(layoutFileName, {
-          overwrite: true,
-        })
-        // レイアウトファイルの出力
-        await layoutFile.write(layoutJsonString)
-      }
-      */
     }
-    console.log('----- done -----')
+    console.log('*done*')
   }
 
-  // すべて可視にする
-  // 背景のぼかしをすべてオフにする　→　ボカシがはいっていると､その画像が書き込まれるため
+  // createRenditionsの前にすべて可視にする
   if (!optionChangeContentOnly) {
     for (let root of roots) {
       traverseNode(root, node => {
@@ -4453,22 +4496,21 @@ async function exportXdUnityUI(roots, outputFolder) {
         if (style.firstAsBool(STYLE_COMMENT_OUT)) {
           return false // 子供には行かないようにする
         }
-        try {
-          if (!node.visible) node.visible = true
-          if (node.blur != null) {
-            // ぼかしをオフ　ぼかした絵がそのまま画像になるため
-            node.blur = null
+        if (!node.visible) {
+          if (!selection.isInEditContext(node)) {
+            console.log(
+              `**error** could not change visible parameter. not in edit context ${node.name}`,
+            )
+          } else {
+            node.visible = true
           }
-        } catch (e) {
-          console.log('***error ' + nodeName + ': blur off failed.')
         }
         // IMAGEであった場合、そのグループの不可視情報はそのまま活かすため
         // 自身は可視にし、子供の不可視情報は生かす
         // 本来は sourceImageをNaturalWidth,Heightで出力する
         if (
           style.firstAsBool(STYLE_IMAGE) ||
-          style.firstAsBool(STYLE_IMAGE_SLICE) != null ||
-          node.constructor.name == 'RepeatGrid'
+          style.firstAsBool(STYLE_IMAGE_SLICE)
         ) {
           return false
         }
@@ -4477,11 +4519,12 @@ async function exportXdUnityUI(roots, outputFolder) {
   }
 
   if (renditions.length !== 0 && !optionImageNoExport) {
+    console.log('## Create Rendition')
     // 一括画像ファイル出力
     await application
       .createRenditions(renditions)
       .then(() => {
-        console.log(`saved ${renditions.length} image file(s)`)
+        console.log(`### Result\n- saved ${renditions.length} image file(s)`)
       })
       .catch(error => {
         //console.log(renditions)
@@ -4858,13 +4901,11 @@ async function pluginExportXdUnityUI(selection, root) {
     console.log(e.stack)
     await alert(e.message, 'error')
   }
-  console.log('export baum2 done.')
-  /*
+
   // データをもとに戻すため､意図的にエラーをスローする
   if (!optionChangeContentOnly) {
     throw 'throw error for UNDO'
   }
-   */
 }
 
 /**
@@ -4976,13 +5017,13 @@ class CssSelector {
    */
   constructor(selectorText) {
     if (!selectorText) {
-      throw 'CssSelectorがNULLで作成されました'
+      throw 'CssSelectorがNULLで作成された'
     }
     // console.log("SelectorTextをパースします",selectorText)
     this.json = cssSelectorParser.parse(selectorText.trim())
     /*
       console.log(
-        'SelectorTextをパースしました',
+        'SelectorTextをパースした',
         JSON.stringify(this.json, null, '  '),
       )
        */
@@ -5004,6 +5045,7 @@ class CssSelector {
    *
    * @param {{name:string, parent:*}} node
    * @param {{type:string, classNames:string[], id:string, tagName:string, pseudos:*[], nestingOperator:string, rule:*, selectors:*[] }|null} rule
+   * @param verboseLog
    * @return {null|*}
    */
   matchRule(node, rule = null, verboseLog = false) {
@@ -5027,6 +5069,7 @@ class CssSelector {
         break
       }
       case 'selectors': {
+        // 複数あり、どれかに適合するかどうか
         for (let selector of rule.selectors) {
           ruleRule = selector.rule
           checkNode = this.matchRule(node, ruleRule, verboseLog)
@@ -5044,26 +5087,30 @@ class CssSelector {
         return null
     }
     if (ruleRule && ruleRule.nestingOperator === null) {
-      // console.log('nullオペレータ確認をする')
+      if (verboseLog) console.log('nullオペレータ確認をする')
       while (checkNode) {
         let result = CssSelector.check(checkNode, rule, verboseLog)
         if (result) {
-          // console.log('nullオペレータで整合したものをみつけた')
+          if (verboseLog) console.log('nullオペレータで整合したものをみつけた')
           return checkNode
         }
         checkNode = checkNode.parent
       }
-      // console.log('nullオペレータで整合するものはみつからなかった')
+      if (verboseLog)
+        console.log('nullオペレータで整合するものはみつからなかった')
       return null
     }
     let result = CssSelector.check(checkNode, rule, verboseLog)
     if (!result) {
-      // console.log('このruleは適合しなかった')
+      if (verboseLog) console.log('このruleは適合しなかった')
       return null
     }
-    // console.log('check成功')
-    if (rule.nestingOperator === '>' || rule.nestingOperator === null) {
-      // console.log('nestingオペレータ確認のため、checkNodeを親にすすめる')
+    if (verboseLog) console.log('check成功')
+    if (rule.nestingOperator === '>' || rule.nestingOperator == null) {
+      if (verboseLog)
+        console.log(
+          `nestingオペレータ${rule.nestingOperator} 確認のため、checkNodeを親にすすめる`,
+        )
       checkNode = checkNode.parent
     }
     return checkNode
@@ -5077,26 +5124,25 @@ class CssSelector {
   static check(node, rule, verboseLog = false) {
     if (!node) return false
     const nodeName = node.name.trim()
-    const parsedNodeName = parseNodeName(nodeName)
+    const parsedNodeName = cssParseNodeName(nodeName)
     if (verboseLog) {
-      console.log('rule check ----------')
-      console.log(node)
+      console.log('# rule check')
+      console.log('- name:', node.name)
       console.log(parsedNodeName)
-      console.log('以下のruleと照らし合わせる')
+      console.log('## 以下のruleと照らし合わせる')
       console.log(rule)
-      console.log('----')
     }
     if (rule.tagName && rule.tagName !== '*') {
       if (
         rule.tagName !== parsedNodeName.tagName &&
         rule.tagName !== nodeName
       ) {
-        if (verboseLog) console.log('tagName not found')
+        if (verboseLog) console.log('tagNameが適合しない')
         return false
       }
     }
     if (rule.id && rule.id !== parsedNodeName.id) {
-      if (verboseLog) console.log('id not found')
+      if (verboseLog) console.log('idが適合しない')
       return false
     }
     if (rule.classNames) {
@@ -5104,7 +5150,7 @@ class CssSelector {
       for (let className of rule.classNames) {
         const found = parsedNodeName.classNames.find(c => c === className)
         if (!found) {
-          if (verboseLog) console.log('classNames not found')
+          if (verboseLog) console.log('classが適合しない')
           return false
         }
       }
@@ -5163,37 +5209,47 @@ class CssSelector {
             return !!node.mask
           }
           default:
-            console.log('***error 未対応の要素名です:', attr.name)
+            console.log('**error** 未対応の要素名です:', attr.name)
             return false
         }
       }
     }
     if (rule.pseudos) {
+      if (verboseLog) console.log('## 疑似クラスチェック')
       for (let pseudo of rule.pseudos) {
+        let result = false
         switch (pseudo.name) {
           case 'nth-child':
             const nthChild = parseInt(pseudo.value)
             const nodeChildIndex = getChildIndex(node) + 1
-            if (nthChild !== nodeChildIndex) return false
+            result = nthChild === nodeChildIndex
             break
           case 'first-child':
-            if (!isFirstChild(node)) return false
+            result = isFirstChild(node)
             break
           case 'last-child':
-            if (!isLastChild(node)) return false
+            result = isLastChild(node)
+            break
+          case 'same-parent-bounds':
+            result = sameParentBounds(node)
             break
           case 'root':
-            if (node.parent) return false // 親があるのならマッチしない
+            result = !node.parent // 親があるのならマッチしない
             break
           default:
-            console.log('***error 未対応の疑似要素です', pseudo.name)
+            console.log('**error** 未対応の疑似要素です', pseudo.name)
             return false
         }
+        if (!result) {
+          if (verboseLog) console.log(`- ${pseudo.name} が適合しません`)
+          return false
+        }
+        if (verboseLog) console.log(`- ${pseudo.name} が適合した`)
       }
     }
     //console.log(nodeName)
     //console.log(JSON.stringify(parsedNodeName, null, '  '))
-    if (verboseLog) console.log('マッチしました')
+    if (verboseLog) console.log('このruleは適合した')
     return true
   }
 
@@ -5241,6 +5297,7 @@ let cssSelectorParser = new CssSelectorParser()
 cssSelectorParser.registerNumericPseudos('nth-child')
 cssSelectorParser.registerSelectorPseudos('first-child')
 cssSelectorParser.registerSelectorPseudos('last-child')
+cssSelectorParser.registerSelectorPseudos('same-parent-bounds')
 cssSelectorParser.registerNestingOperators('>', '+', '~', ' ')
 cssSelectorParser.registerAttrEqualityMods('^', '$', '*', '~')
 cssSelectorParser.enableSubstitutes()

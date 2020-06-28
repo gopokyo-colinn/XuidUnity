@@ -448,12 +448,12 @@ namespace XdUnityUI.Editor
                 layoutGroup.childAlignment = childAlignment.Value;
             }
 
-            var controlChildSize = layoutJson.GetArray("control_child_size");
-            if (controlChildSize != null)
+            var childControlSize = layoutJson.GetArray("child_control_size");
+            if (childControlSize != null)
             {
-                if (controlChildSize.Contains("width"))
+                if (childControlSize.Contains("width"))
                     layoutGroup.childControlWidth = true;
-                if (controlChildSize.Contains("height"))
+                if (childControlSize.Contains("height"))
                     layoutGroup.childControlHeight = true;
             }
 

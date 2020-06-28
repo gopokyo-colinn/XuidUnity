@@ -1,0 +1,4 @@
+.vertical-stack > :first-child:same-parent-bounds {
+  check-log: true;
+  match-log: '********* match *********'
+}

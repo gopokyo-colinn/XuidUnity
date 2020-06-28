@@ -16,11 +16,6 @@ namespace XdUnityUI.Editor
     {
         private readonly string spriteRootPath;
         private readonly string fontRootPath;
-        private readonly Vector2 imageSize;
-        public Vector2 CanvasSize { get; private set; }
-
-        private readonly Vector2 basePosition;
-        //
 
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
 
@@ -47,15 +42,10 @@ namespace XdUnityUI.Editor
             return toggleGroup;
         }
 
-
-        public RenderContext(string spriteRootPath, string fontRootPath, Vector2 imageSize, Vector2 canvasSize,
-            Vector2 basePosition)
+        public RenderContext(string spriteRootPath, string fontRootPath)
         {
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
-            this.imageSize = imageSize;
-            CanvasSize = canvasSize;
-            this.basePosition = basePosition;
         }
 
         public Sprite GetSprite(string spriteName)
@@ -65,7 +55,7 @@ namespace XdUnityUI.Editor
             var fileInfo = new System.IO.FileInfo(path);
             var fullName = TextureUtil.GetSameImagePath(fileInfo.FullName);
             // TextureUtil.SliceSprite(fullName);
-            var unityPath = EditorUtil.ToUnityPath(fullName);
+            var unityPath = EditorUtil.ToAssetPath(fullName);
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(unityPath);
             if (sprite == null)
             {
@@ -101,25 +91,5 @@ namespace XdUnityUI.Editor
             return font;
         }
 #endif
-
-        public Vector2 CalcPosition(Vector2 position, Vector2 size)
-        {
-            return CalcPosition(position + size / 2.0f);
-        }
-
-        private Vector2 CalcPosition(Vector2 position)
-        {
-            var tmp = position - basePosition;
-            tmp.y *= -1.0f;
-            return tmp;
-        }
-
-        public Vector2[] GetFourCorners()
-        {
-            var corners = new Vector2[4];
-            corners[0] = CalcPosition(Vector2.zero) + (imageSize - CanvasSize) / 2.0f;
-            corners[2] = CalcPosition(imageSize) - (imageSize - CanvasSize) / 2.0f;
-            return corners;
-        }
     }
 }

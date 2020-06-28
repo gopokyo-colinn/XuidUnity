@@ -30,7 +30,7 @@ namespace XdUnityUI.Editor
             }
             else 
             */
-            if (assetPath.Contains(EditorUtil.ToUnityPath(EditorUtil.GetOutputSpritesFolderPath())))
+            if (assetPath.Contains(EditorUtil.ToAssetPath(EditorUtil.GetOutputSpritesFolderAssetPath())))
             {
                 var fileName = Path.GetFileName(assetPath);
                 if (SlicedTextures == null || !SlicedTextures.ContainsKey(fileName)) return;

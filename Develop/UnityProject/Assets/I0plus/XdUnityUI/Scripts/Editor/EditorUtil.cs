@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 
 namespace XdUnityUI.Editor
 {
@@ -34,41 +35,68 @@ namespace XdUnityUI.Editor
                 foreach (var s in strBuff)
                 {
                     var lstBuff = GetAllFiles(s);
-                    lstBuff.ForEach(delegate(string str)
-                    {
-                        lstStr.Add(str);
-                    });
+                    lstBuff.ForEach(delegate(string str) { lstStr.Add(str); });
                 }
             }
-            catch(UnauthorizedAccessException)
+            catch (UnauthorizedAccessException)
             {
                 // アクセスできなかったので無視
             }
 
             return lstStr;
         }
-        
+
         /// <summary>
         /// Assets以下のパスにする
         /// \を/におきかえる
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static string ToUnityPath(string path)
+        public static string ToAssetPath(string path)
         {
-            path = path.Substring(path.IndexOf("Assets", System.StringComparison.Ordinal));
-            if (path.EndsWith("/", System.StringComparison.Ordinal) ||
-                path.EndsWith("\\", System.StringComparison.Ordinal)) path = path.Substring(0, path.Length - 1);
-            return path.Replace("\\", "/");
+            path = path.Replace("\\", "/");
+            var assetPath = path;
+            if (path.StartsWith(Application.dataPath))
+            {
+                assetPath = "Assets" + path.Substring(Application.dataPath.Length);
+            }
+            return assetPath;
+        }
+        
+        public static string FindFileAssetPath(string fileName, bool throwException = true)
+        {
+            var guids = AssetDatabase.FindAssets(fileName);
+            if (guids.Length == 0)
+            {
+                if (throwException)
+                    throw new System.ApplicationException($"{fileName}ファイルがプロジェクト内に存在しません。");
+                return null;
+            }
+
+            if (guids.Length > 1)
+            {
+                Debug.LogErrorFormat("{0}ファイルがプロジェクト内に複数個存在します。", fileName);
+            }
+
+            var fileAssetPath
+                = AssetDatabase.GUIDToAssetPath(guids[0]);
+
+            return fileAssetPath;
+        }
+
+        public static string FindFolderAssetPath(string fileName, bool throwException = true)
+        {
+            var fileAssetPath = FindFileAssetPath(fileName, throwException);
+            return Path.GetDirectoryName(fileAssetPath);
         }
 
         private const string ImportDirectoryMark = "_XdUnityUIImport";
 
         public static string GetImportDirectoryPath()
         {
-            var path = GetPath(ImportDirectoryMark + "1", false);
+            var path = FindFolderAssetPath(ImportDirectoryMark + "1", false);
             if (path != null) return path;
-            return GetPath(ImportDirectoryMark);
+            return FindFolderAssetPath(ImportDirectoryMark);
         }
 
         /// <summary>
@@ -77,84 +105,79 @@ namespace XdUnityUI.Editor
         /// <returns></returns>
         public static string GetImportDirectoryMark()
         {
-            var marks = new []
+            var marks = new[]
             {
                 ImportDirectoryMark + "1",
                 ImportDirectoryMark
             };
             foreach (var mark in marks)
             {
-                var path = GetPath(mark, false);
+                var path = FindFolderAssetPath(mark, false);
                 if (path != null) return mark;
             }
+
             return null;
         }
 
-
-        public static string GetOutputSpritesFolderPath()
+        public static string GetOutputSpritesFolderAssetPath()
         {
-            var path = GetPath("_XdUnityUISprites1", false);
+            var path = FindFolderAssetPath("_XdUnityUISprites1", false);
             if (path != null) return path;
-            return GetPath("_XdUnityUISprites");
+            return FindFolderAssetPath("_XdUnityUISprites");
         }
 
-        public static string GetOutputPrefabsFolderPath()
+        public static string GetOutputPrefabsFolderAssetPath()
         {
-            var path = GetPath("_XdUnityUIPrefabs1", false);
+            var path = FindFolderAssetPath("_XdUnityUIPrefabs1", false);
             if (path != null) return path;
-            return GetPath("_XdUnityUIPrefabs");
+            return FindFolderAssetPath("_XdUnityUIPrefabs");
         }
 
-        public static string GetFontsPath()
+        public static string GetFontsAssetPath()
         {
-            var path = GetPath("_XdUnityUIFonts1", false);
+            var path = FindFolderAssetPath("_XdUnityUIFonts1", false);
             if (path != null) return path;
-            return GetPath("_XdUnityUIFonts");
+            return FindFolderAssetPath("_XdUnityUIFonts");
         }
 
-        public static string GetBaumAtlasPath()
+        public static string GetBaumAtlasAssetPath()
         {
-            var path = GetPath("_XdUnityUIAtlas1", false);
+            var path = FindFolderAssetPath("_XdUnityUIAtlas1", false);
             if (path != null) return path;
-            return GetPath("_XdUnityUIAtlas");
-        }
-
-        public static string GetPath(string fileName, bool throwException = true)
-        {
-            var files = Directory.GetFiles(Application.dataPath, fileName, SearchOption.AllDirectories);
-            if (files.Length > 1)
-            {
-                files = files.Where(x => !x.Contains("Baum2/Sample")).ToArray();
-            }
-
-            if (files.Length > 1)
-            {
-                Debug.LogErrorFormat("{0}ファイルがプロジェクト内に複数個存在します。", fileName);
-            }
-
-            if (files.Length == 0)
-            {
-                if (throwException)
-                    throw new System.ApplicationException(string.Format("{0}ファイルがプロジェクト内に存在しません。", fileName));
-                return null;
-            }
-
-            string path = files[0];
-            return path.Substring(0, path.Length - fileName.Length);
+            return FindFolderAssetPath("_XdUnityUIAtlas");
         }
 
         /// <summary>
         /// サブディレクトリを含めたスプライトの出力パスを取得する
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="spritePath"></param>
         /// <returns></returns>
-        public static string GetBaumSpritesFullPath(string path)
+        public static string GetSpriteFolderAssetPath(string spritePath)
         {
             // サブディレクトリ名を取得する
-            var directoryName = Path.GetFileName(Path.GetFileName(path));
-            var directoryPath = GetOutputSpritesFolderPath();
+            var directoryName = Path.GetFileName(Path.GetFileName(spritePath));
+            var directoryPath = GetOutputSpritesFolderAssetPath();
             var directoryFullPath = Path.Combine(directoryPath, directoryName);
             return directoryFullPath;
+        }
+
+        public static string GetPrefabFolderAssetPath(string prefabPath)
+        {
+            // サブディレクトリ名を取得する
+            var directoryName = Path.GetFileName(Path.GetFileName(prefabPath));
+            var directoryPath = GetOutputPrefabsFolderAssetPath();
+            var directoryFullPath = Path.Combine(directoryPath, directoryName);
+            return directoryFullPath;
+        }
+
+        /**
+         * /Assets/Top/Second/File.txt
+         * return Second
+         */
+        public static string GetSubFolderName(string filePath)
+        {
+            var folderPath = Path.GetDirectoryName(filePath);
+            return Path.GetFileName(folderPath);
         }
 
         public static Color HexToColor(string hex)
