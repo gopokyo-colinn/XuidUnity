@@ -47,15 +47,10 @@ namespace XdUnityUI.Editor
             var info = json.GetDic("info");
             Validation(info);
 
-            var canvas = info.GetDic("canvas");
-            var imageSize = canvas.GetDic("image");
-            var canvasSize = canvas.GetDic("size");
-            var baseSize = canvas.GetDic("base");
-            var renderer = new RenderContext(spriteRootPath, fontRootPath, imageSize.GetVector2("w", "h").Value,
-                canvasSize.GetVector2("w", "h").Value, baseSize.GetVector2("x", "y").Value);
+            var renderer = new RenderContext(spriteRootPath, fontRootPath);
             var rootJson = json.GetDic("root");
             GameObject root = null;
-            
+
             var rootElement = ElementFactory.Generate(rootJson, null);
             root = rootElement.Render(renderer, null);
 

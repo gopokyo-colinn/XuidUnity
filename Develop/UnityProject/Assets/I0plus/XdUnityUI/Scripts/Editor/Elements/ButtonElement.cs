@@ -29,12 +29,69 @@ namespace XdUnityUI.Editor
             }
 
             var children = RenderChildren(renderContext, go);
+            var deleteObjects = new Dictionary<GameObject, bool>();
 
             var button = go.AddComponent<Button>();
             GameObject targetImageObject = null;
-            var deleteObjects = new Dictionary<GameObject, bool>();
             if (ButtonJson != null)
             {
+                var targetImage =
+                    ElementUtil.FindComponentByClassName<Image>(children, ButtonJson.Get("target_graphic"));
+                if (targetImage != null)
+                {
+                    button.targetGraphic = targetImage;
+                    targetImageObject = targetImage.gameObject;
+                }
+
+                // すげ替え画像を探し、設定する
+                // 見つかった場合は
+                // その画像オブジェクトを削除し
+                // SpriteSwapに設定する
+                var spriteStateJson = ButtonJson.GetDic("sprite_state");
+                if (spriteStateJson != null)
+                {
+                    var spriteState = new SpriteState();
+                    var image = ElementUtil.FindComponentByClassName<Image>(children,
+                        spriteStateJson.Get("highlighted_sprite_target"));
+                    if (image != null)
+                    {
+                        spriteState.highlightedSprite = image.sprite;
+                        deleteObjects[image.gameObject] = true;
+                        button.transition = Selectable.Transition.SpriteSwap;
+                    }
+
+                    image = ElementUtil.FindComponentByClassName<Image>(children,
+                        spriteStateJson.Get("pressed_sprite_target"));
+                    if (image != null)
+                    {
+                        spriteState.pressedSprite = image.sprite;
+                        deleteObjects[image.gameObject] = true;
+                        button.transition = Selectable.Transition.SpriteSwap;
+                    }
+
+#if UNITY_2019_1_OR_NEWER
+                    image = ElementUtil.FindComponentByClassName<Image>(children,
+                        spriteStateJson.Get("selected_sprite_target"));
+                    if (image != null)
+                    {
+                        spriteState.selectedSprite = image.sprite;
+                        deleteObjects[image.gameObject] = true;
+                    }
+#endif
+
+                    image = ElementUtil.FindComponentByClassName<Image>(children,
+                        spriteStateJson.Get("disabled_sprite_target"));
+                    if (image != null)
+                    {
+                        spriteState.disabledSprite = image.sprite;
+                        deleteObjects[image.gameObject] = true;
+                        button.transition = Selectable.Transition.SpriteSwap;
+                    }
+
+                    button.spriteState = spriteState;
+                }
+
+                // transitionの設定が明記してある場合は上書き設定する
                 var type = ButtonJson.Get("transition");
                 switch (type)
                 {
@@ -51,57 +108,7 @@ namespace XdUnityUI.Editor
                         button.transition = Selectable.Transition.None;
                         break;
                     default:
-                        button.transition = Selectable.Transition.ColorTint;
                         break;
-                }
-
-                var targetImage =
-                    ElementUtil.FindComponentByClassName<Image>(children, ButtonJson.Get("target_graphic_class"));
-                if (targetImage != null)
-                {
-                    button.targetGraphic = targetImage;
-                    targetImageObject = targetImage.gameObject;
-                }
-
-                var spriteStateJson = ButtonJson.GetDic("sprite_state");
-                if (spriteStateJson != null)
-                {
-                    var spriteState = new SpriteState();
-                    var image = ElementUtil.FindComponentByClassName<Image>(children,
-                        spriteStateJson.Get("highlighted_sprite_class"));
-                    if (image != null)
-                    {
-                        spriteState.highlightedSprite = image.sprite;
-                        deleteObjects[image.gameObject] = true;
-                    }
-
-                    image = ElementUtil.FindComponentByClassName<Image>(children,
-                        spriteStateJson.Get("pressed_sprite_class"));
-                    if (image != null)
-                    {
-                        spriteState.pressedSprite = image.sprite;
-                        deleteObjects[image.gameObject] = true;
-                    }
-
-#if UNITY_2019_1_OR_NEWER
-                    image = ElementUtil.FindComponentByClassName<Image>(children,
-                        spriteStateJson.Get("selected_sprite_class"));
-                    if (image != null)
-                    {
-                        spriteState.selectedSprite = image.sprite;
-                        deleteObjects[image.gameObject] = true;
-                    }
-#endif
-
-                    image = ElementUtil.FindComponentByClassName<Image>(children,
-                        spriteStateJson.Get("disabled_sprite_class"));
-                    if (image != null)
-                    {
-                        spriteState.disabledSprite = image.sprite;
-                        deleteObjects[image.gameObject] = true;
-                    }
-
-                    button.spriteState = spriteState;
                 }
             }
 
