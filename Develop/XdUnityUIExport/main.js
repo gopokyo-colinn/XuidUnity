@@ -667,16 +667,14 @@ class BoundsToRectTransform {
     this.restore = new GlobalBounds(this.node)
   }
 
-  calcRectTransform(hashResponsiveParameter) {
+  calcRectTransform() {
     // DrawBoundsでのレスポンシブパラメータ(場合によっては不正確)
     this.responsiveParameter = calcRectTransform(
       this.node,
-      hashResponsiveParameter,
     )
     // GlobalBoundsでのレスポンシブパラメータ(場合によっては不正確)
     this.responsiveParameterGlobal = calcRectTransform(
       this.node,
-      hashResponsiveParameter,
       false,
     )
   }
@@ -856,7 +854,7 @@ function getBeforeGlobalDrawBounds(node) {
     }
   }
   if (bounds) return bounds
-  throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
+  // throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
   return null
 }
 
@@ -1897,12 +1895,12 @@ function calcRect(
  * @param calcDrawBounds
  * @return {{offset_max: {x: number, y: number}, fix: {top: null, left: null, bottom: null, width: null, right: null, height: null}, pivot: {x: number, y: number}, anchor_min: {x: number, y: number}, anchor_max: {x: number, y: number}, offset_min: {x: number, y: number}}}
  */
-function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
+function calcRectTransform(node, calcDrawBounds = true) {
   if (!node || !node.parent) return null
 
-  const bounds = hashBounds[node.guid]
+  const bounds = globalResponsiveBounds[node.guid]
   if (!bounds || !bounds.before || !bounds.after) return null
-  const parentBounds = hashBounds[node.parent.guid]
+  const parentBounds = globalResponsiveBounds[node.parent.guid]
   if (!parentBounds || !parentBounds.before || !parentBounds.after) return null
 
   const beforeGlobalBounds = bounds.before.global_bounds
@@ -1956,13 +1954,12 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
  * @param {SceneNodeClass} root
  * @return {BoundsToRectTransform[]}
  */
-async function makeResponsiveBounds(root) {
-  let hashBounds = {}
+async function makeGlobalBoundsRectTransform(root) {
   // 現在のboundsを取得する
   traverseNode(root, node => {
     let param = new BoundsToRectTransform(node)
     param.updateBeforeBounds()
-    hashBounds[node.guid] = param
+    globalResponsiveBounds[node.guid] = param
   })
 
   const rootWidth = root.globalBounds.width
@@ -1987,8 +1984,8 @@ async function makeResponsiveBounds(root) {
   // 変更されたboundsを取得する
   traverseNode(root, node => {
     let bounds =
-      hashBounds[node.guid] ||
-      (hashBounds[node.guid] = new BoundsToRectTransform(node))
+      globalResponsiveBounds[node.guid] ||
+      (globalResponsiveBounds[node.guid] = new BoundsToRectTransform(node))
     bounds.updateAfterBounds()
   })
 
@@ -2000,15 +1997,14 @@ async function makeResponsiveBounds(root) {
 
   // 元に戻ったときのbounds
   traverseNode(root, node => {
-    hashBounds[node.guid].updateRestoreBounds()
+    globalResponsiveBounds[node.guid].updateRestoreBounds()
   })
 
   // レスポンシブパラメータの生成
-  for (let key in hashBounds) {
-    hashBounds[key].calcRectTransform(hashBounds) // ここまでに生成されたデータが必要
+  for (let key in globalResponsiveBounds) {
+    globalResponsiveBounds[key].calcRectTransform() // ここまでに生成されたデータが必要
   }
 
-  return hashBounds
 }
 
 /**
@@ -3129,8 +3125,10 @@ function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
         return drawBounds.width
       case 'draw-bounds-height':
         return drawBounds.height
+      case null:
+        break
       default:
-        console.log(`**error** unknown value${name}`)
+        console.log(`**error** unknown value ${name}`)
         break
     }
     return null
@@ -4448,7 +4446,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     }
     globalCssVars = createCssVars(globalCssRules)
 
-    globalResponsiveBounds = await makeResponsiveBounds(root)
+    await makeGlobalBoundsRectTransform(root)
 
     // フォルダ名に使えない文字を'_'に変換
     let subFolderName = nodeToFolderName(root)
@@ -4974,10 +4972,10 @@ async function pluginResponsiveParamName(selection, root) {
   // TODO: selectionItemsで、 for..of ループができるか、確認必要。 makeResponsiveBoundsで、await処理がないため、問題ないように見えてしまう可能性あり。
   for (const item of selectionItems) {
     // あとで一括変化があったかどうか調べるため､responsiveBoundsにパラメータを追加していく
-    await makeResponsiveBounds(item)
+    await makeGlobalBoundsRectTransform(item)
     let func = node => {
       if (node.symbolId) return
-      const param = calcRectTransform(node, {})
+      const param = calcRectTransform(node)
       if (param) {
         let styleFix = []
         for (let key in param.fix) {
