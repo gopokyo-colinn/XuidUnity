@@ -27,14 +27,69 @@
 }
 
 /*
- 縦にならべる
+padding
+- vertical layout groupを作成しpaddingをコントロール
+- background以外を.contentにまとめる
+- .contentのサイズ
  */
-.vertical-stack {
-  layout-group: y;
-  layout-group-control-child-size: width height;
-  /*layout-group-child-force-expand: width;*/
+.padding {
+  layout-group: vertical;
+  layout-group-child-control-size: width height;
+  /* layout-group-child-force-expand: width height; */
+  layout-group-child-alignment: upper-center;
+  content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
+  create-content: true;
+  create-content-name: '.content';
+}
+
+.padding > .content {
+  layout-element: true;
+  layout-element-preferred-width: draw-bounds-width;
+  layout-element-preferred-height: draw-bounds-height;
+}
+
+
+/*
+padding background
+ */
+.padding > :first-child:same-parent-bounds {
+  component: true;
+  image: true;
+}
+
+/*
+ 縦にならべる
+ APIでvertical-stack状態であるかどうかが取得できると
+ クラスで指定する必要がなくなる
+ */
+.vertical-stack {
+  layout-group: vertical;
+  layout-group-child-control-size: width height;
+  layout-group-child-alignment: upper-center;
+  layout-group-spacing: average;
+  content-size-fitter: true;
+  content-size-fitter-horizontal-fit: preferred-size;
+  content-size-fitter-vertical-fit: preferred-size;
+}
+
+.vertical-stack > * {
+  layout-element: if-no-layout-properties preferred;
+  layout-element-preferred-width: draw-bounds-width;
+  layout-element-preferred-height: draw-bounds-height;
+}
+
+/*
+.vertical-stack直下の一番下のレイヤーは画像化、コンポーネント化する
+最下のレイヤー
+first-childになる
+それが、親Boundsと同じであった場合、Paddingフレームとなっている
+イメージ化し、コンポーネント化する
+ */
+.vertical-stack > :first-child:same-parent-bounds {
+  component: true;
+  image: true;
 }
 
 /*
@@ -68,11 +123,9 @@
 }
 
 /*
- リピードグリッドはViewport扱い
+ リピードグリッドはマスクを持つ
  */
 [typeof='RepeatGrid'] {
-  create-content: true;
-  create-content-name: '.content';
   rect-mask-twod: true;
 }
 
@@ -91,30 +144,11 @@
   scroll-rect-content-target: '.content';
 }
 
-.padding {
-  layout-group: y;
-  layout-group-child-control-size: width height;
-}
-
-.padding > * {
-  layout-element: if-no-layout-properties preferred;
-  layout-element-preferred-width: bounds;
-  layout-element-preferred-height: bounds;
-}
-
-/*
-.padding直下の一番下のレイヤーは画像化、コンポーネント化する
-最下のレイヤー
-first-childになる
- */
-.padding > *:first-child {
-  component: true;
-  image: true;
-}
 
 .viewport-xy {
   create-content: true;
   create-content-name: '.content';
+  create-content-bounds: viewport-content-global-draw-bounds;
   rect-mask-twod: true;
   scroll-rect: x y;
   scroll-rect-content-target: '.content';
@@ -280,7 +314,6 @@ first-childになる
 [class$='-button'],
 [class$='_button'] {
   button: true;
-  button-transition: color-tint;
   button-transition-target-graphic: '.target-image';
   button-transition-highlighted-sprite-target: '.highlighted-image';
   button-transition-pressed-sprite-target: '.pressed-image';
@@ -295,7 +328,6 @@ first-childになる
 [class$='-toggle'],
 [class$='_toggle'] {
   toggle: true;
-  toggle-transition: color-tint;
   toggle-transition-target-graphic: '.target-image';
   toggle-transition-highlighted-sprite-target: '.highlighted-image';
   toggle-transition-pressed-sprite-target: '.pressed-image';
@@ -304,13 +336,17 @@ first-childになる
   toggle-graphic-target: '.checked-image'; /* ONのときのチェック画像 */
 }
 
-.transition-sprite-swap {
-  button-transition: sprite-swap;
-  toggle-transition: sprite-swap;
-}
-
 .no-slice {
   image-slice: false;
+}
+
+/*
+このクラス直下のイメージは親のサイズでSpriteを作成する
+XD内では無理なので、Unity内で作成する
+*/
+.image-each-child > * {
+  image: true;
+  image-fit-parent-bounds: true;
 }
 
 .input,
@@ -320,7 +356,6 @@ first-childになる
 [class$='-input'],
 [class$='_input'] {
   input: true;
-  input-transition: color-tint;
   input-transition-target-graphic: '.target-image';
   input-transition-highlighted-sprite-target: '.highlighted-image';
   input-transition-pressed-sprite-target: '.pressed-image';
