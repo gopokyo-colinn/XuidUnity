@@ -44,7 +44,7 @@ namespace XdUnityUI.Editor
                 return null;
             }
 
-            return (float) json[key];
+            return (float?) json[key];
         }
 
         public static int? GetInt(this Dictionary<string, object> json, string key)

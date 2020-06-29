@@ -68,7 +68,7 @@ let cacheNodeNameAndStyle = {}
  * グローバル変数をリセットする 再コンバートに必要なものだけのリセット
  */
 function resetGlobalVariables() {
-  globalResponsiveBounds = null
+  globalResponsiveBounds = {}
   globalCssRules = null
   globalCssVars = {}
   cacheParseNodeName = {}
@@ -113,6 +113,7 @@ const STYLE_IMAGE_TYPE = 'image-type' // sliced/tiled/simple/filled
 const STYLE_IMAGE_FIT_PARENT_BOUNDS = 'image-fit-parent-bounds' // 親と同じ大きさで画像を作成する
 const STYLE_LAYER = 'layer'
 const STYLE_LAYOUT_ELEMENT = 'layout-element'
+const STYLE_LAYOUT_ELEMENT_IGNORE_LAYOUT = 'layout-element-ignore-layout'
 const STYLE_LAYOUT_ELEMENT_PREFERRED_WIDTH = 'layout-element-preferred-width'
 const STYLE_LAYOUT_ELEMENT_PREFERRED_HEIGHT = 'layout-element-preferred-height'
 const STYLE_LAYOUT_GROUP = 'layout-group' //子供を自動的にどうならべるかのオプション
@@ -197,17 +198,17 @@ const appLanguage = application.appLanguage
  *
  * @returns {string}
  */
-function getString(multilangStr) {
+function getString(multiLangStr) {
   /**
    * @type {string[]}
    */
-  if (!multilangStr) {
+  if (!multiLangStr) {
     return 'no text(strings.json problem)'
   }
-  let str = multilangStr[appLanguage]
+  let str = multiLangStr[appLanguage]
   if (str) return str
   // 日本語にフォールする
-  str = multilangStr['ja']
+  str = multiLangStr['ja']
   if (str) return str
   return 'no text(strings.json problem)'
 }
@@ -542,7 +543,7 @@ class GlobalBounds {
     this.visible = node.visible
     this.global_bounds = getGlobalBounds(node)
     this.global_draw_bounds = getGlobalDrawBounds(node)
-    if (hasContentChildren(node)) {
+    if (hasContentBounds(node)) {
       // Mask（もしくはViewport）をふくむ、含まないで、それぞれのBoundsが必要
       //  マスクありでBoundsが欲しいとき → 全体コンテンツBoundsがほしいとき　とくに、Childrenが大幅にかたよっているときなど
       //  マスク抜きでBoundsが欲しいとき → List内コンテンツのPaddingの計算
@@ -667,18 +668,11 @@ class BoundsToRectTransform {
     this.restore = new GlobalBounds(this.node)
   }
 
-  calcRectTransform(hashResponsiveParameter) {
+  calcRectTransform() {
     // DrawBoundsでのレスポンシブパラメータ(場合によっては不正確)
-    this.responsiveParameter = calcRectTransform(
-      this.node,
-      hashResponsiveParameter,
-    )
+    this.responsiveParameter = calcRectTransform(this.node)
     // GlobalBoundsでのレスポンシブパラメータ(場合によっては不正確)
-    this.responsiveParameterGlobal = calcRectTransform(
-      this.node,
-      hashResponsiveParameter,
-      false,
-    )
+    this.responsiveParameterGlobal = calcRectTransform(this.node, false)
   }
 }
 
@@ -727,7 +721,7 @@ function getRGB(color) {
 
 /**
  * 親をさかのぼり､Artboardを探し出す
- * @param {SceneNode} node
+ * @param {SceneNode|SceneNodeClass} node
  * @returns {Artboard|null}
  */
 function getArtboard(node) {
@@ -743,9 +737,9 @@ function getArtboard(node) {
 
 /**
  * @param node
- * @returns {RepeatGrid|null}
+ * @returns {RepeatGrid}
  */
-function getRepeatGrid(node) {
+function getAncestorRepeatGrid(node) {
   let parent = node
   while (parent != null) {
     if (parent.constructor.name === 'RepeatGrid') {
@@ -786,7 +780,7 @@ function getGlobalBounds(node) {
  * ハッシュをつかわないで取得する
  * Textのフォントサイズ情報など、描画サイズにかかわるものを取得する
  * アートボードの伸縮でサイズが変わってしまうために退避できるように
- * @param node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
 function getGlobalDrawBounds(node) {
@@ -815,7 +809,7 @@ function getGlobalDrawBounds(node) {
 
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
 function getBeforeGlobalBounds(node) {
@@ -838,10 +832,11 @@ function getBeforeTextFontSize(node) {
   const hBounds = globalResponsiveBounds[node.guid]
   return hBounds.before.global_draw_bounds.text.fontSize
 }
+
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
  * ハッシュからデータを取得する
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {{ex: number, ey: number, x: number, width: number, y: number, height: number}}
  */
 function getBeforeGlobalDrawBounds(node) {
@@ -856,12 +851,12 @@ function getBeforeGlobalDrawBounds(node) {
     }
   }
   if (bounds) return bounds
-  throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
+  // throw `リサイズ前のGlobalDrawBoundsの情報がありません: ${node}`
   return null
 }
 
 /**
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {Bounds}
  */
 function getBeforeContentGlobalBounds(node) {
@@ -881,7 +876,7 @@ function getBeforeContentGlobalBounds(node) {
 }
 
 /**
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {Bounds}
  */
 function getBeforeContentGlobalDrawBounds(node) {
@@ -901,7 +896,7 @@ function getBeforeContentGlobalDrawBounds(node) {
 }
 
 /**
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {Bounds}
  */
 function getBeforeViewportContentGlobalBounds(node) {
@@ -921,7 +916,7 @@ function getBeforeViewportContentGlobalBounds(node) {
 }
 
 /**
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {Bounds}
  */
 function getBeforeViewportContentGlobalDrawBounds(node) {
@@ -944,33 +939,6 @@ function getBeforeViewportContentGlobalDrawBounds(node) {
 }
 
 /**
- * Baum2用Boundsパラメータの取得
- * Artboard内でのDrawBoundsを取得する
- * x､yはCenterMiddleでの座標になる
- * @param {SceneNodeClass} node
- * @param {SceneNodeClass} base
- * @return {{cx: number, cy: number, width: number, height: number}}
- */
-function getDrawBoundsCMInBase(node, base) {
-  const nodeDrawBounds = getBeforeGlobalDrawBounds(node)
-  const baseBounds = getBeforeGlobalDrawBounds(base)
-  if (baseBounds) {
-    return {
-      cx: nodeDrawBounds.x - baseBounds.x + nodeDrawBounds.width / 2,
-      cy: nodeDrawBounds.y - baseBounds.y + nodeDrawBounds.height / 2,
-      width: nodeDrawBounds.width,
-      height: nodeDrawBounds.height,
-    }
-  }
-  return {
-    cx: nodeDrawBounds.x - nodeDrawBounds.width / 2,
-    cy: nodeDrawBounds.y - nodeDrawBounds.height / 2,
-    width: nodeDrawBounds.width,
-    height: nodeDrawBounds.height,
-  }
-}
-
-/**
  * 相対座標のBoundsを返す
  * @param {Bounds} bounds
  * @param {Bounds} baseBounds
@@ -982,22 +950,6 @@ function getBoundsInBase(bounds, baseBounds) {
     y: bounds.y - baseBounds.y,
     width: bounds.width,
     height: bounds.height,
-  }
-}
-
-/**
- * @param {SceneNodeClass} node
- * @param {SceneNodeClass} base
- * @return {{cx: number, cy: number, width: number, height: number}}
- */
-function getBoundsCMInBase(node, base) {
-  const nodeBounds = getBeforeGlobalBounds(node)
-  const baseBounds = getBeforeGlobalBounds(base)
-  return {
-    cx: nodeBounds.x - baseBounds.x + nodeBounds.width / 2,
-    cy: nodeBounds.y - baseBounds.y + nodeBounds.height / 2,
-    width: nodeBounds.width,
-    height: nodeBounds.height,
   }
 }
 
@@ -1165,7 +1117,7 @@ function addLayoutFromRepeatGrid(json, repeatGrid, style) {
  * 子供(コンポーネント化するもの･withoutNodeを除く)の全体サイズと
  * 子供の中での最大Width、Heightを取得する
  * 注意：保存されたBounds情報をつかわず、現在のサイズを取得する
- * @param {Array<SceneNode>} nodes
+ * @param {SceneNode[]} nodes
  * @returns {{node_max_height: number, node_max_width: number, global_bounds: Bounds, global_draw_bounds: Bounds}}
  */
 function calcGlobalBounds(nodes) {
@@ -1210,9 +1162,7 @@ function calcGlobalBounds(nodes) {
 
 /**
  * Viewport内の、オブジェクトリストから Paddingを計算する
- * @param {SceneNodeClass} node
- * @param {SceneNodeClass} maskNode
- * @param {SceneNodeList} nodeChildren
+ * @param {SceneNode|SceneNodeClass} node
  * @returns {{top: number, left: number, bottom: number, right: number}}
  */
 function calcPadding(node) {
@@ -1240,8 +1190,8 @@ function calcPadding(node) {
  * Spacing､Padding､Alignment情報を生成する
  * Baum2にわたすにはmethodが必要
  * @param {*} json
- * @param {SceneNodeClass} viewportNode
- * @param {SceneNodeClass} maskNode
+ * @param {SceneNode|SceneNodeClass} viewportNode
+ * @param {SceneNode|SceneNodeClass} maskNode
  * @param {SceneNodeList} nodeChildren
  */
 function calcLayout(json, viewportNode, maskNode, nodeChildren) {
@@ -1367,8 +1317,8 @@ function calcLayout(json, viewportNode, maskNode, nodeChildren) {
 
 /**
  * @param json
- * @param {SceneNodeClass} viewportNode
- * @param {SceneNodeClass} maskNode
+ * @param {SceneNode|SceneNodeClass} viewportNode
+ * @param {SceneNode|SceneNodeClass} maskNode
  * @param {SceneNodeList} children
  * @returns {{padding: {top: number, left: number, bottom: number, right: number}, cell_max_height: number, cell_max_width: number}}
  */
@@ -1382,8 +1332,8 @@ function calcVLayout(json, viewportNode, maskNode, children) {
 
 /**
  * @param json
- * @param {SceneNodeClass} viewportNode
- * @param {SceneNodeClass} maskNode
+ * @param {SceneNode|SceneNodeClass} viewportNode
+ * @param {SceneNode|SceneNodeClass} maskNode
  * @param {SceneNodeList} children
  * @returns {{padding: {top: number, left: number, bottom: number, right: number}, cell_max_height: number, cell_max_width: number}}
  */
@@ -1397,8 +1347,8 @@ function calcHLayout(json, viewportNode, maskNode, children) {
 
 /**
  * @param json
- * @param {SceneNodeClass} viewportNode
- * @param {SceneNodeClass} maskNode
+ * @param {SceneNode|SceneNodeClass} viewportNode
+ * @param {SceneNode|SceneNodeClass} maskNode
  * @param {SceneNodeList} children
  * @returns {{padding: {top: number, left: number, bottom: number, right: number}, cell_max_height: number, cell_max_width: number}}
  */
@@ -1459,7 +1409,7 @@ function forEachReverseElements(elements, func) {
 }
 
 /**
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  */
 function getUnityName(node) {
   const { node_name: nodeName, style } = getNodeNameAndStyle(node)
@@ -1892,17 +1842,16 @@ function calcRect(
  anchor_max: anchorMax,
  offset_min: offsetMin,
  offset_max: offsetMax,
- * @param {SceneNodeClass} node
- * @param {Style} style
+ * @param {SceneNode|SceneNodeClass} node
  * @param calcDrawBounds
- * @return {{offset_max: {x: number, y: number}, fix: {top: null, left: null, bottom: null, width: null, right: null, height: null}, pivot: {x: number, y: number}, anchor_min: {x: number, y: number}, anchor_max: {x: number, y: number}, offset_min: {x: number, y: number}}}
+ * @return {null}
  */
-function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
+function calcRectTransform(node, calcDrawBounds = true) {
   if (!node || !node.parent) return null
 
-  const bounds = hashBounds[node.guid]
+  const bounds = globalResponsiveBounds[node.guid]
   if (!bounds || !bounds.before || !bounds.after) return null
-  const parentBounds = hashBounds[node.parent.guid]
+  const parentBounds = globalResponsiveBounds[node.parent.guid]
   if (!parentBounds || !parentBounds.before || !parentBounds.after) return null
 
   const beforeGlobalBounds = bounds.before.global_bounds
@@ -1953,16 +1902,15 @@ function calcRectTransform(node, hashBounds, calcDrawBounds = true) {
 
 /**
  * root以下のノードのレスポンシブパラメータ作成
- * @param {SceneNodeClass} root
+ * @param {SceneNode|SceneNodeClass} root
  * @return {BoundsToRectTransform[]}
  */
-async function makeResponsiveBounds(root) {
-  let hashBounds = {}
+async function makeGlobalBoundsRectTransform(root) {
   // 現在のboundsを取得する
   traverseNode(root, node => {
     let param = new BoundsToRectTransform(node)
     param.updateBeforeBounds()
-    hashBounds[node.guid] = param
+    globalResponsiveBounds[node.guid] = param
   })
 
   const rootWidth = root.globalBounds.width
@@ -1987,8 +1935,8 @@ async function makeResponsiveBounds(root) {
   // 変更されたboundsを取得する
   traverseNode(root, node => {
     let bounds =
-      hashBounds[node.guid] ||
-      (hashBounds[node.guid] = new BoundsToRectTransform(node))
+      globalResponsiveBounds[node.guid] ||
+      (globalResponsiveBounds[node.guid] = new BoundsToRectTransform(node))
     bounds.updateAfterBounds()
   })
 
@@ -2000,15 +1948,13 @@ async function makeResponsiveBounds(root) {
 
   // 元に戻ったときのbounds
   traverseNode(root, node => {
-    hashBounds[node.guid].updateRestoreBounds()
+    globalResponsiveBounds[node.guid].updateRestoreBounds()
   })
 
   // レスポンシブパラメータの生成
-  for (let key in hashBounds) {
-    hashBounds[key].calcRectTransform(hashBounds) // ここまでに生成されたデータが必要
+  for (let key in globalResponsiveBounds) {
+    globalResponsiveBounds[key].calcRectTransform() // ここまでに生成されたデータが必要
   }
-
-  return hashBounds
 }
 
 /**
@@ -2050,7 +1996,7 @@ function checkBoundsVerbose(beforeBounds, restoreBounds) {
 
 /**
  * 描画サイズでのレスポンシブパラメータの取得
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @returns {*}
  */
 function getRectTransformDraw(node) {
@@ -2060,7 +2006,7 @@ function getRectTransformDraw(node) {
 
 /**
  * GlobalBoundsでのレスポンシブパラメータの取得
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  */
 function getRectTransform(node) {
   let bounds = globalResponsiveBounds[node.guid]
@@ -2069,7 +2015,7 @@ function getRectTransform(node) {
 
 /**
  * NodeNameはXDでつけられたものをTrimしただけ
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @returns {string}
  */
 function getNodeName(node) {
@@ -2078,7 +2024,7 @@ function getNodeName(node) {
 
 /**
  * IDを取得する #を削除する
- * @param {SceneNodeClass} node SceneNodeClassでないといけない
+ * @param {SceneNode|SceneNodeClass} node SceneNodeClassでないといけない
  * @return {string|null}
  */
 function getCssIdFromNodeName(node) {
@@ -2188,6 +2134,31 @@ class Style {
   firstAsBool(property) {
     const first = this.first(property)
     return asBool(first)
+  }
+
+  firstCheck(property, node) {
+    let first = this.first(property)
+    let result = null
+    switch (first) {
+      case 'if-not-content-only-child-has-layout-properties': {
+        // console.log('if-not-content-only-child-has-layout-properties')
+        const contents = node.children.filter(child => {
+          return isContentChild(child)
+        })
+        if (contents.length !== 1) {
+          result = true
+          break
+        }
+        const contentChild = contents[0]
+        const { style: contentStyle } = getNodeNameAndStyle(contentChild)
+        result = !hasLayoutProperties(contentStyle)
+        break
+      }
+      default:
+        result = asBool(first)
+        break
+    }
+    return result
   }
 
   /**
@@ -2309,6 +2280,13 @@ function isLastChild(node) {
   return parent.children.at(lastIndex) === node
 }
 
+function isOnlyChild(node) {
+  const parent = node.parent
+  if (!parent) return false
+  const lastIndex = parent.children.length - 1
+  return parent.children.at(lastIndex) === node
+}
+
 /**
  * 親と同じBoundsかどうか
  * Padding、*-Stackで、nodeが背景になっているかどうかの判定につかう
@@ -2339,7 +2317,7 @@ function sameParentBounds(node) {
  * この関数が基底にあり、正しくNodeName Styleが取得できるようにする
  * ここで処理しないと辻褄があわないケースがでてくる
  * 例：repeatgrid-child-nameで得られる名前
- * @param {SceneNodeClass} node ここのNodeはSceneNodeClassでないといけない
+ * @param {SceneNode|SceneNodeClass} node ここのNodeはSceneNodeClassでないといけない
  * @returns {{node_name: string, name: string, style: Style}|null}
  */
 function getNodeNameAndStyle(node) {
@@ -2411,37 +2389,12 @@ function getNodeNameAndStyle(node) {
 
 /**
  * @param root
- * @returns {{root: {name: *, type: string}, info: {canvas: {image: {w: number, h: number}, size: {w: number, h: number}, base: {w: number, x: number, h: number, y: number}}, version: string}}}
+ * @returns {{root: {name: *, type: string}, info: {version: string}}}
  */
 function makeLayoutJson(root) {
-  let rootBounds
-  if (root instanceof Artboard) {
-    rootBounds = getBeforeGlobalDrawBounds(root)
-    rootBounds.cx = rootBounds.width / 2
-    rootBounds.cy = rootBounds.height / 2
-  } else {
-    rootBounds = getDrawBoundsCMInBase(root, root.parent)
-  }
-
   return {
     info: {
       version: '0.6.1',
-      canvas: {
-        image: {
-          w: rootBounds.width,
-          h: rootBounds.height,
-        },
-        size: {
-          w: rootBounds.width,
-          h: rootBounds.height,
-        },
-        base: {
-          x: rootBounds.cx,
-          y: rootBounds.cy,
-          w: rootBounds.width,
-          h: rootBounds.height,
-        },
-      },
     },
     root: {
       type: 'Root',
@@ -2465,7 +2418,7 @@ function addActive(json, style) {
 /**
  * CanvasGroupオプション
  * @param {*} json
- * @param {SceneNode} node
+ * @param {SceneNodeClass|SceneNode} node
  * @param style
  */
 function addCanvasGroup(json, node, style) {
@@ -2570,7 +2523,7 @@ function addRectTransformDraw(json, node, style) {
 /**
  *
  * @param json
- * @param {SceneNode} node
+ * @param {SceneNode|SceneNodeClass} node
  * @param style
  * @returns {null}
  */
@@ -2605,7 +2558,7 @@ function addState(json, style) {
 
 /**
  * @param json
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  */
 function addParsedNames(json, node) {
   const parsedName = cssParseNodeName(node.name)
@@ -2632,22 +2585,6 @@ function addParsedNames(json, node) {
 
   Object.assign(json, {
     parsed_names,
-  })
-}
-
-/**
- * BAUM2では使わないケースもあるが､
- * CenterMiddle座標と､サイズをアサインする
- * XY座標によるElementsソートなどに使われる
- * @param {*} json
- * @param {{cx:number, cy:number, width:number, height:number}} boundsCm
- */
-function addBoundsCM(json, boundsCm) {
-  Object.assign(json, {
-    x: boundsCm.cx,
-    y: boundsCm.cy,
-    w: boundsCm.width,
-    h: boundsCm.height,
   })
 }
 
@@ -2730,7 +2667,7 @@ function getImageSliceOptionJson(styleImageSliceValues, node) {
 /**
  * 親のサイズで画像を生成する
  * ToDo:スライスや、ImageScaleをまだ考慮していない
- * @param node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {null|{copy_rect: {width: number, height: number}}}
  */
 function getImageRectOptionJson(node) {
@@ -2753,7 +2690,7 @@ function getImageRectOptionJson(node) {
 /**
  *
  * @param json
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @param root
  * @param outputFolder
  * @param renditions
@@ -2787,12 +2724,7 @@ async function addImage(
     hashStringLength++
   }
 
-  const drawBounds = getDrawBoundsCMInBase(node, root)
   Object.assign(json, {
-    x: drawBounds.cx,
-    y: drawBounds.cy,
-    w: drawBounds.width,
-    h: drawBounds.height,
     opacity: 100,
   })
 
@@ -2825,7 +2757,7 @@ async function addImage(
   }
 
   /**
-   * @type {SceneNodeClass}
+   * @type {SceneNode}
    */
   let renditionNode = node
   let renditionScale = globalScale
@@ -2930,7 +2862,7 @@ function addContentSizeFitter(json, style) {
 
 /**
  * @param json
- * @param {SceneNode} node
+ * @param {SceneNode|SceneNode} node
  * @param {Style} style
  */
 function addScrollRect(json, node, style) {
@@ -3001,8 +2933,8 @@ function addRectMask2d(json, style) {
 /**
  *
  * @param json
- * @param {SceneNodeClass} viewportNode
- * @param {SceneNodeClass} maskNode
+ * @param {SceneNode|SceneNodeClass} viewportNode
+ * @param {SceneNode|SceneNodeClass} maskNode
  * @param {SceneNodeList} children
  * @param {Style} style
  */
@@ -3097,26 +3029,38 @@ function hasLayoutProperties(style) {
 }
 
 /**
+ * @param {SceneNode|SceneNodeClass} node
+ */
+function isContentOnlyChild(node) {
+  console.log(`isContentOnlyChild(${node.name})`)
+  const contents = node.children.filter(child => {
+    const result = isContentChild(child)
+    console.log(`${child.name}:${result}`)
+    return result
+  })
+  return contents.length === 1
+}
+
+/**
  *
  * @param {{}} json
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNode} node
  * @param {Style} style
  * @param overwriteGlobalDrawBounds 上書きするGlobalDrawBounds値
  */
 function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
   let first = style.first(STYLE_LAYOUT_ELEMENT)
-  if (first === 'if-no-layout-properties') {
-    if (hasLayoutProperties(style)) {
-      first = false
-    }
+  if (first === 'if-not-has-layout-properties') {
+    first = !hasLayoutProperties(style)
   }
   if (!asBool(first)) return
 
   const layoutElementJson = {}
 
-  if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'ignore-layout')) {
+  const styleIgnoreLayout = style.first(STYLE_LAYOUT_ELEMENT_IGNORE_LAYOUT)
+  if (styleIgnoreLayout != null) {
     Object.assign(layoutElementJson, {
-      ignore_layout: true,
+      ignore_layout: asBool(styleIgnoreLayout),
     })
   }
 
@@ -3129,8 +3073,10 @@ function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
         return drawBounds.width
       case 'draw-bounds-height':
         return drawBounds.height
+      case null:
+        break
       default:
-        console.log(`**error** unknown value${name}`)
+        console.log(`**error** unknown value ${name}`)
         break
     }
     return null
@@ -3199,14 +3145,15 @@ function addComponents(json, style) {
 }
 
 /**
- * そのノードがContentをもつかどうか
+ * nodeがnode.Boundsとことなる　content boundsをもつかどうか
  * Contentとは、Childrenをもっていて、なにかでMaskされているグループのこと
+ * nodeと、ChildrenのDrawBoundsが異なる場合 Contentを持つという
  * ・MaskedGroup
- * ・RepeatGrid
- * @param {SceneNodeClass} node
+ * ※RepeatGridはもたない node.Boundsの中で 子供ノードの位置を計算する
+ * @param {SceneNode|SceneNodeClass} node
  * @return {boolean}
  */
-function hasContentChildren(node) {
+function hasContentBounds(node) {
   const { style } = getNodeNameAndStyle(node)
   if (style.firstAsBool(STYLE_CREATE_CONTENT)) return true
   if (style.firstAsBool(STYLE_LAYOUT_GROUP)) return true
@@ -3216,14 +3163,14 @@ function hasContentChildren(node) {
 
 /**
  *
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @return {boolean}
  */
 function isContentChild(node) {
   const { style } = getNodeNameAndStyle(node)
   if (style.firstAsBool(STYLE_COMPONENT)) return false
   if (node.parent.mask === node) return false
-  return hasContentChildren(node.parent)
+  return hasContentBounds(node.parent)
 }
 
 /**
@@ -3250,10 +3197,9 @@ function getViewport(node) {
  * @param style
  * @param json
  * @param node
- * @param root
  */
 function addContent(style, json, node) {
-  if (!style.firstAsBool(STYLE_CREATE_CONTENT)) return
+  if (!style.firstCheck(STYLE_CREATE_CONTENT, node)) return
   const createContentName = style.first(STYLE_CREATE_CONTENT_NAME) || 'content'
 
   // contentのアサインと名前設定
@@ -3348,7 +3294,7 @@ function addContent(style, json, node) {
 /**
  *
  * @param {*} json
- * @param {SceneNode} node
+ * @param {SceneNode|SceneNodeClass} node
  * @param {*} root
  * @param {*} funcForEachChild
  * 出力構成
@@ -3395,7 +3341,7 @@ async function createViewport(json, node, root, funcForEachChild) {
 
 /**
  * Stretch変形できるものへ変換コピーする
- * @param {SceneNodeClass} item
+ * @param {SceneNode|SceneNodeClass} item
  */
 function duplicateStretchable(item) {
   let fill = item.fill
@@ -3433,14 +3379,9 @@ async function createInput(json, node, root, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
 
   const type = 'Input'
-  let boundsCM = getDrawBoundsCMInBase(node, root)
   Object.assign(json, {
     type: type,
     name: getUnityName(node),
-    x: boundsCM.cx, // XdUnityUIでは使わないが､　VGroupなど､レイアウトの情報としてもつ
-    y: boundsCM.cy, // XdUnityUIでは使わないが､ VGroupなど､レイアウトの情報としてもつ
-    w: boundsCM.width, // XdUnityUIではつかわないが､情報としていれる RectElementで使用
-    h: boundsCM.height, // XdUnityUIではつかわないが､情報としていれる RectElementで使用
     elements: [], // Groupは空でもelementsをもっていないといけない
   })
   await funcForEachChild()
@@ -3625,8 +3566,8 @@ function addWrap(json, node, style) {
 /**
  *
  * @param json
- * @param {SceneNodeClass} node
- * @param {SceneNodeClass} root
+ * @param {SceneNode|SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} root
  * @param funcForEachChild
  * @return {Promise<string>}
  */
@@ -3637,14 +3578,9 @@ async function createGroup(json, node, root, funcForEachChild) {
   const nodeGroup = node
 
   const type = 'Group'
-  let boundsCM = getDrawBoundsCMInBase(node, root)
   Object.assign(json, {
     type: type,
     name: getUnityName(node),
-    x: boundsCM.cx, // XdUnityUIでは使わないが､　VGROUPなど､レイアウトの情報としてもつ
-    y: boundsCM.cy, // XdUnityUIでは使わないが､ VGroupなど､レイアウトの情報としてもつ
-    w: boundsCM.width, // XdUnityUIではつかわないが､情報としていれる RectElementで使用
-    h: boundsCM.height, // XdUnityUIではつかわないが､情報としていれる RectElementで使用
     elements: [], // Groupは空でもelementsをもっていないといけない
   })
 
@@ -3856,7 +3792,6 @@ async function createToggle(json, node, root, funcForEachChild) {
     })
   }
 
-  addBoundsCM(json, getDrawBoundsCMInBase(node, root))
   await funcForEachChild()
 
   let styleToggleTransition = style.first(STYLE_TOGGLE_TRANSITION)
@@ -3916,7 +3851,6 @@ async function createButton(json, node, root, funcForEachChild) {
     name: getUnityName(node),
   })
 
-  addBoundsCM(json, getDrawBoundsCMInBase(node, root))
   if (funcForEachChild) await funcForEachChild() // 子供を作成するかどうか選択できる createImageから呼び出された場合は子供の処理をしない
 
   const target_graphic = style.first(STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC)
@@ -3967,8 +3901,8 @@ async function createButton(json, node, root, funcForEachChild) {
 /**
  * パスレイヤー(楕円や長方形等)の処理
  * @param {*} json
- * @param {SceneNodeClass} node
- * @param {SceneNodeClass} root
+ * @param {SceneNode|SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} root
  * @param {*} outputFolder
  * @param {*} renditions
  * @param localStyle {Style}
@@ -4048,7 +3982,7 @@ async function createImage(
   )
   if (imageDataValues && imageDataValues.length > 0) {
     console.log('image data series')
-    let repeatGrid = getRepeatGrid(node)
+    let repeatGrid = getAncestorRepeatGrid(node)
 
     const dataSeries = []
     for (let value of imageDataValues) {
@@ -4110,7 +4044,7 @@ function addRectTransformRoot(layoutJson, node, funcForEachChild) {
  * TextNodeの処理
  * 画像になるか、Textコンポーネントをもつ
  * @param {*} json
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @param {Artboard} artboard
  * @param {*} outputFolder
  * @param {[]} renditions
@@ -4138,7 +4072,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
     STYLE_REPEATGRID_ATTACH_TEXT_DATA_SERIES,
   )
   if (styleValuesAttachText) {
-    let repeatGrid = getRepeatGrid(nodeText)
+    let repeatGrid = getAncestorRepeatGrid(nodeText)
     if (repeatGrid) {
       repeatGrid.attachTextDataSeries(nodeText, styleValuesAttachText)
     }
@@ -4165,8 +4099,6 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
     )
     return
   }
-
-  const boundsCM = getBoundsCMInBase(node, artboard)
 
   let type = 'Text'
   if (style.firstAsBool(STYLE_TEXTMP)) {
@@ -4208,13 +4140,8 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
       size: getBeforeTextFontSize(nodeText) * globalScale, // アートボードの伸縮でfontSizeが変わってしまうため、保存してある情報を使う
       color: nodeText.fill.toHex(true),
       align: hAlign + vAlign,
-      vh: boundsCM.height,
       opacity: 100,
     },
-    x: boundsCM.cx,
-    y: boundsCM.cy,
-    w: boundsCM.width,
-    h: boundsCM.height,
   })
 
   // 基本パラメータ
@@ -4228,7 +4155,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
 
 /**
  * @param {string} nodeName
- * @return {SceneNodeClass|null}
+ * @return {SceneNode|null}
  */
 function searchNode(nodeName) {
   let found = null
@@ -4243,7 +4170,7 @@ function searchNode(nodeName) {
 
 /**
  * func : node => {}  nodeを引数とした関数
- * @param {SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} node
  * @param {*} func
  */
 function traverseNode(node, func) {
@@ -4258,7 +4185,7 @@ function traverseNode(node, func) {
  * アートボードの処理
  * @param {*} renditions
  * @param outputFolder
- * @param {SceneNodeClass} root
+ * @param {SceneNode|SceneNodeClass} root
  */
 async function nodeRoot(renditions, outputFolder, root) {
   let layoutJson = makeLayoutJson(root)
@@ -4399,7 +4326,7 @@ async function nodeRoot(renditions, outputFolder, root) {
 
 /**
  *
- * @param node {SceneNodeClass}
+ * @param node {SceneNode}
  * @returns {string}
  * @constructor
  */
@@ -4417,20 +4344,20 @@ function nodeToFolderName(node) {
 
 /**
  * XdUnityUI export
- * @param {SceneNodeClass[]} roots
+ * @param {SceneNode[]} roots
  * @param outputFolder
  * @returns {Promise<void>}
  */
 async function exportXdUnityUI(roots, outputFolder) {
-  resetGlobalVariables()
-
   // ラスタライズする要素を入れる
   let renditions = []
 
-  globalResponsiveBounds = {}
+  console.log(`## export ${roots.length} roots`)
 
   for (let root of roots) {
     console.log(`### ${root.name}`)
+    console.log('- reset global variables')
+    resetGlobalVariables()
     globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
     const artboardCssFilename = replaceToFileName(root.name) + '.css'
     try {
@@ -4448,7 +4375,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     }
     globalCssVars = createCssVars(globalCssRules)
 
-    globalResponsiveBounds = await makeResponsiveBounds(root)
+    await makeGlobalBoundsRectTransform(root)
 
     // フォルダ名に使えない文字を'_'に変換
     let subFolderName = nodeToFolderName(root)
@@ -4461,7 +4388,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     if (!optionChangeContentOnly && !optionImageNoExport && outputFolder) {
       let entries = await outputFolder.getEntries()
       subFolder = entries.find(entry => {
-        return entry.name == subFolderName
+        return entry.name === subFolderName
       })
       if (!subFolder) {
         console.log(`- create output folder:${subFolderName}`)
@@ -4485,11 +4412,14 @@ async function exportXdUnityUI(roots, outputFolder) {
         await layoutFile.write(layoutJsonString)
       }
     }
-    console.log('*done*')
+    console.log('- done')
   }
 
-  // createRenditionsの前にすべて可視にする
-  if (!optionChangeContentOnly) {
+  if (renditions.length !== 0 && !optionImageNoExport) {
+    console.log('## image export')
+
+    // createRenditionsの前にすべて可視にする
+    console.log('- change visible')
     for (let root of roots) {
       traverseNode(root, node => {
         const { node_name: nodeName, style } = getNodeNameAndStyle(node)
@@ -4516,15 +4446,12 @@ async function exportXdUnityUI(roots, outputFolder) {
         }
       })
     }
-  }
 
-  if (renditions.length !== 0 && !optionImageNoExport) {
-    console.log('## Create Rendition')
     // 一括画像ファイル出力
     await application
       .createRenditions(renditions)
       .then(() => {
-        console.log(`### Result\n- saved ${renditions.length} image file(s)`)
+        console.log(`- saved ${renditions.length} image file(s)`)
       })
       .catch(error => {
         //console.log(renditions)
@@ -4700,7 +4627,9 @@ async function getExportArtboards(selection) {
  * @returns {Promise<void>}
  */
 async function pluginExportXdUnityUI(selection, root) {
-  checkLatestVersion()
+  console.log('# export plugin')
+
+  checkLatestVersion().then(r => {})
 
   // エキスポートマークがついたものだけ出力するオプションは、毎回オフにする
   optionCheckMarkedForExport = false
@@ -4893,7 +4822,7 @@ async function pluginExportXdUnityUI(selection, root) {
   try {
     // 出力ノードリスト
     /**
-     * @type {SceneNodeClass[]}
+     * @type {SceneNode[]}
      */
     await exportXdUnityUI(exportRoots, outputFolder)
   } catch (e) {
@@ -4902,22 +4831,25 @@ async function pluginExportXdUnityUI(selection, root) {
     await alert(e.message, 'error')
   }
 
+  console.log('## end process')
+
   // データをもとに戻すため､意図的にエラーをスローする
   if (!optionChangeContentOnly) {
+    console.log('- throw error,undo changes')
     throw 'throw error for UNDO'
   }
 }
 
 /**
  *
- * @param selectionItems {SceneNodeClass[]}
- * @returns {{exportRoots: SceneNodeClass[]}|null}
+ * @param selectionItems {SceneNode[]}
+ * @returns {{exportRoots: SceneNode[]}|null}
  */
 function getExportRoots(selectionItems) {
   if (!selectionItems) return null
 
   /**
-   * @type {SceneNodeClass[]|SceneNodeList}
+   * @type {SceneNode[]|SceneNodeList}
    */
   let exportRoots = []
 
@@ -4974,10 +4906,10 @@ async function pluginResponsiveParamName(selection, root) {
   // TODO: selectionItemsで、 for..of ループができるか、確認必要。 makeResponsiveBoundsで、await処理がないため、問題ないように見えてしまう可能性あり。
   for (const item of selectionItems) {
     // あとで一括変化があったかどうか調べるため､responsiveBoundsにパラメータを追加していく
-    await makeResponsiveBounds(item)
+    await makeGlobalBoundsRectTransform(item)
     let func = node => {
       if (node.symbolId) return
-      const param = calcRectTransform(node, {})
+      const param = calcRectTransform(node)
       if (param) {
         let styleFix = []
         for (let key in param.fix) {
@@ -5049,6 +4981,7 @@ class CssSelector {
    * @return {null|*}
    */
   matchRule(node, rule = null, verboseLog = false) {
+    if (verboseLog) console.log('# matchRule')
     if (!rule) {
       rule = this.json
     }
@@ -5059,6 +4992,7 @@ class CssSelector {
     let ruleRule = rule.rule
     switch (rule.type) {
       case 'rule': {
+        if (verboseLog) console.log('## type:rule')
         // まず奥へ入っていく
         if (ruleRule) {
           checkNode = this.matchRule(node, ruleRule, verboseLog)
@@ -5069,6 +5003,7 @@ class CssSelector {
         break
       }
       case 'selectors': {
+        if (verboseLog) console.log('## type:selectors')
         // 複数あり、どれかに適合するかどうか
         for (let selector of rule.selectors) {
           ruleRule = selector.rule
@@ -5081,6 +5016,7 @@ class CssSelector {
         break
       }
       case 'ruleSet': {
+        if (verboseLog) console.log('## type:ruleSet')
         return this.matchRule(node, ruleRule, verboseLog)
       }
       default:
@@ -5146,10 +5082,12 @@ class CssSelector {
       return false
     }
     if (rule.classNames) {
-      if (!parsedNodeName.classNames) return false
+      if (!parsedNodeName.classNames) {
+        if (verboseLog) console.log('ruleはclassを求めたがclassが無い')
+        return false
+      }
       for (let className of rule.classNames) {
-        const found = parsedNodeName.classNames.find(c => c === className)
-        if (!found) {
+        if (!parsedNodeName.classNames.find(c => c === className)) {
           if (verboseLog) console.log('classが適合しない')
           return false
         }
@@ -5158,89 +5096,15 @@ class CssSelector {
     if (rule.attrs) {
       // console.log('attrチェック')
       for (let attr of rule.attrs) {
-        switch (attr.name) {
-          case 'class': {
-            if (
-              !CssSelector.namesCheck(
-                attr.operator,
-                parsedNodeName.classNames,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          case 'id': {
-            if (
-              !CssSelector.nameCheck(
-                attr.operator,
-                parsedNodeName.id,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          case 'tag-name': {
-            if (
-              !CssSelector.nameCheck(
-                attr.operator,
-                parsedNodeName.tagName,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          case 'type-of':
-          case 'typeof': {
-            if (
-              !CssSelector.nameCheck(
-                attr.operator,
-                node.constructor.name,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          // maskをもっているか判定
-          case 'mask': {
-            return !!node.mask
-          }
-          default:
-            console.log('**error** 未対応の要素名です:', attr.name)
-            return false
+        if (!this.checkAttr(node, parsedNodeName, attr)) {
+          return false
         }
       }
     }
     if (rule.pseudos) {
       if (verboseLog) console.log('## 疑似クラスチェック')
       for (let pseudo of rule.pseudos) {
-        let result = false
-        switch (pseudo.name) {
-          case 'nth-child':
-            const nthChild = parseInt(pseudo.value)
-            const nodeChildIndex = getChildIndex(node) + 1
-            result = nthChild === nodeChildIndex
-            break
-          case 'first-child':
-            result = isFirstChild(node)
-            break
-          case 'last-child':
-            result = isLastChild(node)
-            break
-          case 'same-parent-bounds':
-            result = sameParentBounds(node)
-            break
-          case 'root':
-            result = !node.parent // 親があるのならマッチしない
-            break
-          default:
-            console.log('**error** 未対応の疑似要素です', pseudo.name)
-            return false
-        }
-        if (!result) {
+        if (!this.checkPseudo(node, pseudo)) {
           if (verboseLog) console.log(`- ${pseudo.name} が適合しません`)
           return false
         }
@@ -5251,6 +5115,87 @@ class CssSelector {
     //console.log(JSON.stringify(parsedNodeName, null, '  '))
     if (verboseLog) console.log('このruleは適合した')
     return true
+  }
+
+  static checkAttr(node, parsedNodeName, attr) {
+    switch (attr.name) {
+      case 'class': {
+        if (
+          !CssSelector.namesCheck(
+            attr.operator,
+            parsedNodeName.classNames,
+            attr.value,
+          )
+        )
+          return false
+        break
+      }
+      case 'id': {
+        if (
+          !CssSelector.nameCheck(attr.operator, parsedNodeName.id, attr.value)
+        )
+          return false
+        break
+      }
+      case 'tag-name': {
+        if (
+          !CssSelector.nameCheck(
+            attr.operator,
+            parsedNodeName.tagName,
+            attr.value,
+          )
+        )
+          return false
+        break
+      }
+      case 'type-of':
+      case 'typeof': {
+        if (
+          !CssSelector.nameCheck(
+            attr.operator,
+            node.constructor.name,
+            attr.value,
+          )
+        )
+          return false
+        break
+      }
+      default:
+        console.log('**error** 未対応の要素名です:', attr.name)
+        return false
+    }
+    return true
+  }
+
+  static checkPseudo(node, pseudo) {
+    let result = false
+    switch (pseudo.name) {
+      case 'nth-child':
+        const nthChild = parseInt(pseudo.value)
+        const nodeChildIndex = getChildIndex(node) + 1
+        result = nthChild === nodeChildIndex
+        break
+      case 'first-child':
+        result = isFirstChild(node)
+        break
+      case 'last-child':
+        result = isLastChild(node)
+        break
+      case 'only-child':
+        result = isOnlyChild(node)
+        break
+      case 'same-parent-bounds':
+        result = sameParentBounds(node)
+        break
+      case 'root':
+        result = !node.parent // 親があるのならマッチしない
+        break
+      default:
+        console.log('**error** 未対応の疑似要素です', pseudo.name)
+        result = false
+        break
+    }
+    return result
   }
 
   /**
