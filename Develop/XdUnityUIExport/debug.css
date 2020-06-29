@@ -1,4 +1,5 @@
-.vertical-stack > :first-child:same-parent-bounds {
+[tag-name$='-button'] {
+  match-log: '********* match *********';
   check-log: true;
-  match-log: '********* match *********'
+  button: true;
 }

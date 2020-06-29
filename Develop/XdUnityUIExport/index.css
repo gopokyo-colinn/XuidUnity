@@ -40,7 +40,7 @@ padding
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
-  create-content: true;
+  create-content: if-not-content-only-child-has-layout-properties;
   create-content-name: '.content';
 }
 
@@ -49,7 +49,6 @@ padding
   layout-element-preferred-width: draw-bounds-width;
   layout-element-preferred-height: draw-bounds-height;
 }
-
 
 /*
 padding background
@@ -75,7 +74,7 @@ padding background
 }
 
 .vertical-stack > * {
-  layout-element: if-no-layout-properties preferred;
+  layout-element: if-not-has-layout-properties preferred;
   layout-element-preferred-width: draw-bounds-width;
   layout-element-preferred-height: draw-bounds-height;
 }

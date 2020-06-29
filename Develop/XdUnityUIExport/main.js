@@ -113,6 +113,7 @@ const STYLE_IMAGE_TYPE = 'image-type' // sliced/tiled/simple/filled
 const STYLE_IMAGE_FIT_PARENT_BOUNDS = 'image-fit-parent-bounds' // 親と同じ大きさで画像を作成する
 const STYLE_LAYER = 'layer'
 const STYLE_LAYOUT_ELEMENT = 'layout-element'
+const STYLE_LAYOUT_ELEMENT_IGNORE_LAYOUT = 'layout-element-ignore-layout'
 const STYLE_LAYOUT_ELEMENT_PREFERRED_WIDTH = 'layout-element-preferred-width'
 const STYLE_LAYOUT_ELEMENT_PREFERRED_HEIGHT = 'layout-element-preferred-height'
 const STYLE_LAYOUT_GROUP = 'layout-group' //子供を自動的にどうならべるかのオプション
@@ -542,7 +543,7 @@ class GlobalBounds {
     this.visible = node.visible
     this.global_bounds = getGlobalBounds(node)
     this.global_draw_bounds = getGlobalDrawBounds(node)
-    if (hasContentChildren(node)) {
+    if (hasContentBounds(node)) {
       // Mask（もしくはViewport）をふくむ、含まないで、それぞれのBoundsが必要
       //  マスクありでBoundsが欲しいとき → 全体コンテンツBoundsがほしいとき　とくに、Childrenが大幅にかたよっているときなど
       //  マスク抜きでBoundsが欲しいとき → List内コンテンツのPaddingの計算
@@ -831,6 +832,7 @@ function getBeforeTextFontSize(node) {
   const hBounds = globalResponsiveBounds[node.guid]
   return hBounds.before.global_draw_bounds.text.fontSize
 }
+
 /**
  * リサイズされる前のグローバル座標とサイズを取得する
  * ハッシュからデータを取得する
@@ -2134,6 +2136,31 @@ class Style {
     return asBool(first)
   }
 
+  firstCheck(property, node) {
+    let first = this.first(property)
+    let result = null
+    switch (first) {
+      case 'if-not-content-only-child-has-layout-properties': {
+        // console.log('if-not-content-only-child-has-layout-properties')
+        const contents = node.children.filter(child => {
+          return isContentChild(child)
+        })
+        if (contents.length !== 1) {
+          result = true
+          break
+        }
+        const contentChild = contents[0]
+        const { style: contentStyle } = getNodeNameAndStyle(contentChild)
+        result = !hasLayoutProperties(contentStyle)
+        break
+      }
+      default:
+        result = asBool(first)
+        break
+    }
+    return result
+  }
+
   /**
    * Valuesの値を連結した文字列を返す
    * @param {string} property
@@ -2247,6 +2274,13 @@ function isFirstChild(node) {
 }
 
 function isLastChild(node) {
+  const parent = node.parent
+  if (!parent) return false
+  const lastIndex = parent.children.length - 1
+  return parent.children.at(lastIndex) === node
+}
+
+function isOnlyChild(node) {
   const parent = node.parent
   if (!parent) return false
   const lastIndex = parent.children.length - 1
@@ -2995,6 +3029,19 @@ function hasLayoutProperties(style) {
 }
 
 /**
+ * @param {SceneNode|SceneNodeClass} node
+ */
+function isContentOnlyChild(node) {
+  console.log(`isContentOnlyChild(${node.name})`)
+  const contents = node.children.filter(child => {
+    const result = isContentChild(child)
+    console.log(`${child.name}:${result}`)
+    return result
+  })
+  return contents.length === 1
+}
+
+/**
  *
  * @param {{}} json
  * @param {SceneNode|SceneNode} node
@@ -3003,18 +3050,17 @@ function hasLayoutProperties(style) {
  */
 function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
   let first = style.first(STYLE_LAYOUT_ELEMENT)
-  if (first === 'if-no-layout-properties') {
-    if (hasLayoutProperties(style)) {
-      first = false
-    }
+  if (first === 'if-not-has-layout-properties') {
+    first = !hasLayoutProperties(style)
   }
   if (!asBool(first)) return
 
   const layoutElementJson = {}
 
-  if (style.hasValue(STYLE_LAYOUT_ELEMENT, 'ignore-layout')) {
+  const styleIgnoreLayout = style.first(STYLE_LAYOUT_ELEMENT_IGNORE_LAYOUT)
+  if (styleIgnoreLayout != null) {
     Object.assign(layoutElementJson, {
-      ignore_layout: true,
+      ignore_layout: asBool(styleIgnoreLayout),
     })
   }
 
@@ -3099,14 +3145,15 @@ function addComponents(json, style) {
 }
 
 /**
- * そのノードがContentをもつかどうか
+ * nodeがnode.Boundsとことなる　content boundsをもつかどうか
  * Contentとは、Childrenをもっていて、なにかでMaskされているグループのこと
+ * nodeと、ChildrenのDrawBoundsが異なる場合 Contentを持つという
  * ・MaskedGroup
- * ・RepeatGrid
+ * ※RepeatGridはもたない node.Boundsの中で 子供ノードの位置を計算する
  * @param {SceneNode|SceneNodeClass} node
  * @return {boolean}
  */
-function hasContentChildren(node) {
+function hasContentBounds(node) {
   const { style } = getNodeNameAndStyle(node)
   if (style.firstAsBool(STYLE_CREATE_CONTENT)) return true
   if (style.firstAsBool(STYLE_LAYOUT_GROUP)) return true
@@ -3123,7 +3170,7 @@ function isContentChild(node) {
   const { style } = getNodeNameAndStyle(node)
   if (style.firstAsBool(STYLE_COMPONENT)) return false
   if (node.parent.mask === node) return false
-  return hasContentChildren(node.parent)
+  return hasContentBounds(node.parent)
 }
 
 /**
@@ -3152,7 +3199,7 @@ function getViewport(node) {
  * @param node
  */
 function addContent(style, json, node) {
-  if (!style.firstAsBool(STYLE_CREATE_CONTENT)) return
+  if (!style.firstCheck(STYLE_CREATE_CONTENT, node)) return
   const createContentName = style.first(STYLE_CREATE_CONTENT_NAME) || 'content'
 
   // contentのアサインと名前設定
@@ -4784,11 +4831,11 @@ async function pluginExportXdUnityUI(selection, root) {
     await alert(e.message, 'error')
   }
 
-  console.log("## end process")
+  console.log('## end process')
 
   // データをもとに戻すため､意図的にエラーをスローする
   if (!optionChangeContentOnly) {
-    console.log("- throw error,undo changes")
+    console.log('- throw error,undo changes')
     throw 'throw error for UNDO'
   }
 }
@@ -4934,6 +4981,7 @@ class CssSelector {
    * @return {null|*}
    */
   matchRule(node, rule = null, verboseLog = false) {
+    if (verboseLog) console.log('# matchRule')
     if (!rule) {
       rule = this.json
     }
@@ -4944,6 +4992,7 @@ class CssSelector {
     let ruleRule = rule.rule
     switch (rule.type) {
       case 'rule': {
+        if (verboseLog) console.log('## type:rule')
         // まず奥へ入っていく
         if (ruleRule) {
           checkNode = this.matchRule(node, ruleRule, verboseLog)
@@ -4954,6 +5003,7 @@ class CssSelector {
         break
       }
       case 'selectors': {
+        if (verboseLog) console.log('## type:selectors')
         // 複数あり、どれかに適合するかどうか
         for (let selector of rule.selectors) {
           ruleRule = selector.rule
@@ -4966,6 +5016,7 @@ class CssSelector {
         break
       }
       case 'ruleSet': {
+        if (verboseLog) console.log('## type:ruleSet')
         return this.matchRule(node, ruleRule, verboseLog)
       }
       default:
@@ -5031,10 +5082,12 @@ class CssSelector {
       return false
     }
     if (rule.classNames) {
-      if (!parsedNodeName.classNames) return false
+      if (!parsedNodeName.classNames) {
+        if (verboseLog) console.log('ruleはclassを求めたがclassが無い')
+        return false
+      }
       for (let className of rule.classNames) {
-        const found = parsedNodeName.classNames.find(c => c === className)
-        if (!found) {
+        if (!parsedNodeName.classNames.find(c => c === className)) {
           if (verboseLog) console.log('classが適合しない')
           return false
         }
@@ -5043,89 +5096,15 @@ class CssSelector {
     if (rule.attrs) {
       // console.log('attrチェック')
       for (let attr of rule.attrs) {
-        switch (attr.name) {
-          case 'class': {
-            if (
-              !CssSelector.namesCheck(
-                attr.operator,
-                parsedNodeName.classNames,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          case 'id': {
-            if (
-              !CssSelector.nameCheck(
-                attr.operator,
-                parsedNodeName.id,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          case 'tag-name': {
-            if (
-              !CssSelector.nameCheck(
-                attr.operator,
-                parsedNodeName.tagName,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          case 'type-of':
-          case 'typeof': {
-            if (
-              !CssSelector.nameCheck(
-                attr.operator,
-                node.constructor.name,
-                attr.value,
-              )
-            )
-              return false
-            break
-          }
-          // maskをもっているか判定
-          case 'mask': {
-            return !!node.mask
-          }
-          default:
-            console.log('**error** 未対応の要素名です:', attr.name)
-            return false
+        if (!this.checkAttr(node, parsedNodeName, attr)) {
+          return false
         }
       }
     }
     if (rule.pseudos) {
       if (verboseLog) console.log('## 疑似クラスチェック')
       for (let pseudo of rule.pseudos) {
-        let result = false
-        switch (pseudo.name) {
-          case 'nth-child':
-            const nthChild = parseInt(pseudo.value)
-            const nodeChildIndex = getChildIndex(node) + 1
-            result = nthChild === nodeChildIndex
-            break
-          case 'first-child':
-            result = isFirstChild(node)
-            break
-          case 'last-child':
-            result = isLastChild(node)
-            break
-          case 'same-parent-bounds':
-            result = sameParentBounds(node)
-            break
-          case 'root':
-            result = !node.parent // 親があるのならマッチしない
-            break
-          default:
-            console.log('**error** 未対応の疑似要素です', pseudo.name)
-            return false
-        }
-        if (!result) {
+        if (!this.checkPseudo(node, pseudo)) {
           if (verboseLog) console.log(`- ${pseudo.name} が適合しません`)
           return false
         }
@@ -5136,6 +5115,87 @@ class CssSelector {
     //console.log(JSON.stringify(parsedNodeName, null, '  '))
     if (verboseLog) console.log('このruleは適合した')
     return true
+  }
+
+  static checkAttr(node, parsedNodeName, attr) {
+    switch (attr.name) {
+      case 'class': {
+        if (
+          !CssSelector.namesCheck(
+            attr.operator,
+            parsedNodeName.classNames,
+            attr.value,
+          )
+        )
+          return false
+        break
+      }
+      case 'id': {
+        if (
+          !CssSelector.nameCheck(attr.operator, parsedNodeName.id, attr.value)
+        )
+          return false
+        break
+      }
+      case 'tag-name': {
+        if (
+          !CssSelector.nameCheck(
+            attr.operator,
+            parsedNodeName.tagName,
+            attr.value,
+          )
+        )
+          return false
+        break
+      }
+      case 'type-of':
+      case 'typeof': {
+        if (
+          !CssSelector.nameCheck(
+            attr.operator,
+            node.constructor.name,
+            attr.value,
+          )
+        )
+          return false
+        break
+      }
+      default:
+        console.log('**error** 未対応の要素名です:', attr.name)
+        return false
+    }
+    return true
+  }
+
+  static checkPseudo(node, pseudo) {
+    let result = false
+    switch (pseudo.name) {
+      case 'nth-child':
+        const nthChild = parseInt(pseudo.value)
+        const nodeChildIndex = getChildIndex(node) + 1
+        result = nthChild === nodeChildIndex
+        break
+      case 'first-child':
+        result = isFirstChild(node)
+        break
+      case 'last-child':
+        result = isLastChild(node)
+        break
+      case 'only-child':
+        result = isOnlyChild(node)
+        break
+      case 'same-parent-bounds':
+        result = sameParentBounds(node)
+        break
+      case 'root':
+        result = !node.parent // 親があるのならマッチしない
+        break
+      default:
+        console.log('**error** 未対応の疑似要素です', pseudo.name)
+        result = false
+        break
+    }
+    return result
   }
 
   /**
