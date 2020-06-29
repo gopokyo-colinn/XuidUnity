@@ -35,8 +35,6 @@ namespace XdUnityUI.Editor
             var align = _textJson.Get("align");
             var type = _textJson.Get("textType");
 
-            var virtualHeight = _textJson.GetFloat("vh");
-
             var text = go.AddComponent<Text>();
             text.text = message;
 
