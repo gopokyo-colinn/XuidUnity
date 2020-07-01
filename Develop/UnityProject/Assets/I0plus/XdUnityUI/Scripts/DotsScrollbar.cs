@@ -1,8 +1,4 @@
-﻿/**
- * @author Kazuma Kuwabara
- */
-
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -10,18 +6,21 @@ using UnityEngine.UI;
 
 namespace I0plus.XdUnityUI
 {
+    /// <summary>
+    /// @author Kazuma Kuwabara
+    /// </summary>
     [RequireComponent(typeof(ToggleGroup))]
     public sealed class DotsScrollbar : Scrollbar
     {
         [SerializeField] private Transform dotContainer;
 
-        private ToggleGroup dotGroup;
+        private ToggleGroup _dotGroup;
 
         [SerializeField] private Toggle dotPrefab;
 
-        [SerializeField] private List<Toggle> dots;
+        [SerializeField] private List<Toggle> dots = default;
 
-        private bool scrolling;
+        private bool _scrolling;
 
         public bool IsValid => dotContainer != null && dotPrefab != null;
 
@@ -95,11 +94,11 @@ namespace I0plus.XdUnityUI
 
         private void SetupDotGroup()
         {
-            if (dotGroup == null)
-                dotGroup = GetComponent<ToggleGroup>();
-            if (dotGroup == null)
-                dotGroup = gameObject.AddComponent<ToggleGroup>();
-            dotGroup.allowSwitchOff = false;
+            if (_dotGroup == null)
+                _dotGroup = GetComponent<ToggleGroup>();
+            if (_dotGroup == null)
+                _dotGroup = gameObject.AddComponent<ToggleGroup>();
+            _dotGroup.allowSwitchOff = false;
         }
 
         private void SetupHandleRect()
@@ -139,7 +138,7 @@ namespace I0plus.XdUnityUI
             {
                 var dot = Instantiate(dotPrefab, dotContainer);
                 dot.gameObject.SetActive(true);
-                dot.group = dotGroup;
+                dot.group = _dotGroup;
                 if (Application.isPlaying)
                     dot.onValueChanged.AddListener(OnToggleValueChange);
                 dots.Add(dot);
@@ -191,7 +190,7 @@ namespace I0plus.XdUnityUI
 
         private IEnumerator ChangeValue(float targetValue)
         {
-            scrolling = true;
+            _scrolling = true;
             var nowValue = value;
             for (float i = 1; i <= 10; i++)
             {
@@ -199,12 +198,12 @@ namespace I0plus.XdUnityUI
                 yield return null;
             }
 
-            scrolling = false;
+            _scrolling = false;
         }
 
         private void OnToggleValueChange(bool input)
         {
-            if (scrolling) return;
+            if (_scrolling) return;
             var step = dots.FindIndex(x => x.isOn);
             StartCoroutine(ChangeValue(step / (dots.Count - 1.0f)));
         }

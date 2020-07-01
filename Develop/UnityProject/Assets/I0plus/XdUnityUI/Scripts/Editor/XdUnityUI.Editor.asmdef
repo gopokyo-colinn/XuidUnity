@@ -1,0 +1,15 @@
+{
+    "name": "XdUnityUI.Editor",
+    "references": [
+        "Baum2",
+        "XdUnityUI"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": []
+}

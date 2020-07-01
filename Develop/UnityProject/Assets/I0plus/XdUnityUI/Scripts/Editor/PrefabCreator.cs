@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Baum2.MiniJSON;
+using MiniJSON;
 using UnityEditor;
 using UnityEngine;
 
