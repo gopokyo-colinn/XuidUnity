@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// RectElement class.
+    ///     RectElement class.
     /// </summary>
     public sealed class RectElement : Element
     {
@@ -17,10 +17,8 @@ namespace XdUnityUI.Editor
             var go = CreateUiGameObject(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            }
 
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 

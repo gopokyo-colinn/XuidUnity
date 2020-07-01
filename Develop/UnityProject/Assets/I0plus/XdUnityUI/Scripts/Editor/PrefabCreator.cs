@@ -1,29 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
-using UnityEngine;
+using Baum2.MiniJSON;
 using UnityEditor;
+using UnityEngine;
 
 #if TMP_PRESENT
 using TMPro;
 #endif
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// PrefabCreator class.
-    /// based on Baum2.Editor.PrefabCreator class.
+    ///     PrefabCreator class.
+    ///     based on Baum2.Editor.PrefabCreator class.
     /// </summary>
     public sealed class PrefabCreator
     {
         private static readonly string[] Versions = {"0.6.0", "0.6.1"};
-        private readonly string spriteRootPath;
-        private readonly string fontRootPath;
         private readonly string assetPath;
+        private readonly string fontRootPath;
+        private readonly string spriteRootPath;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="spriteRootPath"></param>
         /// <param name="fontRootPath"></param>
@@ -37,13 +38,10 @@ namespace XdUnityUI.Editor
 
         public GameObject Create()
         {
-            if (EditorApplication.isPlaying)
-            {
-                EditorApplication.isPlaying = false;
-            }
+            if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
-            var text = System.IO.File.ReadAllText(assetPath);
-            var json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
+            var text = File.ReadAllText(assetPath);
+            var json = Json.Deserialize(text) as Dictionary<string, object>;
             var info = json.GetDic("info");
             Validation(info);
 
@@ -78,10 +76,7 @@ namespace XdUnityUI.Editor
                 .GetTypes()
                 .Where(x => x.IsSubclassOf(typeof(BaumPostprocessor)))
                 .Select(x => x.GetMethod("OnPostprocessPrefab"));
-            foreach (var method in methods)
-            {
-                method.Invoke(null, new object[] {go});
-            }
+            foreach (var method in methods) method.Invoke(null, new object[] {go});
         }
 
         public void Validation(Dictionary<string, object> info)

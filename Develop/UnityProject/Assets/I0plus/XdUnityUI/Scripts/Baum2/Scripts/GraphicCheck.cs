@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
+
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 
@@ -16,9 +17,9 @@ namespace AlphaRaycaster
 
     public class RectGraphic : Graphic
     {
+        public float height;
         public Vector2 pos = new Vector2(0, 0);
-        public float width = 0;
-        public float height = 0;
+        public float width;
 
         public RectGraphic()
         {
@@ -48,7 +49,7 @@ namespace AlphaRaycaster
     public class CircleGraphic : Graphic
     {
         public Vector2 pos = new Vector2(0, 0);
-        public float radius = 0;
+        public float radius;
 
         public CircleGraphic()
         {
@@ -63,7 +64,7 @@ namespace AlphaRaycaster
 
         public bool Contains(Vector2 position)
         {
-            return (this.pos - position).magnitude < radius * radius;
+            return (pos - position).magnitude < radius * radius;
         }
 
         public bool Contains(Vector3 pos)
@@ -130,12 +131,8 @@ namespace AlphaRaycaster
             var pos = ScreenToLocalObjectPosition(screenPosition, objectRectTransform, eventCamera);
 
             foreach (var graphic in graphics)
-            {
                 if (graphic.Contains(pos))
-                {
                     return true;
-                }
-            }
 
             return false;
         }

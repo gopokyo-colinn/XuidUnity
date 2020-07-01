@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// MaskElement class.
-    /// based on Baum2.Editor.MaskElement class.
+    ///     MaskElement class.
+    ///     based on Baum2.Editor.MaskElement class.
     /// </summary>
     public sealed class MaskElement : ImageElement
     {

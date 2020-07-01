@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 #if ODIN_INSPECTOR
 using Sirenix.Utilities;
 #endif
-using Object = UnityEngine.Object;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     public static class ElementUtil
     {
@@ -20,58 +19,31 @@ namespace XdUnityUI.Editor
             childAlignment = childAlignment.ToLower();
             if (childAlignment.Contains("upper"))
             {
-                if (childAlignment.Contains("left"))
-                {
-                    return TextAnchor.UpperLeft;
-                }
+                if (childAlignment.Contains("left")) return TextAnchor.UpperLeft;
 
-                if (childAlignment.Contains("right"))
-                {
-                    return TextAnchor.UpperRight;
-                }
+                if (childAlignment.Contains("right")) return TextAnchor.UpperRight;
 
-                if (childAlignment.Contains("center"))
-                {
-                    return TextAnchor.UpperCenter;
-                }
+                if (childAlignment.Contains("center")) return TextAnchor.UpperCenter;
 
                 Debug.LogError("ChildAlignmentが設定できませんでした");
             }
             else if (childAlignment.Contains("middle"))
             {
-                if (childAlignment.Contains("left"))
-                {
-                    return TextAnchor.MiddleLeft;
-                }
+                if (childAlignment.Contains("left")) return TextAnchor.MiddleLeft;
 
-                if (childAlignment.Contains("right"))
-                {
-                    return TextAnchor.MiddleRight;
-                }
+                if (childAlignment.Contains("right")) return TextAnchor.MiddleRight;
 
-                if (childAlignment.Contains("center"))
-                {
-                    return TextAnchor.MiddleCenter;
-                }
+                if (childAlignment.Contains("center")) return TextAnchor.MiddleCenter;
 
                 Debug.LogError("ChildAlignmentが設定できませんでした");
             }
             else if (childAlignment.Contains("lower"))
             {
-                if (childAlignment.Contains("left"))
-                {
-                    return TextAnchor.LowerLeft;
-                }
+                if (childAlignment.Contains("left")) return TextAnchor.LowerLeft;
 
-                if (childAlignment.Contains("right"))
-                {
-                    return TextAnchor.LowerRight;
-                }
+                if (childAlignment.Contains("right")) return TextAnchor.LowerRight;
 
-                if (childAlignment.Contains("center"))
-                {
-                    return TextAnchor.LowerCenter;
-                }
+                if (childAlignment.Contains("center")) return TextAnchor.LowerCenter;
 
                 Debug.LogError("ChildAlignmentが設定できませんでした");
             }
@@ -149,10 +121,7 @@ namespace XdUnityUI.Editor
             {
                 var image = go.AddComponent<Image>();
                 Color color;
-                if (ColorUtility.TryParseHtmlString(fillColor, out color))
-                {
-                    image.color = color;
-                }
+                if (ColorUtility.TryParseHtmlString(fillColor, out color)) image.color = color;
             }
         }
 
@@ -162,37 +131,26 @@ namespace XdUnityUI.Editor
             var componentContentSizeFitter = go.GetComponent<ContentSizeFitter>();
             if (contentSizeFitter == null) return componentContentSizeFitter; // 引数がNULLでも持っていたら返す
 
-            if (componentContentSizeFitter == null)
-            {
-                componentContentSizeFitter = go.AddComponent<ContentSizeFitter>();
-            }
+            if (componentContentSizeFitter == null) componentContentSizeFitter = go.AddComponent<ContentSizeFitter>();
 
             if (contentSizeFitter.ContainsKey("vertical_fit"))
             {
                 var verticalFit = contentSizeFitter.Get("vertical_fit");
                 if (verticalFit.Contains("preferred"))
-                {
                     componentContentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-                }
 
                 if (verticalFit.Contains("min"))
-                {
                     componentContentSizeFitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
-                }
             }
 
             if (contentSizeFitter.ContainsKey("horizontal_fit"))
             {
                 var verticalFit = contentSizeFitter.Get("horizontal_fit");
                 if (verticalFit.Contains("preferred"))
-                {
                     componentContentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-                }
 
                 if (verticalFit.Contains("min"))
-                {
                     componentContentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
-                }
             }
 
             return componentContentSizeFitter;
@@ -389,10 +347,7 @@ namespace XdUnityUI.Editor
             Dictionary<string, object> layoutJson)
         {
             var method = "";
-            if (layoutJson.ContainsKey("method"))
-            {
-                method = layoutJson.Get("method");
-            }
+            if (layoutJson.ContainsKey("method")) method = layoutJson.Get("method");
 
             HorizontalOrVerticalLayoutGroup layoutGroup = null;
 
@@ -408,10 +363,7 @@ namespace XdUnityUI.Editor
                 layoutGroup = horizontalLayoutGroup;
             }
 
-            if (layoutGroup == null)
-            {
-                return null;
-            }
+            if (layoutGroup == null) return null;
 
             // child control 子オブジェクトのサイズを変更する
             layoutGroup.childControlWidth = false;
@@ -443,10 +395,7 @@ namespace XdUnityUI.Editor
             }
 
             var childAlignment = GetChildAlignment(layoutJson);
-            if (childAlignment != null)
-            {
-                layoutGroup.childAlignment = childAlignment.Value;
-            }
+            if (childAlignment != null) layoutGroup.childAlignment = childAlignment.Value;
 
             var childControlSize = layoutJson.GetArray("child_control_size");
             if (childControlSize != null)
@@ -522,10 +471,7 @@ namespace XdUnityUI.Editor
             }
 
             var childAlignment = GetChildAlignment(layoutJson);
-            if (childAlignment != null)
-            {
-                layoutGroup.childAlignment = childAlignment.Value;
-            }
+            if (childAlignment != null) layoutGroup.childAlignment = childAlignment.Value;
 
             var startAxis = layoutJson.Get("start_axis");
             switch (startAxis)
@@ -550,34 +496,19 @@ namespace XdUnityUI.Editor
             var componentLayoutElement = go.AddComponent<LayoutElement>();
 
             var minWidth = layoutElement.GetFloat("min_width");
-            if (minWidth != null)
-            {
-                componentLayoutElement.minWidth = minWidth.Value;
-            }
+            if (minWidth != null) componentLayoutElement.minWidth = minWidth.Value;
 
             var minHeight = layoutElement.GetFloat("min_height");
-            if (minHeight != null)
-            {
-                componentLayoutElement.minHeight = minHeight.Value;
-            }
+            if (minHeight != null) componentLayoutElement.minHeight = minHeight.Value;
 
             var preferredWidth = layoutElement.GetFloat("preferred_width");
-            if (preferredWidth != null)
-            {
-                componentLayoutElement.preferredWidth = preferredWidth.Value;
-            }
+            if (preferredWidth != null) componentLayoutElement.preferredWidth = preferredWidth.Value;
 
             var preferredHeight = layoutElement.GetFloat("preferred_height");
-            if (preferredHeight != null)
-            {
-                componentLayoutElement.preferredHeight = preferredHeight.Value;
-            }
+            if (preferredHeight != null) componentLayoutElement.preferredHeight = preferredHeight.Value;
 
             var ignoreLayout = layoutElement.GetBool("ignore_layout");
-            if (ignoreLayout != null)
-            {
-                componentLayoutElement.ignoreLayout = ignoreLayout.Value;
-            }
+            if (ignoreLayout != null) componentLayoutElement.ignoreLayout = ignoreLayout.Value;
         }
 
         public static void SetupLayoutGroup(GameObject go, Dictionary<string, object> layout)
@@ -600,26 +531,18 @@ namespace XdUnityUI.Editor
                         var gridLayoutGroup = SetupGridLayoutGroupParam(go, layout);
                         break;
                     }
-                    default:
-                        break;
                 }
             }
         }
 
         public static void SetupCanvasGroup(GameObject go, Dictionary<string, object> canvasGroup)
         {
-            if (canvasGroup != null)
-            {
-                go.AddComponent<CanvasGroup>();
-            }
+            if (canvasGroup != null) go.AddComponent<CanvasGroup>();
         }
 
         public static void SetupRectMask2D(GameObject go, bool? param)
         {
-            if (param != null && param.Value)
-            {
-                go.AddComponent<RectMask2D>(); // setupMask
-            }
+            if (param != null && param.Value) go.AddComponent<RectMask2D>(); // setupMask
         }
 
         public static void SetupMask(GameObject go, Dictionary<string, object> param)
@@ -628,17 +551,14 @@ namespace XdUnityUI.Editor
             {
                 var mask = go.AddComponent<Mask>(); // setupMask
                 var showMaskGraphic = param.GetBool("show_mask_graphic");
-                if (showMaskGraphic != null)
-                {
-                    mask.showMaskGraphic = showMaskGraphic.Value;
-                }
+                if (showMaskGraphic != null) mask.showMaskGraphic = showMaskGraphic.Value;
             }
         }
 
 
         /// <summary>
-        /// Scrollオブションの対応
-        /// ViewportとContentを結びつける  
+        ///     Scrollオブションの対応
+        ///     ViewportとContentを結びつける
         /// </summary>
         /// <param name="goViewport"></param>
         /// <param name="goContent"></param>
@@ -646,31 +566,19 @@ namespace XdUnityUI.Editor
         public static void SetupScrollRect(GameObject goViewport, GameObject goContent,
             Dictionary<string, object> scrollRect)
         {
-            if (scrollRect == null)
-            {
-                return;
-            }
+            if (scrollRect == null) return;
 
             var scrollRectComponent = goViewport.AddComponent<ScrollRect>();
-            if (goContent != null)
-            {
-                scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
-            }
+            if (goContent != null) scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
 
             scrollRectComponent.viewport = goViewport.GetComponent<RectTransform>(); // 自分自身がViewportになる
             scrollRectComponent.vertical = false;
             scrollRectComponent.horizontal = false;
 
             bool? b;
-            if ((b = scrollRect.GetBool("horizontal")) != null)
-            {
-                scrollRectComponent.horizontal = b.Value;
-            }
+            if ((b = scrollRect.GetBool("horizontal")) != null) scrollRectComponent.horizontal = b.Value;
 
-            if ((b = scrollRect.GetBool("vertical")) != null)
-            {
-                scrollRectComponent.vertical = b.Value;
-            }
+            if ((b = scrollRect.GetBool("vertical")) != null) scrollRectComponent.vertical = b.Value;
         }
 
         public static void SetupRectTransform(GameObject root, Dictionary<string, object> rectTransformJson)

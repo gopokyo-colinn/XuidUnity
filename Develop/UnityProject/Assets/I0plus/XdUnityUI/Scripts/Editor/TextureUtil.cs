@@ -1,23 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using JetBrains.Annotations;
+using Baum2.MiniJSON;
 using OnionRing;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using Object = UnityEngine.Object;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     public class TextureUtil
     {
+        private static readonly Dictionary<string, string> imageHashMap = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> imagePathMap = new Dictionary<string, string>();
+
         /// <summary>
-        /// 読み込み可能なTextureを作成する
-        /// Texture2DをC#ScriptでReadableに変更するには？ - Qiita
-        /// https://qiita.com/Katumadeyaruhiko/items/c2b9b4ccdfe51df4ad4a
+        ///     読み込み可能なTextureを作成する
+        ///     Texture2DをC#ScriptでReadableに変更するには？ - Qiita
+        ///     https://qiita.com/Katumadeyaruhiko/items/c2b9b4ccdfe51df4ad4a
         /// </summary>
         /// <param name="sourceTexture"></param>
         /// <param name="destY"></param>
@@ -47,10 +45,7 @@ namespace XdUnityUI.Editor
             // テクスチャをクリア
             var pixels = readableTexture.GetPixels32();
             var clearColor = new Color32(0, 0, 0, 0);
-            for (var i = 0; i < pixels.Length; i++)
-            {
-                pixels[i] = clearColor;
-            }
+            for (var i = 0; i < pixels.Length; i++) pixels[i] = clearColor;
             readableTexture.SetPixels32(pixels);
             // コピー
             readableTexture.ReadPixels(new Rect(0, 0, sourceTexture.width, sourceTexture.height),
@@ -64,7 +59,7 @@ namespace XdUnityUI.Editor
         }
 
         /// <summary>
-        /// バイナリデータを読み込む
+        ///     バイナリデータを読み込む
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -83,29 +78,19 @@ namespace XdUnityUI.Editor
         {
             var readBinary = ReadFileToBytes(path);
 
-            int pos = 16; // 16バイトから開始
+            var pos = 16; // 16バイトから開始
 
-            int width = 0;
-            for (int i = 0; i < 4; i++)
-            {
-                width = width * 256 + readBinary[pos++];
-            }
+            var width = 0;
+            for (var i = 0; i < 4; i++) width = width * 256 + readBinary[pos++];
 
-            int height = 0;
-            for (int i = 0; i < 4; i++)
-            {
-                height = height * 256 + readBinary[pos++];
-            }
+            var height = 0;
+            for (var i = 0; i < 4; i++) height = height * 256 + readBinary[pos++];
 
             var texture = new Texture2D(width, height);
             texture.LoadImage(readBinary);
 
             return texture;
         }
-
-
-        static Dictionary<string, string> imageHashMap = new Dictionary<string, string>();
-        static Dictionary<string, string> imagePathMap = new Dictionary<string, string>();
 
         public static void ClearImageMap()
         {
@@ -149,11 +134,9 @@ namespace XdUnityUI.Editor
                 var oldPngData = File.ReadAllBytes(newPath);
                 // 中身をチェックする
                 if (oldPngData.Length == pngData.Length && pngData.SequenceEqual(oldPngData))
-                {
                     // 全く同じだった場合、書き込まないでそのまま利用する
                     // UnityのDB更新を防ぐ
                     return "Same texture existed.";
-                }
             }
 
             File.WriteAllBytes(newPath, pngData);
@@ -161,8 +144,8 @@ namespace XdUnityUI.Editor
         }
 
         /// <summary>
-        /// アセットのイメージをスライスする
-        /// 戻り地は、変換リザルトメッセージ
+        ///     アセットのイメージをスライスする
+        ///     戻り地は、変換リザルトメッセージ
         /// </summary>
         /// <param name="sourceImagePath"></param>
         /// <returns></returns>
@@ -180,7 +163,7 @@ namespace XdUnityUI.Editor
             if (File.Exists(imageJsonPath))
             {
                 var text = File.ReadAllText(imageJsonPath);
-                json = Baum2.MiniJSON.Json.Deserialize(text) as Dictionary<string, object>;
+                json = Json.Deserialize(text) as Dictionary<string, object>;
             }
 
             // PNGを読み込み、同じサイズのTextureを作成する

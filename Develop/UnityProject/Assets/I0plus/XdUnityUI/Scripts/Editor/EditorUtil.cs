@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
-using System.Linq;
-using UnityEditor;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
     /// EditorUtil class.
@@ -182,14 +182,11 @@ namespace XdUnityUI.Editor
 
         public static Color HexToColor(string hex)
         {
-            if (hex[0] == '#')
-            {
-                hex = hex.Substring(1);
-            }
+            if (hex[0] == '#') hex = hex.Substring(1);
 
-            var r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
-            var g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
-            var b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+            var r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+            var g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+            var b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
             return new Color32(r, g, b, 255);
         }
 

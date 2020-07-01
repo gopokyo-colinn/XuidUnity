@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
     ///     GroupElement class.
@@ -71,16 +71,13 @@ namespace XdUnityUI.Editor
             ElementUtil.SetupRectMask2D(go, RectMask2D);
             // ScrollRectを設定した時点で、はみでたContentがアジャストされる　PivotがViewport内に入っていればOK
             GameObject goContent = null;
-            if (RenderedChildren.Count > 0)
-            {
-                goContent = RenderedChildren[0].Item1;
-            }
+            if (RenderedChildren.Count > 0) goContent = RenderedChildren[0].Item1;
             ElementUtil.SetupScrollRect(go, goContent, ScrollRectJson);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
             return go;
         }
-        
+
         public override void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
         {
             var self = selfAndSiblings.Find(tuple => tuple.Item2 == this);

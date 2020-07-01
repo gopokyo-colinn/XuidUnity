@@ -1,17 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Baum2;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// TextElement class.
-    /// based on Baum2.Editor.TextElement class.
+    ///     TextElement class.
+    ///     based on Baum2.Editor.TextElement class.
     /// </summary>
     public sealed class TextElement : Element
     {
-        private readonly Dictionary<string, object> _textJson = default;
+        private readonly Dictionary<string, object> _textJson;
 
         public TextElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
@@ -28,7 +27,7 @@ namespace XdUnityUI.Editor
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
             }
-            
+
             var message = _textJson.Get("text");
             var fontName = _textJson.Get("font");
             var fontSize = _textJson.GetFloat("size");
@@ -40,7 +39,7 @@ namespace XdUnityUI.Editor
 
             // 検索するフォント名を決定する
             var fontFilename = fontName;
-            
+
             if (_textJson.ContainsKey("style"))
             {
                 var style = _textJson.Get("style");
@@ -61,7 +60,7 @@ namespace XdUnityUI.Editor
             text.color = Color.black;
 
             var color = _textJson.Get("color");
-            text.color = color != null ? EditorUtil.HexToColor(color) : Color.black; 
+            text.color = color != null ? EditorUtil.HexToColor(color) : Color.black;
 
             text.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -140,7 +139,7 @@ namespace XdUnityUI.Editor
                     break;
             }
 
-            
+
             if (_textJson.ContainsKey("strokeSize"))
             {
                 var strokeSize = _textJson.GetInt("strokeSize");

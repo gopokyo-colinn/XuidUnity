@@ -1,10 +1,8 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Baum2
+namespace I0plus.XdUnityUI
 {
     /**
      * このクラスの仕事はEditorできるはず
@@ -15,6 +13,10 @@ namespace Baum2
         private static GameObject _managerGameObject;
 
         private static readonly Dictionary<string, GameObject> ToggleGroupMap = new Dictionary<string, GameObject>();
+
+        [SerializeField] private string groupName;
+
+        public string GroupName => groupName;
 
         public static ToggleGroup GetToggleGroup(string name)
         {
@@ -35,13 +37,6 @@ namespace Baum2
             }
 
             return toggleGroup;
-        }
-
-        [SerializeField] private string groupName;
-
-        public string GroupName
-        {
-            get { return groupName; }
         }
 
         public void SetGroupName(string name)
@@ -65,10 +60,7 @@ namespace Baum2
                 DontDestroyOnLoad(_managerGameObject);
             }
 
-            if (GroupName == null)
-            {
-                return;
-            }
+            if (GroupName == null) return;
 
             // 初期化する
             SetGroupName(GroupName);

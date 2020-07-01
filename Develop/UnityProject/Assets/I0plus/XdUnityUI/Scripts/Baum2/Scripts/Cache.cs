@@ -1,31 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
-using System.Collections.Generic;
 
 namespace Baum2
 {
     public class Cache : MonoBehaviour
     {
-        [SerializeField]
-        public List<CachedGameObject> List = new List<CachedGameObject>();
-        private static readonly char[] SplitChar = { '/' };
+        private static readonly char[] SplitChar = {'/'};
 
-        [Serializable]
-        public class CachedGameObject
-        {
-            public CachedGameObject(string name, GameObject go, List<string> path)
-            {
-                Name = name;
-                GameObject = go;
-                Path = path.ToArray();
-                Array.Reverse(Path);
-            }
-
-            public string Name;
-            public GameObject GameObject;
-            public string[] Path;
-        }
+        [SerializeField] public List<CachedGameObject> List = new List<CachedGameObject>();
 
         public void CreateCache(Transform root, List<string> route = null)
         {
@@ -57,7 +41,8 @@ namespace Baum2
                 var pass = true;
                 for (var j = 1; j < elements.Length; ++j)
                 {
-                    if (cand[i].Path.Length > j - 1 && cand[i].Path[j - 1].Equals(elements[j], StringComparison.OrdinalIgnoreCase)) continue;
+                    if (cand[i].Path.Length > j - 1 &&
+                        cand[i].Path[j - 1].Equals(elements[j], StringComparison.OrdinalIgnoreCase)) continue;
                     pass = false;
                     break;
                 }
@@ -68,6 +53,23 @@ namespace Baum2
             if (cand.Count == 0) return null;
             Assert.AreEqual(cand.Count, 1, string.Format("[Baum2] \"{0}\" is not unique", path));
             return cand[0].GameObject;
+        }
+
+        [Serializable]
+        public class CachedGameObject
+        {
+            public GameObject GameObject;
+
+            public string Name;
+            public string[] Path;
+
+            public CachedGameObject(string name, GameObject go, List<string> path)
+            {
+                Name = name;
+                GameObject = go;
+                Path = path.ToArray();
+                Array.Reverse(Path);
+            }
         }
     }
 }

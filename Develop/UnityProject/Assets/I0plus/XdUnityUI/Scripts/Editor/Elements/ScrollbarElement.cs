@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using Baum2;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// RootElement class.
-    /// based on Baum2.Editor.ScrollbarElement class.
+    ///     RootElement class.
+    ///     based on Baum2.Editor.ScrollbarElement class.
     /// </summary>
     public sealed class ScrollbarElement : GroupElement
     {
@@ -23,10 +22,8 @@ namespace XdUnityUI.Editor
             var go = CreateSelf(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            }
 
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
@@ -55,7 +52,6 @@ namespace XdUnityUI.Editor
 
             var direction = _scrollbarJson.Get("direction");
             if (direction != null)
-            {
                 switch (direction)
                 {
                     case "left-to-right":
@@ -77,21 +73,16 @@ namespace XdUnityUI.Editor
                         scrollbar.direction = Scrollbar.Direction.TopToBottom;
                         break;
                 }
-            }
 
             var handleClassName = _scrollbarJson.Get("handle_class");
             if (handleClassName != null)
             {
                 var found = children.Find(child => child.Item2.HasParsedName(handleClassName));
-                if (found != null)
-                {
-                    scrollbar.handleRect = found.Item1.GetComponent<RectTransform>();
-                }
+                if (found != null) scrollbar.handleRect = found.Item1.GetComponent<RectTransform>();
             }
 
             ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
             return go;
         }
-
     }
 }

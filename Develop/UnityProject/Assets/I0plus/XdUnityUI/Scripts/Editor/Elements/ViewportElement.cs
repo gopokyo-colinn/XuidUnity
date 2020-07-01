@@ -4,18 +4,18 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// ViewportElement class.
-    /// GroupElementに統合した
-    /// 削除予定
+    ///     ViewportElement class.
+    ///     GroupElementに統合した
+    ///     削除予定
     /// </summary>
     public sealed class ViewportElement : GroupElement
     {
-        private readonly Dictionary<string, object> _scrollRectJson = default;
-        private readonly Dictionary<string, object> _contentJson = default;
-        private Element _parentElement = default;
+        private readonly Dictionary<string, object> _contentJson;
+        private readonly Dictionary<string, object> _scrollRectJson;
+        private Element _parentElement;
 
         public ViewportElement(Dictionary<string, object> json, Element parent) : base(json, parent, true)
         {
@@ -29,11 +29,9 @@ namespace XdUnityUI.Editor
             var go = CreateSelf(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 // 親のパラメータがある場合､親にする
                 // 後のAnchor設定のため これ以降でないと正確に設定できない
                 rect.SetParent(parentObject.transform);
-            }
 
             ElementUtil.SetLayer(go, Layer);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
@@ -51,10 +49,7 @@ namespace XdUnityUI.Editor
             {
                 goContent.name = _contentJson.Get("name") ?? "";
                 var rectJson = _contentJson.GetDic("rect_transform");
-                if (rectJson != null)
-                {
-                    ElementUtil.SetupRectTransform(goContent,rectJson);
-                }
+                if (rectJson != null) ElementUtil.SetupRectTransform(goContent, rectJson);
 
                 if (_contentJson.ContainsKey("layout"))
                 {

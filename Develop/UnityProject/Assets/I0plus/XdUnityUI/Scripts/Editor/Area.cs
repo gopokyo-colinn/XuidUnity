@@ -1,38 +1,9 @@
 ﻿using UnityEngine;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     public class Area
     {
-        public bool Empty { get; private set; }
-        public Vector2 Min { get; private set; }
-        public Vector2 Max { get; private set; }
-
-        public Vector2 Avg
-        {
-            get { return (Min + Max) / 2.0f; }
-        }
-
-        public Vector2 Center
-        {
-            get { return (Min + Max) / 2.0f; }
-        }
-
-        public float Width
-        {
-            get { return Mathf.Abs(Max.x - Min.x); }
-        }
-
-        public float Height
-        {
-            get { return Mathf.Abs(Max.y - Min.y); }
-        }
-
-        public Vector2 Size
-        {
-            get { return new Vector2(Width, Height); }
-        }
-
         public Area()
         {
             Empty = true;
@@ -44,6 +15,20 @@ namespace XdUnityUI.Editor
             Max = max;
             Empty = false;
         }
+
+        public bool Empty { get; private set; }
+        public Vector2 Min { get; private set; }
+        public Vector2 Max { get; private set; }
+
+        public Vector2 Avg => (Min + Max) / 2.0f;
+
+        public Vector2 Center => (Min + Max) / 2.0f;
+
+        public float Width => Mathf.Abs(Max.x - Min.x);
+
+        public float Height => Mathf.Abs(Max.y - Min.y);
+
+        public Vector2 Size => new Vector2(Width, Height);
 
         public static Area FromPositionAndSize(Vector2 position, Vector2 size)
         {
