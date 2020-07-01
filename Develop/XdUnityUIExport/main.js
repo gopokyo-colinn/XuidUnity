@@ -454,6 +454,7 @@ function cssParseNodeName(nodeName) {
       name = r[1].trim()
     }
     try {
+      // ascii文字以外 _ に変換する
       const asciiNodeName = nodeName.replace(/[^\x01-\x7E]/g, function(s) {
         return '_'
       })
