@@ -48,36 +48,43 @@ namespace I0plus.XdUnityUI.Editor
         {
         }
 
+        /*
         [MenuItem("Assets/XdUnityUI/Import Selected Folders")]
         public static async Task MenuImportFromSelectFolder()
         {
             var folderPaths = ProjectHighlightedFolders();
             await ImportFolders(folderPaths, true, false);
         }
+        */
 
+        /*
         [MenuItem("Assets/XdUnityUI/Import Selected Folders", true)]
         public static bool MenuImportSelectedFolderCheck()
         {
             var folderPaths = ProjectHighlightedFolders();
             return folderPaths.Any();
         }
+        */
 
+        /*
         [MenuItem("Assets/XdUnityUI/Import Selected Folders(Layout Only)")]
         public static async Task MenuImportSelectedFolderLayoutOnly()
         {
             var folderPaths = ProjectHighlightedFolders();
             await ImportFolders(folderPaths, false, false);
         }
+        */
 
+        /*
         [MenuItem("Assets/XdUnityUI/Import Selected Folders(Layout Only)", true)]
         public static bool MenuImportSelectedFolderLayoutOnlyCheck()
         {
             var folderPaths = ProjectHighlightedFolders();
             return folderPaths.Any();
         }
+        */
 
-
-        [MenuItem("Assets/XdUnityUI/Specify Folder Import...")]
+        [MenuItem("Assets/XdUnityUI/Folder Import...")]
         public static async Task MenuImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
@@ -87,6 +94,7 @@ namespace I0plus.XdUnityUI.Editor
             await ImportFolders(folders, true, false);
         }
 
+        /*
         [MenuItem("Assets/XdUnityUI/Specify Folder Import(layout only)...")]
         public static async Task MenuImportSpecifiedFolderLayoutOnly()
         {
@@ -96,6 +104,7 @@ namespace I0plus.XdUnityUI.Editor
             var folders = new List<string> {path};
             await ImportFolders(folders, false, false);
         }
+        */
 
         /// <summary>
         ///     Project ウィンドウで、ハイライトされているディレクトリを取得する
