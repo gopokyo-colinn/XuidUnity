@@ -1,11 +1,8 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 #if TMP_PRESENT
 using TMPro;
 #endif
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
     /// TextMeshProElement class.

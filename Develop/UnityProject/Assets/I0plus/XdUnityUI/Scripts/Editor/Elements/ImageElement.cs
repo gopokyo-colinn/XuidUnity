@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// ImageElement class.
-    /// based on Baum2.Editor.ImageElement class.
+    ///     ImageElement class.
+    ///     based on Baum2.Editor.ImageElement class.
     /// </summary>
     public class ImageElement : Element
     {
@@ -25,10 +25,8 @@ namespace XdUnityUI.Editor
 
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            }
 
             var image = go.AddComponent<Image>();
             var sourceImage = ImageJson.Get("source_image");
@@ -43,7 +41,6 @@ namespace XdUnityUI.Editor
             image.type = Image.Type.Sliced;
             var imageType = ImageJson.Get("image_type");
             if (imageType != null)
-            {
                 switch (imageType.ToLower())
                 {
                     case "sliced":
@@ -62,7 +59,6 @@ namespace XdUnityUI.Editor
                         Debug.LogAssertion("[XdUnityUI] unknown image_type:" + imageType);
                         break;
                 }
-            }
 
             var preserveAspect = ImageJson.GetBool("preserve_aspect");
             if (preserveAspect != null && preserveAspect.Value)

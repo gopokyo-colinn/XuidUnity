@@ -3,19 +3,40 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+
 // ReSharper disable InconsistentNaming
 
 namespace Baum2
 {
     public class List : MonoBehaviour
     {
-        [SerializeField]
-        public List<GameObject> ItemSources;
-
-        [SerializeField]
-        public ListLayoutGroup LayoutGroup;
+        private readonly Vector3[] fourCornersArray = new Vector3[4];
+        private readonly Vector2[] worldCornersEdge = new Vector2[2];
 
         private GameObject contentCache;
+
+        private RectTransform contentRectTransformCache;
+
+        private readonly Dictionary<int, CurrentRenderingElement> CurrentRenderingElements =
+            new Dictionary<int, CurrentRenderingElement>();
+
+        [SerializeField] public List<GameObject> ItemSources;
+
+        [SerializeField] public ListLayoutGroup LayoutGroup;
+
+        private readonly Dictionary<string, List<UIRoot>> Pool = new Dictionary<string, List<UIRoot>>();
+
+        private RectTransform rectTransformCache;
+        private int RenderingMax;
+
+        private int RenderingMin;
+
+        private ScrollRect scrollRectCache;
+
+        private Func<int, string> uiSelector;
+
+        private Action<UIRoot, int> uiUpdater;
+
         public GameObject Content
         {
             get
@@ -26,7 +47,6 @@ namespace Baum2
             }
         }
 
-        private RectTransform contentRectTransformCache;
         public RectTransform ContentRectTransform
         {
             get
@@ -37,7 +57,6 @@ namespace Baum2
             }
         }
 
-        private RectTransform rectTransformCache;
         public RectTransform RectTransform
         {
             get
@@ -48,7 +67,6 @@ namespace Baum2
             }
         }
 
-        private ScrollRect scrollRectCache;
         public ScrollRect ScrollRect
         {
             get
@@ -69,22 +87,11 @@ namespace Baum2
             }
         }
 
-        private int count;
-        public int Count
-        {
-            get
-            {
-                return count;
-            }
-        }
+        public int Count { get; private set; }
 
-        private Func<int, string> uiSelector;
         public Func<int, string> UISelector
         {
-            get
-            {
-                return uiSelector;
-            }
+            get => uiSelector;
             set
             {
                 uiSelector = value;
@@ -92,26 +99,11 @@ namespace Baum2
             }
         }
 
-        private Action<string, UIRoot> uiFactory;
-        public Action<string, UIRoot> UIFactory
-        {
-            get
-            {
-                return uiFactory;
-            }
-            set
-            {
-                uiFactory = value;
-            }
-        }
+        public Action<string, UIRoot> UIFactory { get; set; }
 
-        private Action<UIRoot, int> uiUpdater;
         public Action<UIRoot, int> UIUpdater
         {
-            get
-            {
-                return uiUpdater;
-            }
+            get => uiUpdater;
             set
             {
                 uiUpdater = value;
@@ -119,23 +111,9 @@ namespace Baum2
             }
         }
 
-        private int RenderingMin = 0;
-        private int RenderingMax = 0;
-        private Dictionary<int, CurrentRenderingElement> CurrentRenderingElements = new Dictionary<int, CurrentRenderingElement>();
-        private Dictionary<string, List<UIRoot>> Pool = new Dictionary<string, List<UIRoot>>();
-
-        public struct CurrentRenderingElement
-        {
-            public string Item1;
-            public UIRoot Item2;
-        }
-
         public void Awake()
         {
-            foreach (var itemSource in ItemSources)
-            {
-                itemSource.SetActive(false);
-            }
+            foreach (var itemSource in ItemSources) itemSource.SetActive(false);
 
             if (LayoutGroup != null) LayoutGroup.Initialize(this);
         }
@@ -161,7 +139,7 @@ namespace Baum2
             cache.CreateCache(item.transform);
             uiRoot.Awake();
 
-            if (uiFactory != null) uiFactory(sourceName, uiRoot);
+            if (UIFactory != null) UIFactory(sourceName, uiRoot);
             return uiRoot;
         }
 
@@ -169,7 +147,7 @@ namespace Baum2
         {
             var sourceName = uiSelector(index);
             var item = CreateObject(sourceName);
-            CurrentRenderingElements.Add(index, new CurrentRenderingElement{Item1 = sourceName, Item2 = item});
+            CurrentRenderingElements.Add(index, new CurrentRenderingElement {Item1 = sourceName, Item2 = item});
             if (RenderingMin >= index) RenderingMin = index - 1;
             if (RenderingMax <= index) RenderingMax = index + 1;
             if (uiUpdater != null) uiUpdater(item, index);
@@ -182,10 +160,7 @@ namespace Baum2
 
         private void ReturnObjectsToPool()
         {
-            while (CurrentRenderingElements.Count > 0)
-            {
-                ToPool(CurrentRenderingElements.First().Key);
-            }
+            while (CurrentRenderingElements.Count > 0) ToPool(CurrentRenderingElements.First().Key);
             CurrentRenderingElements.Clear();
             RenderingMin = 0;
             RenderingMax = 0;
@@ -211,14 +186,11 @@ namespace Baum2
 
         public void Resize(int size)
         {
-            count = size;
+            Count = size;
             LayoutGroup.RequestUpdate();
 
             ReturnObjectsToPool();
         }
-
-        private readonly Vector3[] fourCornersArray = new Vector3[4];
-        private readonly Vector2[] worldCornersEdge = new Vector2[2];
 
         public void LateUpdate()
         {
@@ -226,8 +198,10 @@ namespace Baum2
             {
                 RectTransform.GetLocalCorners(fourCornersArray);
                 var localToWorldMatrix = RectTransform.localToWorldMatrix;
-                fourCornersArray[0] = localToWorldMatrix.MultiplyPoint(fourCornersArray[0] - new Vector3(LayoutGroup.MaxElementSize, LayoutGroup.MaxElementSize));
-                fourCornersArray[2] = localToWorldMatrix.MultiplyPoint(fourCornersArray[2] + new Vector3(LayoutGroup.MaxElementSize, LayoutGroup.MaxElementSize));
+                fourCornersArray[0] = localToWorldMatrix.MultiplyPoint(
+                    fourCornersArray[0] - new Vector3(LayoutGroup.MaxElementSize, LayoutGroup.MaxElementSize));
+                fourCornersArray[2] = localToWorldMatrix.MultiplyPoint(
+                    fourCornersArray[2] + new Vector3(LayoutGroup.MaxElementSize, LayoutGroup.MaxElementSize));
             }
             worldCornersEdge[0] = fourCornersArray[0];
             worldCornersEdge[1] = fourCornersArray[2];
@@ -235,6 +209,7 @@ namespace Baum2
             while (TryDelete(RenderingMin + 1))
             {
             }
+
             while (TryDelete(RenderingMax - 1))
             {
             }
@@ -245,13 +220,12 @@ namespace Baum2
                 var i = 0;
                 var created = false;
                 for (i = 0; i < Count; ++i)
-                {
                     if (TryCreate(i))
                     {
                         created = true;
                         break;
                     }
-                }
+
                 if (created)
                 {
                     RenderingMin = i - 1;
@@ -262,6 +236,7 @@ namespace Baum2
             while (TryCreate(RenderingMin))
             {
             }
+
             while (TryCreate(RenderingMax))
             {
             }
@@ -270,24 +245,28 @@ namespace Baum2
         private bool TryCreate(int index)
         {
             if (index < 0 || Count <= index) return false;
-            var p = RectTransform.TransformPoint(new Vector3(0f, ContentRectTransform.localPosition.y + LayoutGroup.ElementPositions[index], 0f));
+            var p = RectTransform.TransformPoint(new Vector3(0f,
+                ContentRectTransform.localPosition.y + LayoutGroup.ElementPositions[index], 0f));
             if (worldCornersEdge[0].y < p.y && p.y < worldCornersEdge[1].y)
             {
                 AddItem(index);
                 return true;
             }
+
             return false;
         }
 
         private bool TryDelete(int index)
         {
             if (index <= RenderingMin || RenderingMax <= index) return false;
-            var p = RectTransform.TransformPoint(new Vector3(0f, ContentRectTransform.localPosition.y + LayoutGroup.ElementPositions[index], 0f));
+            var p = RectTransform.TransformPoint(new Vector3(0f,
+                ContentRectTransform.localPosition.y + LayoutGroup.ElementPositions[index], 0f));
             if (!(worldCornersEdge[0].y < p.y && p.y < worldCornersEdge[1].y))
             {
                 ToPool(index);
                 return true;
             }
+
             return false;
         }
 
@@ -301,16 +280,19 @@ namespace Baum2
         public void UpdateAll()
         {
             if (uiUpdater == null) return;
-            foreach (var element in CurrentRenderingElements)
-            {
-                uiUpdater(element.Value.Item2, element.Key);
-            }
+            foreach (var element in CurrentRenderingElements) uiUpdater(element.Value.Item2, element.Key);
         }
 
         public void ResetScroll()
         {
             ScrollRect.velocity = Vector2.zero;
             LayoutGroup.ResetScroll();
+        }
+
+        public struct CurrentRenderingElement
+        {
+            public string Item1;
+            public UIRoot Item2;
         }
     }
 }

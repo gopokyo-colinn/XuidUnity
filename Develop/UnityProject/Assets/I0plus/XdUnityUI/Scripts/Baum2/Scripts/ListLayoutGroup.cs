@@ -7,36 +7,23 @@ namespace Baum2
 {
     public class ListLayoutGroup : MonoBehaviour
     {
-        [SerializeField]
-        public Scroll Scroll;
+        private readonly Dictionary<string, float> ElementSize = new Dictionary<string, float>();
 
         private bool Initialized;
-        private List Root;
-        private readonly Dictionary<string, float> ElementSize = new Dictionary<string, float>();
-        public float MaxElementSize { get; private set; }
-        public List<float> ElementPositions { get; private set; }
-
-        public void Initialize(List root)
-        {
-            Root = root;
-            foreach (var itemSource in Root.ItemSources)
-            {
-                var child = itemSource.transform as RectTransform;
-                if (child != null) ElementSize[itemSource.name] = child.rect.height;
-            }
-            MaxElementSize = ElementSize.Values.Max();
-
-            RectTransformParent = RectTransform.parent.GetComponent<RectTransform>();
-            Parent = transform.parent.GetComponent<RectTransform>();
-        }
 
         public RectOffset Padding;
-        public float Spacing;
-        public Dictionary<string, float> SpecialPadding = new Dictionary<string, float>();
+        private RectTransform Parent;
 
         private RectTransform rectTransformCache;
-        private RectTransform Parent;
         private RectTransform RectTransformParent;
+        private List Root;
+
+        [SerializeField] public Scroll Scroll;
+
+        public float Spacing;
+        public Dictionary<string, float> SpecialPadding = new Dictionary<string, float>();
+        public float MaxElementSize { get; private set; }
+        public List<float> ElementPositions { get; private set; }
 
         public RectTransform RectTransform
         {
@@ -46,6 +33,21 @@ namespace Baum2
                 rectTransformCache = GetComponent<RectTransform>();
                 return rectTransformCache;
             }
+        }
+
+        public void Initialize(List root)
+        {
+            Root = root;
+            foreach (var itemSource in Root.ItemSources)
+            {
+                var child = itemSource.transform as RectTransform;
+                if (child != null) ElementSize[itemSource.name] = child.rect.height;
+            }
+
+            MaxElementSize = ElementSize.Values.Max();
+
+            RectTransformParent = RectTransform.parent.GetComponent<RectTransform>();
+            Parent = transform.parent.GetComponent<RectTransform>();
         }
 
         public void RequestUpdate()
@@ -87,13 +89,11 @@ namespace Baum2
                 var select = Root.UISelector(i);
                 var elementSize = ElementSize[select];
                 size += elementSize;
-                if (i != 0 && SpecialPadding.ContainsKey(select))
-                {
-                    size += SpecialPadding[select];
-                }
+                if (i != 0 && SpecialPadding.ContainsKey(select)) size += SpecialPadding[@select];
                 ElementPositions.Add(size * vector - elementSize / 2f * vector);
                 if (i != Root.Count - 1) size += Spacing;
             }
+
             size += paddingEnd;
 
             var totalSize = RectTransform.sizeDelta;
@@ -102,10 +102,7 @@ namespace Baum2
             totalSize[axis] = size;
             RectTransform.sizeDelta = totalSize;
 
-            for (var i = 0; i < ElementPositions.Count; ++i)
-            {
-                ElementPositions[i] -= (size / 2f * vector);
-            }
+            for (var i = 0; i < ElementPositions.Count; ++i) ElementPositions[i] -= size / 2f * vector;
         }
 
         public void ResetScroll()

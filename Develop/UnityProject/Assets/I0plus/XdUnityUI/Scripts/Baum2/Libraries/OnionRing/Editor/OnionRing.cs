@@ -4,18 +4,12 @@ namespace OnionRing
 {
     public class TextureSlicer
     {
-        public static SlicedTexture Slice(Texture2D texture)
-        {
-            var pixels = texture.GetPixels();
-            var slicer = new TextureSlicer(texture, pixels);
-            return slicer.Slice(pixels);
-        }
-
-        private readonly int width;
-        private readonly int height;
-        private readonly int[] pixels;
         private const int SafetyMargin = 2;
         private const int Margin = 2;
+        private readonly int height;
+        private readonly int[] pixels;
+
+        private readonly int width;
 
         private TextureSlicer(Texture refTexture, Color[] getPixels)
         {
@@ -26,6 +20,13 @@ namespace OnionRing
             for (var i = 0; i < getPixels.Length; ++i) pixels[i] = ToHashCode(getPixels[i]);
         }
 
+        public static SlicedTexture Slice(Texture2D texture)
+        {
+            var pixels = texture.GetPixels();
+            var slicer = new TextureSlicer(texture, pixels);
+            return slicer.Slice(pixels);
+        }
+
         private int ToHashCode(Color color)
         {
             if ((int) (color.a * 255) == 0) return 0;
@@ -33,7 +34,8 @@ namespace OnionRing
             const int a = 256 / 4;
             if (color.a > 0.95f) color.a = 1.0f;
             if (color.a < 0.05f) color.a = 0.0f;
-            return (int)(color.a * a) * 255 * 255 * 255 + (int)(color.r * a) * 255 * 255 + (int)(color.g * a) * 255 + (int)(color.b * a);
+            return (int) (color.a * a) * 255 * 255 * 255 + (int) (color.r * a) * 255 * 255 + (int) (color.g * a) * 255 +
+                   (int) (color.b * a);
         }
 
         private static void CalcLine(ulong[] list, out int start, out int end)
@@ -44,7 +46,6 @@ namespace OnionRing
             var tmpEnd = 0;
             var tmpHash = list[0];
             for (var i = 0; i < list.Length; ++i)
-            {
                 if (tmpHash == list[i])
                 {
                     tmpEnd = i;
@@ -56,11 +57,12 @@ namespace OnionRing
                         start = tmpStart;
                         end = tmpEnd;
                     }
+
                     tmpStart = i;
                     tmpEnd = i;
                     tmpHash = list[i];
                 }
-            }
+
             if (end - start < tmpEnd - tmpStart)
             {
                 start = tmpStart;
@@ -79,9 +81,11 @@ namespace OnionRing
             for (var a = 0; a < aMax; ++a)
             {
                 ulong line = 0;
-                for (var b = 0; b < bMax; ++b) line = (ulong)(line + (ulong)(pixels[b * width + a] * b)).GetHashCode();
+                for (var b = 0; b < bMax; ++b)
+                    line = (ulong) (line + (ulong) (pixels[b * width + a] * b)).GetHashCode();
                 hashList[a] = line;
             }
+
             return hashList;
         }
 
@@ -91,9 +95,11 @@ namespace OnionRing
             for (var a = 0; a < aMax; ++a)
             {
                 ulong line = 0;
-                for (var b = 0; b < bMax; ++b) line = (ulong)(line + (ulong)(pixels[a * width + b] * b)).GetHashCode();
+                for (var b = 0; b < bMax; ++b)
+                    line = (ulong) (line + (ulong) (pixels[a * width + b] * b)).GetHashCode();
                 hashList[a] = line;
             }
+
             return hashList;
         }
 
@@ -126,6 +132,7 @@ namespace OnionRing
                 yStart = 0;
                 yEnd = 0;
             }
+
             var output = GenerateSlicedTexture(xStart, xEnd, yStart, yEnd, originalPixels);
             var left = xStart + SafetyMargin;
             var bottom = yStart + SafetyMargin;
@@ -136,11 +143,13 @@ namespace OnionRing
                 left = 0;
                 right = 0;
             }
+
             if (skipY)
             {
                 top = 0;
                 bottom = 0;
             }
+
             return new SlicedTexture(output, new Boarder(left, bottom, right, top));
         }
 
@@ -151,13 +160,14 @@ namespace OnionRing
             var outputPixels = new Color[outputWidth * outputHeight];
             for (int x = 0, originalX = 0; x < outputWidth; ++x, ++originalX)
             {
-                if (originalX == xStart) originalX += (xEnd - xStart);
+                if (originalX == xStart) originalX += xEnd - xStart;
                 for (int y = 0, originalY = 0; y < outputHeight; ++y, ++originalY)
                 {
-                    if (originalY == yStart) originalY += (yEnd - yStart);
+                    if (originalY == yStart) originalY += yEnd - yStart;
                     outputPixels[y * outputWidth + x] = originalPixels[originalY * width + originalX];
                 }
             }
+
             var output = new Texture2D(outputWidth, outputHeight);
             output.SetPixels(outputPixels);
             return output;
@@ -177,8 +187,8 @@ namespace OnionRing
             Boarder = boarder;
         }
 
-        public Texture2D Texture { get; private set; }
-        public Boarder Boarder { get; private set; }
+        public Texture2D Texture { get; }
+        public Boarder Boarder { get; }
     }
 
     public class Boarder
@@ -191,11 +201,14 @@ namespace OnionRing
             Top = top;
         }
 
-        public Vector4 ToVector4() { return new Vector4(Left, Bottom, Right, Top); }
+        public int Left { get; }
+        public int Bottom { get; }
+        public int Right { get; }
+        public int Top { get; }
 
-        public int Left { get; private set; }
-        public int Bottom { get; private set; }
-        public int Right { get; private set; }
-        public int Top { get; private set; }
+        public Vector4 ToVector4()
+        {
+            return new Vector4(Left, Bottom, Right, Top);
+        }
     }
 }

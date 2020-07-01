@@ -1,11 +1,10 @@
-using Baum2;
 using UnityEditor;
 using UnityEditor.UI;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// @author Kazuma Kuwabara
+    ///     @author Kazuma Kuwabara
     /// </summary>
     [CustomEditor(typeof(DotsScrollbar), true)]
     public sealed class DotScrollbarEditor : ScrollbarEditor

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// RootElement class.
-    /// based on Baum2.Editor.RootElement class.
+    ///     RootElement class.
+    ///     based on Baum2.Editor.RootElement class.
     /// </summary>
     public class RootElement : GroupElement
     {

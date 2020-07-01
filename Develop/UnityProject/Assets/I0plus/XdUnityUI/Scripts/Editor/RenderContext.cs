@@ -1,16 +1,14 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UI;
 
 #if TMP_PRESENT
 using TMPro;
 #endif
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     public class RenderContext
     {
@@ -52,15 +50,12 @@ namespace XdUnityUI.Editor
         {
             var path = Path.Combine(spriteRootPath, spriteName) + ".png";
             // 相対パスの記述に対応した
-            var fileInfo = new System.IO.FileInfo(path);
+            var fileInfo = new FileInfo(path);
             var fullName = TextureUtil.GetSameImagePath(fileInfo.FullName);
             // TextureUtil.SliceSprite(fullName);
             var unityPath = EditorUtil.ToAssetPath(fullName);
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(unityPath);
-            if (sprite == null)
-            {
-                Debug.LogError($"[XdUnityUI] sprite \"{unityPath}\" is not found.");
-            }
+            if (sprite == null) Debug.LogError($"[XdUnityUI] sprite \"{unityPath}\" is not found.");
 
             return sprite;
         }
@@ -70,10 +65,7 @@ namespace XdUnityUI.Editor
             var font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontRootPath, fontName) + ".ttf");
             if (font == null) font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontRootPath, fontName) + ".otf");
             if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
-            if (font == null)
-            {
-                Debug.LogError($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found");
-            }
+            if (font == null) Debug.LogError($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found");
 
             return font;
         }

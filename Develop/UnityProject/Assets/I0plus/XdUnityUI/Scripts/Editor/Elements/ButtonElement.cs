@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// ButtonElement class.
-    /// based on Baum2.Editor.ButtonElement class.
+    ///     ButtonElement class.
+    ///     based on Baum2.Editor.ButtonElement class.
     /// </summary>
     public class ButtonElement : GroupElement
     {
@@ -23,10 +22,8 @@ namespace XdUnityUI.Editor
             var go = CreateSelf(renderContext);
             var rect = go.GetComponent<RectTransform>();
             if (parentObject)
-            {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            }
 
             var children = RenderChildren(renderContext, go);
             var deleteObjects = new Dictionary<GameObject, bool>();
@@ -107,16 +104,12 @@ namespace XdUnityUI.Editor
                     case "none":
                         button.transition = Selectable.Transition.None;
                         break;
-                    default:
-                        break;
                 }
             }
 
             foreach (var keyValuePair in deleteObjects)
-            {
                 if (keyValuePair.Key != targetImageObject)
                     Object.DestroyImmediate(keyValuePair.Key);
-            }
 
             // TargetGraphicが設定されなかった場合
             if (button.targetGraphic == null)
@@ -125,10 +118,8 @@ namespace XdUnityUI.Editor
 
                 var image = go.GetComponentInChildren<Image>();
                 if (image == null)
-                {
                     // componentでないか探す
                     image = go.GetComponent<Image>();
-                }
 
                 button.targetGraphic = image;
             }

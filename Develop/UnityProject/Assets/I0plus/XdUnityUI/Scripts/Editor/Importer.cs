@@ -12,7 +12,7 @@ using UnityEditor.U2D;
 using UnityEngine.U2D;
 #endif
 
-namespace XdUnityUI.Editor
+namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
     ///     based on Baum2/Editor/Scripts/BaumImporter file.
@@ -135,9 +135,7 @@ namespace XdUnityUI.Editor
                 foreach (var file in files)
                 {
                     if (!convertImageFlag && !file.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase))
-                    {
                         continue;
-                    }
 
                     var extension = Path.GetExtension(file).ToLower();
                     if (extension == ".meta") continue;
@@ -153,7 +151,7 @@ namespace XdUnityUI.Editor
             }
 
             await Import(importedAssets);
-            EditorUtility.DisplayDialog("Import", $"Done.", "Ok");
+            EditorUtility.DisplayDialog("Import", "Done.", "Ok");
         }
 
         private static bool IsFolder(string path)

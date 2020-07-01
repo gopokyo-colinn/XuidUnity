@@ -2,40 +2,39 @@
  * @author Kazuma Kuwabara
  */
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Baum2
+namespace I0plus.XdUnityUI
 {
     [RequireComponent(typeof(ToggleGroup))]
     public sealed class DotsScrollbar : Scrollbar
     {
         [SerializeField] private Transform dotContainer;
 
-        [SerializeField] private Toggle dotPrefab;
-
-        [SerializeField] private List<Toggle> dots = null;
-
         private ToggleGroup dotGroup;
 
-        public bool IsValid
-        {
-            get { return dotContainer != null && dotPrefab != null; }
-        }
+        [SerializeField] private Toggle dotPrefab;
+
+        [SerializeField] private List<Toggle> dots;
+
+        private bool scrolling;
+
+        public bool IsValid => dotContainer != null && dotPrefab != null;
 
         public Transform DotContainer
         {
-            set { dotContainer = value; }
-            get { return dotContainer; }
+            set => dotContainer = value;
+            get => dotContainer;
         }
 
         public Toggle DotPrefab
         {
-            set { dotPrefab = value; }
-            get { return dotPrefab; }
+            set => dotPrefab = value;
+            get => dotPrefab;
         }
 
         protected override void Start()
@@ -48,7 +47,7 @@ namespace Baum2
         {
             base.OnEnable();
 
-            if (UnityEngine.Application.isPlaying)
+            if (Application.isPlaying)
             {
                 onValueChanged.AddListener(OnScrollValueChanged);
                 foreach (var toggle in dots)
@@ -60,7 +59,7 @@ namespace Baum2
         {
             base.OnDisable();
 
-            if (UnityEngine.Application.isPlaying)
+            if (Application.isPlaying)
             {
                 onValueChanged.RemoveListener(OnScrollValueChanged);
                 foreach (var toggle in dots)
@@ -76,10 +75,7 @@ namespace Baum2
 
         private void Setup()
         {
-            if (Application.isPlaying && dotPrefab != null)
-            {
-                dotPrefab.gameObject.SetActive(false);
-            }
+            if (Application.isPlaying && dotPrefab != null) dotPrefab.gameObject.SetActive(false);
 
             numberOfSteps = 0;
             SetupDotContainer();
@@ -94,10 +90,7 @@ namespace Baum2
 
         private void SetupDotContainer()
         {
-            if (dotContainer == null && dotPrefab != null)
-            {
-                dotContainer = dotPrefab.transform.parent;
-            }
+            if (dotContainer == null && dotPrefab != null) dotContainer = dotPrefab.transform.parent;
         }
 
         private void SetupDotGroup()
@@ -147,7 +140,7 @@ namespace Baum2
                 var dot = Instantiate(dotPrefab, dotContainer);
                 dot.gameObject.SetActive(true);
                 dot.group = dotGroup;
-                if (UnityEngine.Application.isPlaying)
+                if (Application.isPlaying)
                     dot.onValueChanged.AddListener(OnToggleValueChange);
                 dots.Add(dot);
             }
@@ -162,7 +155,7 @@ namespace Baum2
 
                 var index = dots.Count - 1;
                 var dot = dots[dots.Count - 1];
-                if (UnityEngine.Application.isPlaying)
+                if (Application.isPlaying)
                     dot.onValueChanged.RemoveListener(OnToggleValueChange);
                 DestroyImmediate(dot.gameObject);
                 dots.RemoveAt(index);
@@ -172,7 +165,7 @@ namespace Baum2
         private float StepSize()
         {
             var ofSteps = dots.Count - 1;
-            return (ofSteps > 1) ? 1f / ofSteps : 0.001f;
+            return ofSteps > 1 ? 1f / ofSteps : 0.001f;
         }
 
         private void OnScrollValueChanged(float input)
@@ -195,8 +188,6 @@ namespace Baum2
 #endif
             }
         }
-
-        private bool scrolling = false;
 
         private IEnumerator ChangeValue(float targetValue)
         {
@@ -232,22 +223,16 @@ namespace Baum2
         protected override void Reset()
         {
             base.Reset();
-            if (dots != null)
-            {
-                RemoveDots(dots.Count);
-            }
+            if (dots != null) RemoveDots(dots.Count);
         }
 
         public void ClearDotInstances()
         {
-            if (dots != null)
-            {
-                RemoveDots(dots.Count);
-            }
+            if (dots != null) RemoveDots(dots.Count);
         }
 
-        [UnityEditor.MenuItem("CONTEXT/DotScrollbar/Reset dot instances")]
-        private static void ClearDotInstances(UnityEditor.MenuCommand menuCommand)
+        [MenuItem("CONTEXT/DotScrollbar/Reset dot instances")]
+        private static void ClearDotInstances(MenuCommand menuCommand)
         {
             var self = menuCommand.context as DotsScrollbar;
             if (self != null)

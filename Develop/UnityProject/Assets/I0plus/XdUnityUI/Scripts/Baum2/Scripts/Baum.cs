@@ -6,7 +6,7 @@ namespace Baum2
     {
         public static UIRoot Instantiate(GameObject parent, GameObject prefab)
         {
-            var go = GameObject.Instantiate(prefab);
+            var go = Object.Instantiate(prefab);
             var root = go.GetComponent<UIRoot>();
             root.Awake();
 
