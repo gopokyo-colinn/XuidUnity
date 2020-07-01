@@ -12,4 +12,6 @@
 echo "----- make AdobeXD plugin .xdx file. -----"
 (cd ../Develop && zip -q -r ../Release/XdUnityUIExport.xdx ./XdUnityUIExport -x \*/types/*)
 (cd ../Develop && zip -q -r ../Release/9SliceHelper.xdx ./9SliceHelper -x \*/types/*)
+(cd ../Develop && zip -q -r ../Release/RoundRects.xdx ./RoundRects -x \*/types/*)
+(cd .. && zip -q -r ./Release/Samples.zip ./Samples)
 echo "done.\n"
