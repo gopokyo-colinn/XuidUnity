@@ -10,7 +10,7 @@
       "dom"
     ],
     "typeRoots": [
-      "./types/index.d.ts",
+      "../types/index.d.ts",
       "node_modules/@types"
     ],
     "types": ["./types", "node_modules/types"]

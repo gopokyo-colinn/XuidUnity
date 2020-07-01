@@ -425,6 +425,9 @@ function parseCssDeclarationBlock(declarationBlock) {
  * WARN: ※ここの戻り値を変更するとキャッシュも変更されてしまう
  * NodeNameとは node.nameのこと
  * // によるコメントアウト処理もここでする
+ * 例
+ * vertex #scroller {fix:t v a}
+ * id:scroller name:vertex #scroller
  * @param {string} nodeName
  * @param nodeName
  * @return {{classNames:string[], id:string, tagName:string, declarations:CssDeclarations}}
@@ -443,20 +446,31 @@ function cssParseNodeName(nodeName) {
     declarations.setFirst(STYLE_COMMENT_OUT, true)
     result = { declarations }
   } else {
+    // nameの作成　{} を除いた部分
+    let name = nodeName
+    const pattern = /(.*)({.*})/g
+    const r = pattern.exec(nodeName)
+    if (r && r.length > 1) {
+      name = r[1].trim()
+    }
     try {
-      let rules = parseCss(nodeName, false) // 名前はエラーチェックしない
+      const asciiNodeName = nodeName.replace(/[^\x01-\x7E]/g, function(s) {
+        return '_'
+      })
+      let rules = parseCss(asciiNodeName, false) // 名前はエラーチェックしない
       if (!rules || rules.length === 0 || !rules[0].selector) {
         // パースできなかった場合はそのまま返す
-        result = { tagName: nodeName }
+        result = { name, tagName: nodeName }
       } else {
         result = rules[0].selector.json['rule'] // 一番外側の｛｝をはずす
         Object.assign(result, {
+          name,
           declarations: rules[0].declarations,
         })
       }
     } catch (e) {
       console.log('parseNodeName: exception')
-      result = { tagName: nodeName }
+      result = { name, tagName: nodeName }
     }
   }
   cacheParseNodeName[nodeName] = result
@@ -1413,8 +1427,11 @@ function forEachReverseElements(elements, func) {
  */
 function getUnityName(node) {
   const { node_name: nodeName, style } = getNodeNameAndStyle(node)
+
+  //スタイルで名前の指定がある場合
   let unityName = style.first(STYLE_UNITY_NAME)
   if (unityName) {
+    //childIndexを子供番号で置き換え
     const childIndex = getChildIndex(node)
     unityName = unityName.replace(/\${childIndex}/, childIndex)
     return unityName
@@ -1423,6 +1440,7 @@ function getUnityName(node) {
   const parsed = cssParseNodeName(getNodeName(node))
   if (parsed) {
     if (parsed.id) return parsed.id
+    if (parsed.name) return parsed.name
     if (parsed.tagName) return parsed.tagName
     if (parsed.classNames && parsed.classNames.length > 0)
       return '.' + parsed.classNames.join('.')

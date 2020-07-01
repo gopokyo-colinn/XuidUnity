@@ -135,6 +135,7 @@ first-childになる
   unity-name: 'rg-child(${childIndex})';
 }
 
+
 [typeof='ScrollableGroup'] {
   create-content: true;
   create-content-name: '.content';
