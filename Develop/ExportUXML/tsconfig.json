@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "CommonJS",
+    "baseUrl": ".",
+    "allowJs": true,
+    "checkJs": true,
+    "paths": {
+      "scenegraph": [
+        "./node_modules/@adobexd/typings/types/scenegraph"
+      ],
+      "application": [
+        "./node_modules/@adobexd/typings/types/application"
+      ],
+      "commands": [
+        "./node_modules/@adobexd/typings/types/commands"
+      ],
+      "uxp": [
+        "./node_modules/@adobexd/typings/types/uxp"
+      ],
+      "os": [
+        "./node_modules/@adobexd/typings/types/os"
+      ]
+    },
+    "typeRoots": [
+      "@types",
+      "./node_modules/@adobexd/"
+    ]
+  }
+}

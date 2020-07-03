@@ -1,0 +1,9 @@
+* {
+  match-log: 'layer';
+  layer: 'UI';
+}
+
+:root {
+  match-log: 'this is root.';
+  root: true;
+}
