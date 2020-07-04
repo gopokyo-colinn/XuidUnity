@@ -1,7 +1,3 @@
-import { SceneNode } from "scenegraph";
-import * as consts from "./consts";
-import { globalCacheNodeNameAndStyle } from "./uxml";
-
 /**
  * @param r
  * @returns {boolean}

@@ -1,7 +1,7 @@
-import * as consts from "./consts";
-import { getNodeNameAndStyle, getStyleFromNode, isContentChild, NodeNameAndStyle } from "./node";
-import { asBool, hasAnyValue} from "./tools";
-import { globalCacheNodeNameAndStyle, globalCssVars } from "./uxml";
+import * as consts from './consts'
+import { GlobalVars } from "./globals";
+import { getNodeNameAndStyle, isContentChild } from './node'
+import { asBool, hasAnyValue } from './tools'
 
 /**
  * @param {[]} styleFix
@@ -58,9 +58,8 @@ export function getStyleFix(styleFix) {
   }
 }
 
-
 export class Style {
-  private style: any
+  public style: {[key:string]:any}
   /**
    *
    * @param {*[][]} style
@@ -89,7 +88,7 @@ export class Style {
           const tokenizer = /var\(\s*(?<id>\S*)\s*\)/
           let token = tokenizer.exec(declValue.trim())
           const id = token.groups.id
-          let value = id ? globalCssVars[id] : null
+          let value = id ? GlobalVars.cssVars[id] : null
           // console.log(`var(${id})をみつけました値は${value}`)
           values.push(value)
         } else {
@@ -200,13 +199,12 @@ export class Style {
     return str
   }
 
-  forEach(callback) {
+  forEach(callback: (key: string, value) => void) {
     for (let styleKey in this.style) {
       callback(styleKey, this.style[styleKey])
     }
   }
 }
-
 
 export function hasLayoutProperties(style) {
   return (

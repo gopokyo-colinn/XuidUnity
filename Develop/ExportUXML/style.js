@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const consts = require("./consts");
+const globals_1 = require("./globals");
 const node_1 = require("./node");
 const tools_1 = require("./tools");
-const uxml_1 = require("./uxml");
 /**
  * @param {[]} styleFix
  * @returns {null|{top: boolean, left: boolean, bottom: boolean, width: boolean, right: boolean, height: boolean}}
@@ -85,7 +85,7 @@ class Style {
                     const tokenizer = /var\(\s*(?<id>\S*)\s*\)/;
                     let token = tokenizer.exec(declValue.trim());
                     const id = token.groups.id;
-                    let value = id ? uxml_1.globalCssVars[id] : null;
+                    let value = id ? globals_1.GlobalVars.cssVars[id] : null;
                     // console.log(`var(${id})をみつけました値は${value}`)
                     values.push(value);
                 }

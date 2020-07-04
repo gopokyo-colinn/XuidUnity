@@ -2,7 +2,6 @@ import { SceneNode } from 'scenegraph'
 import { storage } from 'uxp'
 import { UXMLGenerator } from './uxml'
 import * as tools from './tools'
-
 import { sax } from 'sax/lib/sax'
 //const sax = require('./node_modules/sax/lib/sax')
 //import {js2xml} from './node_modules/xml-js/lib/js2xml'

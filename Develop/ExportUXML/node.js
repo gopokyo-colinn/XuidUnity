@@ -2,8 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const consts = require("./consts");
 const css_1 = require("./css");
+const globals_1 = require("./globals");
 const style_1 = require("./style");
-const uxml_1 = require("./uxml");
+const tools_1 = require("./tools");
 function traverseNode(node, func) {
     let result = func(node);
     if (result === false)
@@ -58,6 +59,23 @@ function isOnlyChild(node) {
 }
 exports.isOnlyChild = isOnlyChild;
 /**
+ * Viewportの役割をもつノードを返す
+ * Maskをもっている場合はMask
+ * @param node
+ * @return {null|SceneNode|{show_mask_graphic: boolean}|string|*}
+ */
+function getViewport(node) {
+    const { style } = getNodeNameAndStyle(node);
+    const styleViewport = style.first(consts.STYLE_CREATE_CONTENT);
+    if (tools_1.asBool(styleViewport))
+        return node;
+    if (node.mask)
+        return node.mask;
+    if (node.constructor.name === 'RepeatGrid')
+        return node;
+    return null;
+}
+/**
  * 親と同じBoundsかどうか
  * Padding、*-Stackで、nodeが背景になっているかどうかの判定につかう
  * paddingがマイナスだと判定できない
@@ -82,6 +100,10 @@ function sameParentBounds(node) {
         bounds.height === parentBounds.height);
 }
 exports.sameParentBounds = sameParentBounds;
+function isRootNode(node) {
+    return node === globals_1.GlobalVars.rootNode;
+}
+exports.isRootNode = isRootNode;
 /**
  *
  * @param {SceneNode|SceneNodeClass} node
@@ -126,7 +148,7 @@ function getBeforeGlobalDrawBounds(node) {
     // レスポンシブパラメータ作成用で､すでに取得した変形してしまう前のパラメータがあった場合
     // それを利用するようにする
     let bounds = null;
-    const hashBounds = uxml_1.globalResponsiveBounds;
+    const hashBounds = globals_1.GlobalVars.responsiveBounds;
     if (hashBounds) {
         const hBounds = hashBounds[node.guid];
         if (hBounds && hBounds.before) {
@@ -153,7 +175,7 @@ function getStyleFromNode(node) {
     catch (e) {
         //node.nameがパースできなかった
     }
-    for (const rule of uxml_1.globalCssRules) {
+    for (const rule of globals_1.GlobalVars.cssRules) {
         /** @type {CssSelector} */
         const selector = rule.selector;
         if (selector &&
@@ -188,7 +210,7 @@ function getNodeNameAndStyle(node) {
     }
     // キャッシュ確認
     if (node.guid) {
-        const cache = uxml_1.globalCacheNodeNameAndStyle[node.guid];
+        const cache = globals_1.GlobalVars.cacheNodeNameAndStyle[node.guid];
         if (cache) {
             return cache;
         }
@@ -207,7 +229,7 @@ function getNodeNameAndStyle(node) {
     // 注意する箇所
     // 上： getStyleFromNodeName(nodeName, parentNode, cssRules, ...) で親への参照
     // 下： node.children.some(child => { const childStyle = getNodeNameAndStyle(child).style　で、子供への参照
-    uxml_1.globalCacheNodeNameAndStyle[node.guid] = value;
+    globals_1.GlobalVars.cacheNodeNameAndStyle[node.guid] = value;
     if (parentNode && parentNode.constructor.name === 'RepeatGrid') {
         // 親がリピートグリッドの場合､名前が適当につけられるようです
         // Buttonといった名前やオプションが勝手につき､機能してしまうことを防ぐ

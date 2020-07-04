@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const consts = require("./consts");
+const globals_1 = require("./globals");
 const node_1 = require("./node");
 const tools_1 = require("./tools");
 const CssSelectorParser = require('./node_modules/css-selector-parser/lib/index')
     .CssSelectorParser;
 // import {CssSelectorParser} from 'css-selector-parser'
-const uxml_1 = require("./uxml");
 let cssSelectorParser = new CssSelectorParser();
 //cssSelectorParser.registerSelectorPseudos('has')
 cssSelectorParser.registerNumericPseudos('root');
@@ -252,7 +252,7 @@ class CssSelector {
                 result = node_1.sameParentBounds(node);
                 break;
             case 'root':
-                result = node === uxml_1.globalRootNode;
+                result = node_1.isRootNode(node);
                 break;
             default:
                 console.log('**error** 未対応の疑似要素です', pseudo.name);
@@ -394,7 +394,7 @@ function parseCss(text, errorThrow = true) {
 }
 function cssParseNodeName(nodeName) {
     nodeName = nodeName.trim();
-    const cache = uxml_1.globalCacheParseNodeName[nodeName];
+    const cache = globals_1.GlobalVars.cacheParseNodeName[nodeName];
     if (cache) {
         return cache;
     }
@@ -437,7 +437,7 @@ function cssParseNodeName(nodeName) {
             result = { name, tagName: nodeName };
         }
     }
-    uxml_1.globalCacheParseNodeName[nodeName] = result;
+    globals_1.GlobalVars.cacheParseNodeName[nodeName] = result;
     return result;
 }
 exports.cssParseNodeName = cssParseNodeName;

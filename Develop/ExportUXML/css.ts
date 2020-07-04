@@ -1,19 +1,19 @@
 //import { CssSelectorParser, Selector } from 'css-selector-parser'
 import { storage } from 'uxp'
 import * as consts from './consts'
+import { GlobalVars } from "./globals";
 import {
   getChildIndex,
   isFirstChild,
   isLastChild,
-  isOnlyChild,
-  sameParentBounds,
-} from './node'
+  isOnlyChild, isRootNode,
+  sameParentBounds
+} from "./node";
 import { asBool } from './tools'
 import * as tools from './tools'
 const CssSelectorParser = require('./node_modules/css-selector-parser/lib/index')
   .CssSelectorParser
 // import {CssSelectorParser} from 'css-selector-parser'
-import { globalCacheParseNodeName, globalRootNode } from './uxml'
 
 let cssSelectorParser = new CssSelectorParser()
 //cssSelectorParser.registerSelectorPseudos('has')
@@ -272,7 +272,7 @@ class CssSelector {
         result = sameParentBounds(node)
         break
       case 'root':
-        result = node === globalRootNode
+        result = isRootNode(node)
         break
       default:
         console.log('**error** 未対応の疑似要素です', pseudo.name)
@@ -360,7 +360,7 @@ class CssDeclarations {
   }
 }
 
-function parseCss(text, errorThrow = true) {
+function parseCss(text, errorThrow = true):any {
   // コメントアウト処理 エラー時に行数を表示するため、コメント内の改行を残す
   //TODO: 文字列内の /* */について正しく処理できない
   text = text.replace(/\/\*[\s\S]*?\*\//g, str => {
@@ -417,7 +417,7 @@ function parseCss(text, errorThrow = true) {
 
 export function cssParseNodeName(nodeName) {
   nodeName = nodeName.trim()
-  const cache = globalCacheParseNodeName[nodeName]
+  const cache = GlobalVars.cacheParseNodeName[nodeName]
   if (cache) {
     return cache
   }
@@ -457,7 +457,7 @@ export function cssParseNodeName(nodeName) {
       result = { name, tagName: nodeName }
     }
   }
-  globalCacheParseNodeName[nodeName] = result
+  GlobalVars.cacheParseNodeName[nodeName] = result
   return result
 }
 
@@ -495,7 +495,7 @@ function parseCssDeclarationBlock(declarationBlock: string): {} {
  * @param currentFolder
  * @param filename
  */
-export async function loadCssRules(currentFolder: storage.Folder, filename) {
+export async function loadCssRules(currentFolder: storage.Folder, filename):Promise<any> {
   if (!currentFolder) return null
   // console.log(`${filename}の読み込みを開始します`)
   let file

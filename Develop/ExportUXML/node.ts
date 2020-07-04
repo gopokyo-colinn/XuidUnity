@@ -1,8 +1,9 @@
 import { SceneNode } from "scenegraph";
 import * as consts from "./consts";
 import { cssParseNodeName } from "./css";
+import { GlobalVars } from "./globals";
 import { Style } from "./style";
-import { globalCacheNodeNameAndStyle, globalCssRules, globalResponsiveBounds } from "./uxml";
+import { asBool } from "./tools";
 
 export function traverseNode(node, func) {
   let result = func(node)
@@ -56,6 +57,23 @@ export function isOnlyChild(node: SceneNode) {
   return parent.children.at(lastIndex) === node
 }
 
+
+
+/**
+ * Viewportの役割をもつノードを返す
+ * Maskをもっている場合はMask
+ * @param node
+ * @return {null|SceneNode|{show_mask_graphic: boolean}|string|*}
+ */
+function getViewport(node) {
+  const { style } = getNodeNameAndStyle(node)
+  const styleViewport = style.first(consts.STYLE_CREATE_CONTENT)
+  if (asBool(styleViewport)) return node
+  if (node.mask) return node.mask
+  if (node.constructor.name === 'RepeatGrid') return node
+  return null
+}
+
 /**
  * 親と同じBoundsかどうか
  * Padding、*-Stackで、nodeが背景になっているかどうかの判定につかう
@@ -82,6 +100,10 @@ export function sameParentBounds(node: SceneNode) {
 }
 
 
+export function isRootNode(node:SceneNode)
+{
+  return node === GlobalVars.rootNode;
+}
 
 /**
  *
@@ -123,7 +145,7 @@ export function getBeforeGlobalDrawBounds(node) {
   // レスポンシブパラメータ作成用で､すでに取得した変形してしまう前のパラメータがあった場合
   // それを利用するようにする
   let bounds = null
-  const hashBounds = globalResponsiveBounds
+  const hashBounds = GlobalVars.responsiveBounds
   if (hashBounds) {
     const hBounds = hashBounds[node.guid]
     if (hBounds && hBounds.before) {
@@ -149,7 +171,7 @@ export function getStyleFromNode(node) {
     //node.nameがパースできなかった
   }
 
-  for (const rule of globalCssRules) {
+  for (const rule of GlobalVars.cssRules) {
     /** @type {CssSelector} */
     const selector = rule.selector
     if (
@@ -200,7 +222,7 @@ export function getNodeNameAndStyle(node): NodeNameAndStyle {
 
   // キャッシュ確認
   if (node.guid) {
-    const cache = globalCacheNodeNameAndStyle[node.guid]
+    const cache = GlobalVars.cacheNodeNameAndStyle[node.guid]
     if (cache) {
       return cache
     }
@@ -221,7 +243,7 @@ export function getNodeNameAndStyle(node): NodeNameAndStyle {
   // 注意する箇所
   // 上： getStyleFromNodeName(nodeName, parentNode, cssRules, ...) で親への参照
   // 下： node.children.some(child => { const childStyle = getNodeNameAndStyle(child).style　で、子供への参照
-  globalCacheNodeNameAndStyle[node.guid] = value
+  GlobalVars.cacheNodeNameAndStyle[node.guid] = value
 
   if (parentNode && parentNode.constructor.name === 'RepeatGrid') {
     // 親がリピートグリッドの場合､名前が適当につけられるようです
