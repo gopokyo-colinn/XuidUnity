@@ -130,7 +130,7 @@ function calcRect(
   let styleFixLeft = null;
   let styleFixRight = null;
 
-  const styleFix = style.values(consts.STYLE_MARGIN_FIX);
+  const styleFix = style.values(consts.STYLE_FIX);
   if (styleFix != null) {
     // オプションが設定されたら、全ての設定が決まる(NULLではなくなる)
     const fix = getStyleFix(styleFix);
@@ -399,7 +399,7 @@ function calcRect(
     }
   }
 
-  if (style.hasValue(consts.STYLE_MARGIN_FIX, "c", "center")) {
+  if (style.hasValue(consts.STYLE_FIX, "c", "center")) {
     const beforeCenter = beforeBounds.x + beforeBounds.width / 2;
     const parentBeforeCenter =
       parentBeforeBounds.x + parentBeforeBounds.width / 2;
@@ -410,7 +410,7 @@ function calcRect(
     offsetMax.x = +beforeBounds.width / 2;
   }
 
-  if (style.hasValue(consts.STYLE_MARGIN_FIX, "m", "middle")) {
+  if (style.hasValue(consts.STYLE_FIX, "m", "middle")) {
     const beforeMiddle = beforeBounds.y + beforeBounds.height / 2;
     const parentBeforeMiddle =
       parentBeforeBounds.y + parentBeforeBounds.height / 2;

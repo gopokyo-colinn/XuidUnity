@@ -209,7 +209,6 @@ export class Style {
 export function hasLayoutProperties(style) {
   return (
     style.firstAsBool(consts.STYLE_TEXT) ||
-    style.firstAsBool(consts.STYLE_TEXTMP) ||
     style.firstAsBool(consts.STYLE_IMAGE) ||
     style.firstAsBool(consts.STYLE_LAYOUT_GROUP)
   )

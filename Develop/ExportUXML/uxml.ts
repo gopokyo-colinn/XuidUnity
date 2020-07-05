@@ -77,6 +77,12 @@ export class UXMLGenerator {
     })
     this.addRoot(json, node)
     this.addButton(json, node)
+    this.addToggle(json,node)
+    this.addLabel(json,node)
+    this.addSlider(json,node)
+    this.addMinMaxSlider(json,node)
+    this.addTextField(json,node)
+    this.addFoldout(json,node)
 
     this.addBounds(json, node)
     this.addRectangle(json, node)
@@ -138,11 +144,59 @@ export class UXMLGenerator {
     })
   }
 
+  addLabel(json: Object, node: SceneNode) {
+    const { style } = getNodeNameAndStyle(node)
+    if (!style.firstAsBool(consts.STYLE_LABEL)) return
+    Object.assign(json, {
+      name: 'ui:Label',
+    })
+  }
+
   addButton(json: Object, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_BUTTON)) return
     Object.assign(json, {
       name: 'ui:Button',
+    })
+  }
+
+  addToggle(json: Object, node: SceneNode) {
+    const { style } = getNodeNameAndStyle(node)
+    if (!style.firstAsBool(consts.STYLE_TOGGLE)) return
+    Object.assign(json, {
+      name: 'ui:Toggle',
+    })
+  }
+
+  addSlider(json: Object, node: SceneNode) {
+    const { style } = getNodeNameAndStyle(node)
+    if (!style.firstAsBool(consts.STYLE_SLIDER)) return
+    Object.assign(json, {
+      name: 'ui:Slider',
+    })
+  }
+
+  addMinMaxSlider(json: Object, node: SceneNode) {
+    const { style } = getNodeNameAndStyle(node)
+    if (!style.firstAsBool(consts.STYLE_MIN_MAX_SLIDER)) return
+    Object.assign(json, {
+      name: 'ui:MinMaxSlider',
+    })
+  }
+
+  addTextField(json: Object, node: SceneNode) {
+    const { style } = getNodeNameAndStyle(node)
+    if (!style.firstAsBool(consts.STYLE_TEXT_FIELD)) return
+    Object.assign(json, {
+      name: 'ui:TextField',
+    })
+  }
+
+  addFoldout(json: Object, node: SceneNode) {
+    const { style } = getNodeNameAndStyle(node)
+    if (!style.firstAsBool(consts.STYLE_FOLDOUT)) return
+    Object.assign(json, {
+      name: 'ui:Foldout',
     })
   }
 
