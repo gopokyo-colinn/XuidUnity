@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@adobexd/typeings": "https://github.com/AdobeXD/typings",
+    "css-selector-parser": "^1.4.1",
+    "xml-js": "^1.6.11"
+  }
+}
