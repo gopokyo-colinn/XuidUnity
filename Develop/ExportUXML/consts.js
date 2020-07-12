@@ -5,6 +5,7 @@ exports.STR_VERTICAL = 'vertical';
 exports.STR_HORIZONTAL = 'horizontal';
 exports.STR_PREFERRED = 'preferred';
 exports.STR_GRID = 'grid';
+// 本来はSDKから取得するもの
 exports.FIXED_TOP = 'fixed-top';
 exports.FIXED_LEFT = 'fixed-left';
 exports.FIXED_RIGHT = 'fixed-right';
@@ -29,3 +30,4 @@ exports.STYLE_SLIDER = 'slider';
 exports.STYLE_MIN_MAX_SLIDER = 'min-max-slider';
 exports.STYLE_TEXT_FIELD = 'text-field';
 exports.STYLE_FOLDOUT = 'foldout';
+exports.STYLE_UNITY_NAME = 'unity-name';

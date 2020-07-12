@@ -7,7 +7,7 @@ import {
   getRectTransform,
   makeGlobalBoundsRectTransform,
 } from './geometry'
-import { getNodeNameAndStyle, isRootNode } from './node'
+import { getNodeNameAndStyle, getUnityName, isRootNode } from './node'
 import { GlobalVars } from './globals'
 
 const fs = storage.localFileSystem
@@ -74,15 +74,17 @@ export class UXMLGenerator {
     Object.assign(json, {
       type: 'element',
       name: 'ui:VisualElement',
+      attributes: {},
     })
     this.addRoot(json, node)
+    this.addName(json, node)
     this.addButton(json, node)
-    this.addToggle(json,node)
-    this.addLabel(json,node)
-    this.addSlider(json,node)
-    this.addMinMaxSlider(json,node)
-    this.addTextField(json,node)
-    this.addFoldout(json,node)
+    this.addToggle(json, node)
+    this.addLabel(json, node)
+    this.addSlider(json, node)
+    this.addMinMaxSlider(json, node)
+    this.addTextField(json, node)
+    this.addFoldout(json, node)
 
     this.addBounds(json, node)
     this.addRectangle(json, node)
@@ -132,7 +134,7 @@ export class UXMLGenerator {
       return
     }
     Object.assign(json, {
-      name:"ui:UXML",
+      name: 'ui:UXML',
       attributes: {
         'xmlns:ui': 'UnityEngine.UIElements',
         'xmlns:uie': 'UnityEditor.UIElements',
@@ -141,6 +143,13 @@ export class UXMLGenerator {
         noNamespaceSchemaLocation: '../../UIElementsSchema/UIElements.xsd',
         'editor-extension-mode': 'False',
       },
+    })
+  }
+
+  addName(json: Object, node: SceneNode) {
+    const name = getUnityName(node)
+    Object.assign(json['attributes'], {
+      name,
     })
   }
 
@@ -208,54 +217,76 @@ export class UXMLGenerator {
       assignAttributeStyle(json, {
         position: `absolute`,
       })
-      if (rect.fix.width) {
+
+      // サイズが固定されていて、左右どちらかが固定されているときにサイズ情報出力する
+      // 左右どちらも固定されていないときは、margin マイナスハーフサイズ値でサイズ調整する
+      let outputWidth: boolean = false
+      if (rect.fix.width && (rect.fix.left || rect.fix.right)) {
         assignAttributeStyle(json, {
           width: `${bounds.width}px`,
         })
+        outputWidth = true
       }
-      if (rect.fix.height) {
+      let outputHeight: boolean = false
+      if (rect.fix.height && (rect.fix.top || rect.fix.bottom)) {
         assignAttributeStyle(json, {
           height: `${bounds.height}px`,
         })
+        outputHeight = true
       }
-      const left = rect.fix.left
-      if (left === true) {
+
+      if (rect.fix.left === true) {
         assignAttributeStyle(json, {
           left: `${rect.offset_min.x}px`,
         })
-      } else if (typeof left == 'number') {
+      } else {
         assignAttributeStyle(json, {
-          left: `${left * 100}%`,
+          left: `${rect.anchor_min.x * 100}%`,
+        })
+        assignAttributeStyle(json, {
+          'margin-left': `${rect.offset_min.x}px`,
         })
       }
-      const right = rect.fix.right
-      if (right === true) {
+      if (rect.fix.right === true) {
         assignAttributeStyle(json, {
           right: `${-rect.offset_max.x}px`,
         })
-      } else if (typeof right == 'number') {
-        assignAttributeStyle(json, {
-          right: `${right * 100}%`,
-        })
+      } else {
+        if (!outputWidth) {
+          // まだWidthが出力されていない
+          // Rightが固定されていない&&高さが固定されていないときのみ
+          assignAttributeStyle(json, {
+            right: `${(1 - rect.anchor_max.x) * 100}%`,
+          })
+          assignAttributeStyle(json, {
+            'margin-right': `${-rect.offset_max.x}px`,
+          })
+        }
       }
-      const top = rect.fix.top
-      if (top === true) {
+      if (rect.fix.top === true) {
         assignAttributeStyle(json, {
           top: `${-rect.offset_max.y}px`,
         })
-      } else if (typeof top == 'number') {
+      } else {
         assignAttributeStyle(json, {
-          top: `${top * 100}%`,
+          top: `${(1 - rect.anchor_max.y) * 100}%`,
+        })
+        assignAttributeStyle(json, {
+          'margin-top': `${-rect.offset_max.y}px`,
         })
       }
-      const bottom = rect.fix.bottom
-      if (bottom === true) {
+      if (rect.fix.bottom === true) {
         assignAttributeStyle(json, {
           bottom: `${rect.offset_min.y}px`,
         })
-      } else if (typeof bottom == 'number') {
+      } else if (!outputHeight) {
+        // まだHeightが出力されていない
+        // Bottomが固定されていない&&高さが固定されていないときのみ
         assignAttributeStyle(json, {
-          bottom: `${bottom * 100}%`,
+          bottom: `${rect.anchor_min.y * 100}%`,
+        })
+        assignAttributeStyle(json, {
+          'margin-bottom': `${rect.offset_min.y}px`,
         })
       }
     }
