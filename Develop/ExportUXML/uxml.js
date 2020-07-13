@@ -8,6 +8,12 @@ const geometry_1 = require("./geometry");
 const node_1 = require("./node");
 const globals_1 = require("./globals");
 const fs = uxp_1.storage.localFileSystem;
+function assignAttribute(json, attribute) {
+    if (!json.hasOwnProperty('attributes')) {
+        Object.assign(json, { attributes: { style: {} } });
+    }
+    Object.assign(json.attributes, attribute);
+}
 function assignAttributeStyle(json, style) {
     if (!json.hasOwnProperty('attributes')) {
         Object.assign(json, { attributes: { style: {} } });
@@ -44,6 +50,12 @@ function convertJsonAttributeStyleToString(key, json) {
         // jsonObj is a number or string
     }
     return null;
+}
+function getRgba(color) {
+    return `rgba(${color.r},${color.g},${color.b},${color.a})`;
+}
+function getRgb(color) {
+    return `rgb(${color.r},${color.g},${color.b})`;
 }
 class UXMLGenerator {
     constructor() {
@@ -128,7 +140,7 @@ class UXMLGenerator {
     }
     addName(json, node) {
         const name = node_1.getUnityName(node);
-        Object.assign(json['attributes'], {
+        Object.assign(json.attributes, {
             name,
         });
     }
@@ -139,6 +151,33 @@ class UXMLGenerator {
         Object.assign(json, {
             name: 'ui:Label',
         });
+        let textNode = node;
+        if (textNode.text) {
+            assignAttribute(json, {
+                text: textNode.text.replace('\n', '&#10;'),
+            });
+            assignAttributeStyle(json, {
+                'white-space': 'nowrap',
+                'font-size': textNode.fontSize + 'px',
+                color: getRgba(textNode.fill),
+            });
+            let horizontalAlign = '';
+            switch (textNode.textAlign) {
+                case scenegraph_1.Text.ALIGN_CENTER:
+                    horizontalAlign = 'center';
+                    break;
+                case scenegraph_1.Text.ALIGN_LEFT:
+                    horizontalAlign = 'left';
+                    break;
+                case scenegraph_1.Text.ALIGN_RIGHT:
+                    horizontalAlign = 'right';
+                    break;
+            }
+            let verticalAlign = 'middle';
+            assignAttributeStyle(json, {
+                '-unity-text-align': verticalAlign + '-' + horizontalAlign,
+            });
+        }
     }
     addButton(json, node) {
         const { style } = node_1.getNodeNameAndStyle(node);
@@ -280,7 +319,7 @@ class UXMLGenerator {
                     const color = rect.fill;
                     // console.log('- fill color')
                     assignAttributeStyle(json, {
-                        'background-color': `rgba(${color.r},${color.g},${color.b},${color.a})`,
+                        'background-color': getRgba(color),
                     });
                 }
             }
@@ -295,7 +334,7 @@ class UXMLGenerator {
                     'border-bottom-width': widthPixel,
                 });
                 const borderColor = rect.stroke;
-                const color = `rgb(${borderColor.r},${borderColor.g},${borderColor.b})`;
+                const color = getRgb(borderColor);
                 assignAttributeStyle(json, {
                     'border-left-color': color,
                     'border-right-color': color,
