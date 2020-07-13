@@ -1,4 +1,4 @@
-import { Color, Rectangle, SceneNode } from 'scenegraph'
+import { Color, Rectangle, SceneNode, Text } from 'scenegraph'
 import { storage } from 'uxp'
 import * as consts from './consts'
 import { loadCssRules } from './css'
@@ -7,12 +7,19 @@ import {
   getRectTransform,
   makeGlobalBoundsRectTransform,
 } from './geometry'
-import { getNodeNameAndStyle, isRootNode } from './node'
+import { getNodeNameAndStyle, getUnityName, isRootNode } from './node'
 import { GlobalVars } from './globals'
 
 const fs = storage.localFileSystem
 
-function assignAttributeStyle(json, style: {}) {
+function assignAttribute(json: ElementJson, attribute: {}) {
+  if (!json.hasOwnProperty('attributes')) {
+    Object.assign(json, { attributes: { style: {} } })
+  }
+  Object.assign(json.attributes, attribute)
+}
+
+function assignAttributeStyle(json: ElementJson, style: {}) {
   if (!json.hasOwnProperty('attributes')) {
     Object.assign(json, { attributes: { style: {} } })
   } else {
@@ -49,6 +56,20 @@ function convertJsonAttributeStyleToString(key: string, json: {}): string {
   return null
 }
 
+function getRgba(color: Color) {
+  return `rgba(${color.r},${color.g},${color.b},${color.a})`
+}
+
+function getRgb(color: Color) {
+  return `rgb(${color.r},${color.g},${color.b})`
+}
+
+interface ElementJson {
+  type: string
+  name: string
+  attributes: Object & { style: Object }
+}
+
 export class UXMLGenerator {
   public json: Object
   public renditions = []
@@ -74,15 +95,17 @@ export class UXMLGenerator {
     Object.assign(json, {
       type: 'element',
       name: 'ui:VisualElement',
+      attributes: {},
     })
     this.addRoot(json, node)
+    this.addName(json, node)
     this.addButton(json, node)
-    this.addToggle(json,node)
-    this.addLabel(json,node)
-    this.addSlider(json,node)
-    this.addMinMaxSlider(json,node)
-    this.addTextField(json,node)
-    this.addFoldout(json,node)
+    this.addToggle(json, node)
+    this.addLabel(json, node)
+    this.addSlider(json, node)
+    this.addMinMaxSlider(json, node)
+    this.addTextField(json, node)
+    this.addFoldout(json, node)
 
     this.addBounds(json, node)
     this.addRectangle(json, node)
@@ -126,13 +149,13 @@ export class UXMLGenerator {
     })
   }
 
-  addRoot(json: Object, node: SceneNode) {
+  addRoot(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool('root')) {
       return
     }
     Object.assign(json, {
-      name:"ui:UXML",
+      name: 'ui:UXML',
       attributes: {
         'xmlns:ui': 'UnityEngine.UIElements',
         'xmlns:uie': 'UnityEditor.UIElements',
@@ -144,15 +167,49 @@ export class UXMLGenerator {
     })
   }
 
-  addLabel(json: Object, node: SceneNode) {
+  addName(json: ElementJson, node: SceneNode) {
+    const name = getUnityName(node)
+    Object.assign(json.attributes, {
+      name,
+    })
+  }
+
+  addLabel(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_LABEL)) return
     Object.assign(json, {
       name: 'ui:Label',
     })
+    let textNode: Text = node as Text
+    if (textNode.text) {
+      assignAttribute(json, {
+        text: textNode.text.replace('\n', '&#10;'),
+      })
+      assignAttributeStyle(json, {
+        'white-space': 'nowrap',
+        'font-size': textNode.fontSize + 'px',
+        color: getRgba(textNode.fill),
+      })
+      let horizontalAlign: string = ''
+      switch (textNode.textAlign) {
+        case Text.ALIGN_CENTER:
+          horizontalAlign = 'center'
+          break
+        case Text.ALIGN_LEFT:
+          horizontalAlign = 'left'
+          break
+        case Text.ALIGN_RIGHT:
+          horizontalAlign = 'right'
+          break
+      }
+      let verticalAlign = 'middle'
+      assignAttributeStyle(json, {
+        '-unity-text-align': verticalAlign + '-' + horizontalAlign,
+      })
+    }
   }
 
-  addButton(json: Object, node: SceneNode) {
+  addButton(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_BUTTON)) return
     Object.assign(json, {
@@ -160,7 +217,7 @@ export class UXMLGenerator {
     })
   }
 
-  addToggle(json: Object, node: SceneNode) {
+  addToggle(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_TOGGLE)) return
     Object.assign(json, {
@@ -168,7 +225,7 @@ export class UXMLGenerator {
     })
   }
 
-  addSlider(json: Object, node: SceneNode) {
+  addSlider(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_SLIDER)) return
     Object.assign(json, {
@@ -176,7 +233,7 @@ export class UXMLGenerator {
     })
   }
 
-  addMinMaxSlider(json: Object, node: SceneNode) {
+  addMinMaxSlider(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_MIN_MAX_SLIDER)) return
     Object.assign(json, {
@@ -184,7 +241,7 @@ export class UXMLGenerator {
     })
   }
 
-  addTextField(json: Object, node: SceneNode) {
+  addTextField(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_TEXT_FIELD)) return
     Object.assign(json, {
@@ -192,7 +249,7 @@ export class UXMLGenerator {
     })
   }
 
-  addFoldout(json: Object, node: SceneNode) {
+  addFoldout(json: ElementJson, node: SceneNode) {
     const { style } = getNodeNameAndStyle(node)
     if (!style.firstAsBool(consts.STYLE_FOLDOUT)) return
     Object.assign(json, {
@@ -200,7 +257,7 @@ export class UXMLGenerator {
     })
   }
 
-  addBounds(json, node: SceneNode) {
+  addBounds(json: ElementJson, node: SceneNode) {
     const rect = getRectTransform(node)
     const bounds = getGlobalBounds(node)
     const parentBounds = getGlobalBounds(node.parent)
@@ -208,60 +265,82 @@ export class UXMLGenerator {
       assignAttributeStyle(json, {
         position: `absolute`,
       })
-      if (rect.fix.width) {
+
+      // サイズが固定されていて、左右どちらかが固定されているときにサイズ情報出力する
+      // 左右どちらも固定されていないときは、margin マイナスハーフサイズ値でサイズ調整する
+      let outputWidth: boolean = false
+      if (rect.fix.width && (rect.fix.left || rect.fix.right)) {
         assignAttributeStyle(json, {
           width: `${bounds.width}px`,
         })
+        outputWidth = true
       }
-      if (rect.fix.height) {
+      let outputHeight: boolean = false
+      if (rect.fix.height && (rect.fix.top || rect.fix.bottom)) {
         assignAttributeStyle(json, {
           height: `${bounds.height}px`,
         })
+        outputHeight = true
       }
-      const left = rect.fix.left
-      if (left === true) {
+
+      if (rect.fix.left === true) {
         assignAttributeStyle(json, {
           left: `${rect.offset_min.x}px`,
         })
-      } else if (typeof left == 'number') {
+      } else {
         assignAttributeStyle(json, {
-          left: `${left * 100}%`,
+          left: `${rect.anchor_min.x * 100}%`,
+        })
+        assignAttributeStyle(json, {
+          'margin-left': `${rect.offset_min.x}px`,
         })
       }
-      const right = rect.fix.right
-      if (right === true) {
+      if (rect.fix.right === true) {
         assignAttributeStyle(json, {
           right: `${-rect.offset_max.x}px`,
         })
-      } else if (typeof right == 'number') {
-        assignAttributeStyle(json, {
-          right: `${right * 100}%`,
-        })
+      } else {
+        if (!outputWidth) {
+          // まだWidthが出力されていない
+          // Rightが固定されていない&&高さが固定されていないときのみ
+          assignAttributeStyle(json, {
+            right: `${(1 - rect.anchor_max.x) * 100}%`,
+          })
+          assignAttributeStyle(json, {
+            'margin-right': `${-rect.offset_max.x}px`,
+          })
+        }
       }
-      const top = rect.fix.top
-      if (top === true) {
+      if (rect.fix.top === true) {
         assignAttributeStyle(json, {
           top: `${-rect.offset_max.y}px`,
         })
-      } else if (typeof top == 'number') {
+      } else {
         assignAttributeStyle(json, {
-          top: `${top * 100}%`,
+          top: `${(1 - rect.anchor_max.y) * 100}%`,
+        })
+        assignAttributeStyle(json, {
+          'margin-top': `${-rect.offset_max.y}px`,
         })
       }
-      const bottom = rect.fix.bottom
-      if (bottom === true) {
+      if (rect.fix.bottom === true) {
         assignAttributeStyle(json, {
           bottom: `${rect.offset_min.y}px`,
         })
-      } else if (typeof bottom == 'number') {
+      } else if (!outputHeight) {
+        // まだHeightが出力されていない
+        // Bottomが固定されていない&&高さが固定されていないときのみ
         assignAttributeStyle(json, {
-          bottom: `${bottom * 100}%`,
+          bottom: `${rect.anchor_min.y * 100}%`,
+        })
+        assignAttributeStyle(json, {
+          'margin-bottom': `${rect.offset_min.y}px`,
         })
       }
     }
   }
 
-  addRectangle(json, node: SceneNode) {
+  addRectangle(json: ElementJson, node: SceneNode) {
     if (node instanceof Rectangle) {
       const rect: Rectangle = node as Rectangle
       if (rect.fillEnabled) {
@@ -269,7 +348,7 @@ export class UXMLGenerator {
           const color = rect.fill as Color
           // console.log('- fill color')
           assignAttributeStyle(json, {
-            'background-color': `rgba(${color.r},${color.g},${color.b},${color.a})`,
+            'background-color': getRgba(color),
           })
         }
       }
@@ -284,7 +363,7 @@ export class UXMLGenerator {
           'border-bottom-width': widthPixel,
         })
         const borderColor: Color = rect.stroke
-        const color = `rgb(${borderColor.r},${borderColor.g},${borderColor.b})`
+        const color = getRgb(borderColor)
         assignAttributeStyle(json, {
           'border-left-color': color,
           'border-right-color': color,

@@ -259,3 +259,30 @@ function getNodeNameAndStyle(node) {
     return value;
 }
 exports.getNodeNameAndStyle = getNodeNameAndStyle;
+function getNodeName(node) {
+    return getNodeNameAndStyle(node).node_name;
+}
+function getUnityName(node) {
+    const { node_name: nodeName, style } = getNodeNameAndStyle(node);
+    //スタイルで名前の指定がある場合
+    let unityName = style.first(consts.STYLE_UNITY_NAME);
+    if (unityName) {
+        //childIndexを子供番号で置き換え
+        const childIndex = getChildIndex(node);
+        unityName = unityName.replace(/\${childIndex}/, childIndex);
+        return unityName;
+    }
+    const parsed = css_1.cssParseNodeName(getNodeName(node));
+    if (parsed) {
+        if (parsed.id)
+            return parsed.id;
+        if (parsed.name)
+            return parsed.name;
+        if (parsed.tagName)
+            return parsed.tagName;
+        if (parsed.classNames && parsed.classNames.length > 0)
+            return '.' + parsed.classNames.join('.');
+    }
+    return nodeName;
+}
+exports.getUnityName = getUnityName;

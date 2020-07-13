@@ -4,6 +4,7 @@ export const STR_HORIZONTAL = 'horizontal'
 export const STR_PREFERRED = 'preferred'
 export const STR_GRID = 'grid'
 
+// 本来はSDKから取得するもの
 export const FIXED_TOP = 'fixed-top'
 export const FIXED_LEFT = 'fixed-left'
 export const FIXED_RIGHT = 'fixed-right'
@@ -29,3 +30,4 @@ export const STYLE_SLIDER = 'slider'
 export const STYLE_MIN_MAX_SLIDER = 'min-max-slider'
 export const STYLE_TEXT_FIELD = 'text-field'
 export const STYLE_FOLDOUT = 'foldout'
+export const STYLE_UNITY_NAME = 'unity-name'

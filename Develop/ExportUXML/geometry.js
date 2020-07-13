@@ -25,7 +25,7 @@ function getGlobalBounds(node) {
         width: bounds.width * globals_1.GlobalVars.scale,
         height: bounds.height * globals_1.GlobalVars.scale,
         ex: (bounds.x + bounds.width) * globals_1.GlobalVars.scale,
-        ey: (bounds.y + bounds.height) * globals_1.GlobalVars.scale
+        ey: (bounds.y + bounds.height) * globals_1.GlobalVars.scale,
     };
 }
 exports.getGlobalBounds = getGlobalBounds;
@@ -48,7 +48,7 @@ function getGlobalDrawBounds(node) {
         width: bounds.width * globals_1.GlobalVars.scale,
         height: bounds.height * globals_1.GlobalVars.scale,
         ex: (bounds.x + bounds.width) * globals_1.GlobalVars.scale,
-        ey: (bounds.y + bounds.height) * globals_1.GlobalVars.scale
+        ey: (bounds.y + bounds.height) * globals_1.GlobalVars.scale,
     };
     return b;
 }
@@ -69,7 +69,7 @@ function getBeforeGlobalBounds(node) {
     }
     if (bounds)
         return bounds;
-    console.log("**error** リサイズ前のGlobalBoundsの情報がありません" + node.name);
+    console.log('**error** リサイズ前のGlobalBoundsの情報がありません' + node.name);
     return null;
 }
 exports.getBeforeGlobalBounds = getBeforeGlobalBounds;
@@ -148,31 +148,18 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
         // styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height)
         styleFixHeight = verticalConstraints.size === consts.SIZE_FIXED;
     }
-    if (styleFixLeft === false) {
-        // 親のX座標･Widthをもとに､Left値がきまる
-        styleFixLeft =
-            (beforeBounds.x - parentBeforeBounds.x) / parentBeforeBounds.width;
-    }
-    if (styleFixRight === false) {
-        // 親のX座標･Widthをもとに､割合でRight座標がきまる
-        styleFixRight =
-            (parentBeforeBounds.ex - beforeBounds.ex) / parentBeforeBounds.width;
-    }
-    if (styleFixTop === false) {
-        // 親のY座標･heightをもとに､Top座標がきまる
-        styleFixTop =
-            (beforeBounds.y - parentBeforeBounds.y) / parentBeforeBounds.height;
-    }
-    if (styleFixBottom === false) {
-        // 親のY座標･Heightをもとに､Bottom座標がきまる
-        styleFixBottom =
-            (parentBeforeBounds.ey - beforeBounds.ey) / parentBeforeBounds.height;
-    }
     // ここまでに
-    // fixOptionWidth,fixOptionHeight : true || false
-    // fixOptionTop,fixOptionBottom : true || number
-    // fixOptionLeft,fixOptionRight : true || number
+    // fixOptionWidth,fixOptionHeight : boolean
+    // fixOptionTop,fixOptionBottom : boolean
+    // fixOptionLeft,fixOptionRight : boolean
+    // true: 固定されている
+    // false: 固定されていない
+    // number: 辺の位置割合
     // になっていないといけない
+    const leftRate = (beforeBounds.x - parentBeforeBounds.x) / parentBeforeBounds.width;
+    const rightRate = (parentBeforeBounds.ex - beforeBounds.ex) / parentBeforeBounds.width;
+    const topRate = (beforeBounds.y - parentBeforeBounds.y) / parentBeforeBounds.height;
+    const bottomRate = (parentBeforeBounds.ey - beforeBounds.ey) / parentBeforeBounds.height;
     // anchorの値を決める
     // null: 定義されていない widthかheightが固定されている
     // number: 親に対しての割合 anchorに割合をいれ､offsetを0
@@ -180,15 +167,14 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
     // console.log("left:" + fixOptionLeft, "right:" + fixOptionRight)
     // console.log("top:" + fixOptionTop, "bottom:" + fixOptionBottom)
     // console.log("width:" + fixOptionWidth, "height:" + fixOptionHeight)
-    let pivot_x = 0.5;
-    let pivot_y = 0.5;
+    let pivot = { x: 0.5, y: 0.5 };
     let offsetMin = {
         x: null,
-        y: null
+        y: null,
     }; // left(x), bottom(h)
     let offsetMax = {
         x: null,
-        y: null
+        y: null,
     }; // right(w), top(y)
     let anchorMin = { x: null, y: null }; // left, bottom
     let anchorMax = { x: null, y: null }; // right, top
@@ -216,13 +202,13 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
                 top: styleFixTop,
                 bottom: styleFixBottom,
                 width: styleFixWidth,
-                height: styleFixHeight
+                height: styleFixHeight,
             },
             pivot: { x: 0.5, y: 0.5 },
             anchor_min: anchorMin,
             anchor_max: anchorMax,
             offset_min: offsetMin,
-            offset_max: offsetMax
+            offset_max: offsetMax,
         };
     }
     if (styleFixWidth) {
@@ -233,7 +219,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
         // offsetMin.yとoffsetMax.yの距離がHeight
         if (styleFixLeft !== true && styleFixRight !== true) {
             //左右共ロックされていない
-            anchorMin.x = anchorMax.x = (styleFixLeft + 1 - styleFixRight) / 2;
+            anchorMin.x = anchorMax.x = (leftRate + 1 - rightRate) / 2;
             offsetMin.x = -beforeBounds.width / 2;
             offsetMax.x = beforeBounds.width / 2;
         }
@@ -272,7 +258,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
             offsetMin.x = beforeBounds.x - parentBeforeBounds.x;
         }
         else {
-            anchorMin.x = styleFixLeft;
+            anchorMin.x = leftRate;
             offsetMin.x = 0;
         }
         if (styleFixRight === true) {
@@ -281,7 +267,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
             offsetMax.x = beforeBounds.ex - parentBeforeBounds.ex;
         }
         else {
-            anchorMax.x = 1 - styleFixRight;
+            anchorMax.x = 1 - rightRate;
             offsetMax.x = 0;
         }
     }
@@ -293,7 +279,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
         // offsetMin.yとoffsetMax.yの距離がHeight
         if (styleFixTop !== true && styleFixBottom !== true) {
             //両方共ロックされていない
-            anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2;
+            anchorMin.y = anchorMax.y = 1 - (topRate + 1 - bottomRate) / 2;
             offsetMin.y = -beforeBounds.height / 2;
             offsetMax.y = beforeBounds.height / 2;
         }
@@ -315,7 +301,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
             // 不正な設定
             // サイズが固定されて、上下固定されている
             // 上下共ロックされていない　と同じ設定をする
-            anchorMin.y = anchorMax.y = 1 - (styleFixTop + 1 - styleFixBottom) / 2;
+            anchorMin.y = anchorMax.y = 1 - (topRate + 1 - bottomRate) / 2;
             offsetMin.y = -beforeBounds.height / 2;
             offsetMax.y = beforeBounds.height / 2;
             // 不確定な設定
@@ -338,7 +324,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
             offsetMax.y = -(beforeBounds.y - parentBeforeBounds.y);
         }
         else {
-            anchorMax.y = 1 - styleFixTop;
+            anchorMax.y = 1 - topRate;
             offsetMax.y = 0;
         }
         if (styleFixBottom === true) {
@@ -347,11 +333,11 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
             offsetMin.y = -(beforeBounds.ey - parentBeforeBounds.ey);
         }
         else {
-            anchorMin.y = styleFixBottom;
+            anchorMin.y = bottomRate;
             offsetMin.y = 0;
         }
     }
-    if (style.hasValue(consts.STYLE_FIX, "c", "center")) {
+    if (style.hasValue(consts.STYLE_FIX, 'c', 'center')) {
         const beforeCenter = beforeBounds.x + beforeBounds.width / 2;
         const parentBeforeCenter = parentBeforeBounds.x + parentBeforeBounds.width / 2;
         anchorMin.x = anchorMax.x =
@@ -360,7 +346,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
         offsetMin.x = -beforeBounds.width / 2;
         offsetMax.x = +beforeBounds.width / 2;
     }
-    if (style.hasValue(consts.STYLE_FIX, "m", "middle")) {
+    if (style.hasValue(consts.STYLE_FIX, 'm', 'middle')) {
         const beforeMiddle = beforeBounds.y + beforeBounds.height / 2;
         const parentBeforeMiddle = parentBeforeBounds.y + parentBeforeBounds.height / 2;
         anchorMin.y = anchorMax.y =
@@ -370,16 +356,16 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
     }
     // pivotの設定 固定されている方向にあわせる
     if (styleFixLeft === true && styleFixRight !== true) {
-        pivot_x = 0;
+        pivot.x = 0;
     }
     else if (styleFixLeft !== true && styleFixRight === true) {
-        pivot_x = 1;
+        pivot.x = 1;
     }
     if (styleFixTop === true && styleFixBottom !== true) {
-        pivot_y = 1;
+        pivot.y = 1;
     }
     else if (styleFixTop !== true && styleFixBottom === true) {
-        pivot_y = 0;
+        pivot.y = 0;
     }
     return {
         fix: {
@@ -388,13 +374,13 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
             top: styleFixTop,
             bottom: styleFixBottom,
             width: styleFixWidth,
-            height: styleFixHeight
+            height: styleFixHeight,
         },
-        pivot: { x: pivot_x, y: pivot_y },
+        pivot,
         anchor_min: anchorMin,
         anchor_max: anchorMax,
         offset_min: offsetMin,
-        offset_max: offsetMax
+        offset_max: offsetMax,
     };
 }
 /**
@@ -419,7 +405,7 @@ function calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verti
  * @param calcDrawBounds
  * @return {null}
  */
-function calcRectTransform(node, calcDrawBounds = true) {
+function calcDrawRectTransform(node, calcDrawBounds = true) {
     if (!node || !node.parent)
         return null;
     const bounds = globals_1.GlobalVars.responsiveBounds[node.guid];
@@ -456,6 +442,25 @@ function calcRectTransform(node, calcDrawBounds = true) {
     const horizontalConstraints = node.horizontalConstraints;
     const verticalConstraints = node.verticalConstraints;
     return calcRect(parentBeforeBounds, beforeBounds, horizontalConstraints, verticalConstraints, style);
+}
+function calcRectTransform(node) {
+    if (!node || !node.parent)
+        return null;
+    const bounds = globals_1.GlobalVars.responsiveBounds[node.guid];
+    if (!bounds || !bounds.before || !bounds.after)
+        return null;
+    const parentBounds = globals_1.GlobalVars.responsiveBounds[node.parent.guid];
+    if (!parentBounds || !parentBounds.before || !parentBounds.after)
+        return null;
+    const beforeGlobalBounds = bounds.before.global_bounds;
+    const parentBeforeGlobalBounds = parentBounds.before.content_global_bounds ||
+        parentBounds.before.global_bounds;
+    // fix を取得するため
+    // TODO: anchor スタイルのパラメータはとるべきでは
+    const style = node_1.getNodeNameAndStyle(node).style;
+    const horizontalConstraints = node.horizontalConstraints;
+    const verticalConstraints = node.verticalConstraints;
+    return calcRect(parentBeforeGlobalBounds, beforeGlobalBounds, horizontalConstraints, verticalConstraints, style);
 }
 class MinMaxSize {
     constructor() {
@@ -518,7 +523,7 @@ class CalcBounds {
             width: this.ex - this.sx,
             height: this.ey - this.sy,
             ex: this.ex,
-            ey: this.ey
+            ey: this.ey,
         };
     }
 }
@@ -536,7 +541,7 @@ function calcGlobalBounds(nodes) {
             global_bounds: null,
             global_draw_bounds: null,
             node_max_width: null,
-            node_max_height: null
+            node_max_height: null,
         };
     let childrenCalcBounds = new CalcBounds();
     let childrenCalcDrawBounds = new CalcBounds();
@@ -562,7 +567,7 @@ function calcGlobalBounds(nodes) {
         global_bounds: childrenCalcBounds.bounds,
         global_draw_bounds: childrenCalcDrawBounds.bounds,
         node_max_width: childrenMinMaxSize.maxWidth * globals_1.GlobalVars.scale,
-        node_max_height: childrenMinMaxSize.maxHeight * globals_1.GlobalVars.scale
+        node_max_height: childrenMinMaxSize.maxHeight * globals_1.GlobalVars.scale,
     };
 }
 class GlobalBounds {
@@ -576,7 +581,7 @@ class GlobalBounds {
         this.global_bounds = getGlobalBounds(node);
         this.global_draw_bounds = getGlobalDrawBounds(node);
         // console.log('node.constructor.name:' + node.constructor.name)
-        if (node.constructor.name === "Text") {
+        if (node.constructor.name === 'Text') {
             this.text_font_size = node.fontSize;
         }
         if (node_1.hasContentBounds(node)) {
@@ -683,9 +688,9 @@ class BoundsToRectTransform {
     }
     calcRectTransform() {
         // DrawBoundsでのレスポンシブパラメータ(場合によっては不正確)
-        this.responsiveParameter = calcRectTransform(this.node);
+        this.responsiveParameter = calcDrawRectTransform(this.node);
         // GlobalBoundsでのレスポンシブパラメータ(場合によっては不正確)
-        this.responsiveParameterGlobal = calcRectTransform(this.node, false);
+        this.responsiveParameterGlobal = calcDrawRectTransform(this.node, false);
     }
 }
 exports.BoundsToRectTransform = BoundsToRectTransform;
