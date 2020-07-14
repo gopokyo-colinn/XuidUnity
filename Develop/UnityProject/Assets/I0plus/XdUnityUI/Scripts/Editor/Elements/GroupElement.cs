@@ -30,11 +30,14 @@ namespace I0plus.XdUnityUI.Editor
         {
             Elements = new List<Element>();
             var jsonElements = json.Get<List<object>>("elements");
-            foreach (var jsonElement in jsonElements)
+            if (jsonElements != null)
             {
-                var elem = ElementFactory.Generate(jsonElement as Dictionary<string, object>, this);
-                if (elem != null)
-                    Elements.Add(elem);
+                foreach (var jsonElement in jsonElements)
+                {
+                    var elem = ElementFactory.Generate(jsonElement as Dictionary<string, object>, this);
+                    if (elem != null)
+                        Elements.Add(elem);
+                }
             }
 
             Elements.Reverse();
