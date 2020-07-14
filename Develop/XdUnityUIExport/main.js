@@ -35,7 +35,7 @@ let globalScale = 1.0
 let outputFolder = null
 
 // 全てのアートボードを出力対象にするか
-let ooptionCheckAllArtboard = false
+let optionCheckAllArtboard = false
 
 // エキスポートフラグを見るかどうか
 let optionCheckMarkedForExport = false
@@ -421,16 +421,58 @@ function parseCssDeclarationBlock(declarationBlock) {
 }
 
 /**
+ * folder/name{css-declarations} でパースする
+ * 例
+ * MainMenu/vertex#scroller {fix:t v a}
+ * folder:MainMenu id:scroller name:vertex#scroller
+ * @param {string} nodeName
+ * @return {{css_declarations: string|null, name: string|null, folder: string|null}}
+ */
+function parseNodeName(nodeName) {
+  // https://regex101.com/r/MdGDaC/1
+  const pattern = /((?<comment_out>\/\/)?(?<folder>[^{]*)\/)?(?<name>[^{]*)(?<css_declarations>{.*})?/g
+  const r = pattern.exec(nodeName)
+  if(r.groups.comment_out) {
+    return {}
+  }
+  let name = r.groups.name ? r.groups.name.trim() : null
+  let folder = r.groups.folder? r.groups.folder.trim(): null
+  let css_declarations = r.groups.css_declarations
+  return {
+    folder,
+    name,
+    css_declarations,
+  }
+}
+
+function getSubFolderFromNodeName(nodeName) {
+  const { folder } = parseNodeName(nodeName)
+  return folder
+}
+
+
+/**
+ * @param {SceneNodeClass} node
+ * @return {boolean}
+ */
+function isLayoutRootNode(node)
+{
+  if(!node) return false
+  return !!getSubFolderFromNodeName(node.name)
+}
+
+/**
  * NodeNameをCSSパースする　これによりローカルCSSも取得する
  * WARN: ※ここの戻り値を変更するとキャッシュも変更されてしまう
  * NodeNameとは node.nameのこと
  * // によるコメントアウト処理もここでする
+ * folder/name{css-declarations} でパースする
  * 例
- * vertex #scroller {fix:t v a}
- * id:scroller name:vertex #scroller
+ * MainMenu/vertex#scroller {fix:t v a}
+ * folder:MainMenu id:scroller name:vertex#scroller
  * @param {string} nodeName
  * @param nodeName
- * @return {{classNames:string[], id:string, tagName:string, declarations:CssDeclarations}}
+ * @return {{folder:string, classNames:string[], id:string, tagName:string, declarations:CssDeclarations}}
  */
 function cssParseNodeName(nodeName) {
   nodeName = nodeName.trim()
@@ -446,32 +488,33 @@ function cssParseNodeName(nodeName) {
     declarations.setFirst(STYLE_COMMENT_OUT, true)
     result = { declarations }
   } else {
-    // nameの作成　{} を除いた部分
-    let name = nodeName
-    const pattern = /(.*)({.*})/g
-    const r = pattern.exec(nodeName)
-    if (r && r.length > 1) {
-      name = r[1].trim()
-    }
+    // folder/name{css-declarations} でパースする
+    let { name, folder } = parseNodeName(nodeName)
+    if (!name) name = nodeName
+    // console.log(`parseNodeName: folder:${folder} name:${name} css_decl:${r.groups.css_declarations}`)
+
     try {
-      // ascii文字以外 _ に変換する
-      const asciiNodeName = nodeName.replace(/[^\x01-\x7E]/g, function(s) {
+      // name部分とcss-declarationsを結合、ascii文字以外(漢字など) _ に変換する
+      const asciiNodeName = name.replace(/[^\x01-\x7E]/g, function(s) {
         return '_'
       })
+      // console.log(`parseCss(${asciiNodeName})`)
+      // 名前だけのパース
       let rules = parseCss(asciiNodeName, false) // 名前はエラーチェックしない
       if (!rules || rules.length === 0 || !rules[0].selector) {
         // パースできなかった場合はそのまま返す
-        result = { name, tagName: nodeName }
+        result = { folder, name, tagName: nodeName }
       } else {
         result = rules[0].selector.json['rule'] // 一番外側の｛｝をはずす
         Object.assign(result, {
+          folder,
           name,
           declarations: rules[0].declarations,
         })
       }
     } catch (e) {
-      console.log('parseNodeName: exception')
-      result = { name, tagName: nodeName }
+      console.log(`***exception: parseNodeName(${nodeName})`)
+      result = { folder, name, tagName: nodeName }
     }
   }
   cacheParseNodeName[nodeName] = result
@@ -1870,11 +1913,20 @@ function calcRectTransform(node, calcDrawBounds = true) {
 
   const bounds = globalResponsiveBounds[node.guid]
   if (!bounds || !bounds.before || !bounds.after) return null
-  const parentBounds = globalResponsiveBounds[node.parent.guid]
-  if (!parentBounds || !parentBounds.before || !parentBounds.after) return null
 
   const beforeGlobalBounds = bounds.before.global_bounds
   const beforeGlobalDrawBounds = bounds.before.global_draw_bounds
+  const afterGlobalBounds = bounds.after.global_bounds
+  const afterGlobalDrawBounds = bounds.after.global_draw_bounds
+
+  const beforeBounds = calcDrawBounds
+    ? beforeGlobalDrawBounds
+    : beforeGlobalBounds
+  const afterBounds = calcDrawBounds ? afterGlobalDrawBounds : afterGlobalBounds
+
+  const parentBounds = globalResponsiveBounds[node.parent.guid]
+  if (!parentBounds || !parentBounds.before || !parentBounds.after) return null
+
   const parentBeforeGlobalBounds =
     parentBounds.before.content_global_bounds ||
     parentBounds.before.global_bounds
@@ -1882,18 +1934,11 @@ function calcRectTransform(node, calcDrawBounds = true) {
     parentBounds.before.content_global_draw_bounds ||
     parentBounds.before.global_draw_bounds
 
-  const afterGlobalBounds = bounds.after.global_bounds
-  const afterGlobalDrawBounds = bounds.after.global_draw_bounds
   const parentAfterGlobalBounds =
     parentBounds.after.content_global_bounds || parentBounds.after.global_bounds
   const parentAfterGlobalDrawBounds =
     parentBounds.after.content_global_draw_bounds ||
     parentBounds.after.global_draw_bounds
-
-  const beforeBounds = calcDrawBounds
-    ? beforeGlobalDrawBounds
-    : beforeGlobalBounds
-  const afterBounds = calcDrawBounds ? afterGlobalDrawBounds : afterGlobalBounds
 
   //content_global_boundsは、親がマスク持ちグループである場合、グループ全体のBoundsになる
   const parentBeforeBounds = calcDrawBounds
@@ -1925,7 +1970,15 @@ function calcRectTransform(node, calcDrawBounds = true) {
  * @return {BoundsToRectTransform[]}
  */
 async function makeGlobalBoundsRectTransform(root) {
+  const parent = root.parent
+
   // 現在のboundsを取得する
+  if (parent) {
+    // 親がいるのなら、親の分も取得
+    let param = new BoundsToRectTransform(parent)
+    param.updateBeforeBounds()
+    globalResponsiveBounds[parent.guid] = param
+  }
   traverseNode(root, node => {
     let param = new BoundsToRectTransform(node)
     param.updateBeforeBounds()
@@ -1952,6 +2005,13 @@ async function makeGlobalBoundsRectTransform(root) {
   // await fs.getFileForSaving('txt', { types: ['txt'] })
 
   // 変更されたboundsを取得する
+  if (parent) {
+    // 親がいるのなら、親の分も取得
+    let bounds =
+      globalResponsiveBounds[parent.guid] ||
+      (globalResponsiveBounds[parent.guid] = new BoundsToRectTransform(parent))
+    bounds.updateAfterBounds()
+  }
   traverseNode(root, node => {
     let bounds =
       globalResponsiveBounds[node.guid] ||
@@ -1966,6 +2026,9 @@ async function makeGlobalBoundsRectTransform(root) {
   }
 
   // 元に戻ったときのbounds
+  if (parent) {
+    globalResponsiveBounds[parent.guid].updateRestoreBounds()
+  }
   traverseNode(root, node => {
     globalResponsiveBounds[node.guid].updateRestoreBounds()
   })
@@ -3630,6 +3693,9 @@ async function createGroup(json, node, root, funcForEachChild) {
   addScrollRect(json, node, style)
   addRectMask2d(json, style)
 
+  // Artboard特有
+  addFillColor(json, node)
+
   addWrap(json, node, style) // エレメント操作のため、処理は最後にする
 
   //contentが作成されていた場合、入れ替える
@@ -3921,7 +3987,7 @@ async function createButton(json, node, root, funcForEachChild) {
  * パスレイヤー(楕円や長方形等)の処理
  * @param {*} json
  * @param {SceneNode|SceneNodeClass} node
- * @param {SceneNode|SceneNodeClass} root
+ * @param {Artboard} root
  * @param {*} outputFolder
  * @param {*} renditions
  * @param localStyle {Style}
@@ -4025,7 +4091,7 @@ async function createImage(
  * @param funcForEachChild
  * @returns {Promise<void>}
  */
-function addRectTransformRoot(layoutJson, node, funcForEachChild) {
+function addRectTransformRoot(layoutJson, node) {
   let { style } = getNodeNameAndStyle(node)
   Object.assign(layoutJson, {
     rect_transform: {
@@ -4048,6 +4114,18 @@ function addRectTransformRoot(layoutJson, node, funcForEachChild) {
       },
     },
   })
+  if (
+    node.fillEnabled === true &&
+    node.fill != null &&
+    node.fill instanceof Color
+  ) {
+    Object.assign(layoutJson, {
+      fill_color: node.fill.toHex(true),
+    })
+  }
+}
+
+function addFillColor(layoutJson, node) {
   if (
     node.fillEnabled === true &&
     node.fill != null &&
@@ -4206,7 +4284,7 @@ function traverseNode(node, func) {
  * @param outputFolder
  * @param {SceneNode|SceneNodeClass} root
  */
-async function nodeRoot(renditions, outputFolder, root) {
+async function createRoot(renditions, outputFolder, root) {
   let layoutJson = makeLayoutJson(root)
 
   let traverse = async (nodeStack, json, depth, enableWriteToLayoutJson) => {
@@ -4216,6 +4294,11 @@ async function nodeRoot(renditions, outputFolder, root) {
 
     // コメントアウトチェック
     if (style.firstAsBool(STYLE_COMMENT_OUT)) {
+      return
+    }
+
+    if( root != node && isLayoutRootNode(node) ) {
+      // Root配下に出力ノードをみつけた
       return
     }
 
@@ -4262,11 +4345,6 @@ async function nodeRoot(renditions, outputFolder, root) {
           }
         }
       }
-    }
-
-    // root nodeなら、Root用RectTransformをセットする
-    if (node === root) {
-      await addRectTransformRoot(json, node, funcForEachChild)
     }
 
     // nodeの型で処理の分岐
@@ -4361,6 +4439,22 @@ function nodeToFolderName(node) {
   return replaceToFileName(name, true)
 }
 
+async function createSubFolder(outputFolder, subFolderName) {
+  let subFolder
+  let entries = await outputFolder.getEntries()
+  subFolder = entries.find(entry => {
+    return entry.name === subFolderName
+  })
+  if (!subFolder) {
+    console.log(`- create output folder:${subFolderName}`)
+    subFolder = await outputFolder.createFolder(subFolderName)
+  }
+  if (subFolder.isFile) {
+    throw 'can not create output folder.'
+  }
+  return subFolder
+}
+
 /**
  * XdUnityUI export
  * @param {SceneNode[]} roots
@@ -4378,12 +4472,13 @@ async function exportXdUnityUI(roots, outputFolder) {
     console.log('- reset global variables')
     resetGlobalVariables()
     globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
-    const artboardCssFilename = replaceToFileName(root.name) + '.css'
+
+    const rootName = getUnityName(root)
+    const rootFilename = replaceToFileName(rootName)
+
+    const rootCssFilename = rootFilename + '.css'
     try {
-      const artboardCssRoles = await loadCssRules(
-        outputFolder,
-        artboardCssFilename,
-      )
+      const artboardCssRoles = await loadCssRules(outputFolder, rootCssFilename)
       if (artboardCssRoles) {
         globalCssRules = globalCssRules.concat(artboardCssRoles)
       }
@@ -4396,33 +4491,24 @@ async function exportXdUnityUI(roots, outputFolder) {
 
     await makeGlobalBoundsRectTransform(root)
 
-    // フォルダ名に使えない文字を'_'に変換
-    let subFolderName = nodeToFolderName(root)
-
-    /**
-     * @type {Folder}
-     */
+    /** @type {Folder} */
     let subFolder
     // アートボード毎にフォルダを作成する
     if (!optionChangeContentOnly && !optionImageNoExport && outputFolder) {
-      let entries = await outputFolder.getEntries()
-      subFolder = entries.find(entry => {
-        return entry.name === subFolderName
-      })
-      if (!subFolder) {
-        console.log(`- create output folder:${subFolderName}`)
-        subFolder = await outputFolder.createFolder(subFolderName)
+      let subFolderName = rootFilename
+      // サブフォルダ名を取得
+      const parsedName = cssParseNodeName(root.name)
+      if (parsedName.folder) {
+        subFolderName = replaceToFileName(parsedName.folder)
       }
-      if (subFolder.isFile) {
-        throw 'can not create output folder.'
-      }
+      subFolder = await createSubFolder(outputFolder, subFolderName)
     }
 
-    const layoutJson = await nodeRoot(renditions, subFolder, root)
+    const layoutJson = await createRoot(renditions, subFolder, root)
 
     if (!optionChangeContentOnly) {
       const layoutJsonString = JSON.stringify(layoutJson, null, '  ')
-      const layoutFileName = subFolderName + '.layout.json'
+      const layoutFileName = rootFilename + '.layout.json'
       if (subFolder) {
         const layoutFile = await subFolder.createFile(layoutFileName, {
           overwrite: true,
@@ -4886,16 +4972,26 @@ function getExportRoots(selectionItems) {
   }
 
   for (let selectionItem of selectionItems) {
-    if (optionCheckMarkedForExport) {
-      if (selectionItem.markedForExport) {
-        exportRoots.push(selectionItem)
-        addMessage(selectionItem)
-      }
+    if (optionCheckMarkedForExport && !selectionItem.markedForExport) {
     } else {
       exportRoots.push(selectionItem)
       addMessage(selectionItem)
     }
   }
+
+  const newRoots = []
+  for (let root of exportRoots) {
+    traverseNode(root, node => {
+      if (root === node) return
+      if (optionCheckMarkedForExport && !node.markedForExport) return
+      if (isLayoutRootNode(node)) {
+        // 出力サブフォルダーがみつかった
+        newRoots.push(node)
+        addMessage(node)
+      }
+    })
+  }
+  exportRoots = exportRoots.concat(newRoots)
 
   // 名前でソート
   artboards.sort()
@@ -4905,7 +5001,7 @@ function getExportRoots(selectionItems) {
 
   message +=
     artboards.length > 0 ? '[ARTBOARD] ' + artboards.join('\n[ARTBOARD] ') : ''
-  message += layers.length > 0 ? '[LAYER] ' + layers.join('\n[LAYER] ') : ''
+  message += layers.length > 0 ? '\n[LAYER] ' + layers.join('\n[LAYER] ') : ''
 
   return {
     exportRoots,
@@ -4981,7 +5077,7 @@ class CssSelector {
   }
 
   /**
-   * 擬似クラスの:rooｔであるか
+   * 擬似クラスの:rootであるか
    * @return {boolean}
    */
   isRoot() {
