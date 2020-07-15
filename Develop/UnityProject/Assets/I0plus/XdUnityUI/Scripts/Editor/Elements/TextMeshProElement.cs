@@ -2,6 +2,10 @@
 using TMPro;
 #endif
 
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+
 namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
