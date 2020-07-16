@@ -16,6 +16,7 @@ namespace I0plus.XdUnityUI.Editor
         private readonly string fontRootPath;
 
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
+        public Dictionary<string, GameObject> Prefabs { get; } = new Dictionary<string, GameObject>();
 
         public ToggleGroup GetToggleGroup(string name)
         {

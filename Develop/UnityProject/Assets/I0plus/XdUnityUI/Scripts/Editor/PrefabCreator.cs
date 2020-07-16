@@ -66,6 +66,26 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
 
+            foreach (var prefab in renderer.Prefabs)
+            {
+
+
+                //var saveAssetPath = Path.Combine(Path.Combine(EditorUtil.GetBaumAtlasAssetPath(), subFolderName), go.name + ".prefab");
+
+                // Set the path as within the Assets folder,
+                // and name it as the GameObject's name with the .Prefab format
+                //string localPath = "Assets/" + go.name + ".prefab";
+
+                // Make sure the file name is unique, in case an existing Prefab has the same name.
+                //localPath = UnityEditor.AssetDatabase.GenerateUniqueAssetPath(localPath);
+                //Debug.Log("Creating Prefab asset: " + saveAssetPath);
+                // Create the new Prefab.
+                var subFolderName = EditorUtil.GetSubFolderName(assetPath);
+                var saveAssetPath = Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(), subFolderName), prefab.Key +".prefab");
+
+                UnityEditor.PrefabUtility.SaveAsPrefabAssetAndConnect(prefab.Value, saveAssetPath, UnityEditor.InteractionMode.AutomatedAction);
+            }
+
             return root;
         }
 

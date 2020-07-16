@@ -18,6 +18,11 @@ namespace I0plus.XdUnityUI.Editor
         protected bool? Active;
         protected string name;
         protected Element Parent;
+        public bool IsPrefab
+        {
+            get;
+            private set;
+        }
 
         protected Element(Dictionary<string, object> json, Element parent)
         {
@@ -30,6 +35,8 @@ namespace I0plus.XdUnityUI.Editor
 
             RectTransformJson = json.GetDic("rect_transform");
             LayoutElementJson = json.GetDic("layout_element");
+
+            IsPrefab = json.Get("symbolInstance") != null;
         }
 
         public string Name => name;
