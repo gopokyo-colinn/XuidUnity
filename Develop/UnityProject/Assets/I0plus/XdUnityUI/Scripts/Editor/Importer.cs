@@ -301,6 +301,8 @@ namespace I0plus.XdUnityUI.Editor
 
             await Task.Delay(1000);
 
+            Dictionary<string, GameObject> prefabs = new Dictionary<string, GameObject>();
+
             // Create Prefab
             foreach (var layoutFilePath in importedPaths)
             {
@@ -317,7 +319,7 @@ namespace I0plus.XdUnityUI.Editor
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
-                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath);
+                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath, prefabs);
                     go = creator.Create();
                     var saveAssetPath =
                         Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(),

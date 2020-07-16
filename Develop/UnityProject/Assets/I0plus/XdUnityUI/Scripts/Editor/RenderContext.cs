@@ -14,9 +14,8 @@ namespace I0plus.XdUnityUI.Editor
     {
         private readonly string spriteRootPath;
         private readonly string fontRootPath;
-
+        public Dictionary<string, GameObject> Prefabs { get; private set; } 
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
-        public Dictionary<string, GameObject> Prefabs { get; } = new Dictionary<string, GameObject>();
 
         public ToggleGroup GetToggleGroup(string name)
         {
@@ -41,10 +40,11 @@ namespace I0plus.XdUnityUI.Editor
             return toggleGroup;
         }
 
-        public RenderContext(string spriteRootPath, string fontRootPath)
+        public RenderContext(string spriteRootPath, string fontRootPath, Dictionary<string, GameObject> prefabs)
         {
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
+            this.Prefabs = prefabs;
         }
 
         public Sprite GetSprite(string spriteName)

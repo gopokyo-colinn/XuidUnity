@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -147,13 +148,20 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var element in Elements)
             {
                 var go = element.Render(renderContext, parent);
-                if (go.transform.parent != parent.transform) Debug.Log("親が設定されていない" + go.name);
+                if (go.transform.parent != parent.transform) Debug.Log("No parent set" + go.name);
 
                 if (element.IsPrefab)
                 {
                     //TODO: Check if prefab names are truly unique or if the components in Adobe XD can have the same name
                     if(!renderContext.Prefabs.ContainsKey(go.name))
                         renderContext.Prefabs.Add(go.name,go);
+                    else
+                    {
+                        var oldGo = go;
+                        go = (GameObject)PrefabUtility.InstantiatePrefab(renderContext.Prefabs[oldGo.name],oldGo.transform.parent);
+
+                        GameObject.DestroyImmediate(oldGo);
+                    }
                 }
 
                 list.Add(new Tuple<GameObject, Element>(go, element));
