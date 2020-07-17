@@ -19,10 +19,11 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUiGameObject(renderContext);
+            bool isPrefabChild;
+            var go = CreateUiGameObject(renderContext,parentObject, out isPrefabChild);
 
             var rect = go.GetComponent<RectTransform>();
-            if (parentObject)
+            if (parentObject && !isPrefabChild)
             {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
@@ -34,29 +35,36 @@ namespace I0plus.XdUnityUI.Editor
             var align = _textJson.Get("align");
             var type = _textJson.Get("textType");
 
-            var text = go.AddComponent<Text>();
-            text.text = message;
+            var text = go.GetComponent<Text>();
 
-            // 検索するフォント名を決定する
-            var fontFilename = fontName;
-
-            if (_textJson.ContainsKey("style"))
+            //if a text component is already present this means this go is part of a prefab and we skip the font generation
+            if (text == null)
             {
-                var style = _textJson.Get("style");
-                fontFilename += "-" + style;
-                if (style.Contains("normal") || style.Contains("medium"))
+                text = this.AddComponent<Text>();
+
+                // 検索するフォント名を決定する
+                var fontFilename = fontName;
+
+                if (_textJson.ContainsKey("style"))
                 {
-                    text.fontStyle = FontStyle.Normal;
+                    var style = _textJson.Get("style");
+                    fontFilename += "-" + style;
+                    if (style.Contains("normal") || style.Contains("medium"))
+                    {
+                        text.fontStyle = FontStyle.Normal;
+                    }
+
+                    if (style.Contains("bold"))
+                    {
+                        text.fontStyle = FontStyle.Bold;
+                    }
                 }
 
-                if (style.Contains("bold"))
-                {
-                    text.fontStyle = FontStyle.Bold;
-                }
+                text.fontSize = Mathf.RoundToInt(fontSize.Value);
+                text.font = renderContext.GetFont(fontFilename);
             }
-
-            text.font = renderContext.GetFont(fontFilename);
-            text.fontSize = Mathf.RoundToInt(fontSize.Value);
+         
+            text.text = message;
             text.color = Color.black;
 
             var color = _textJson.Get("color");
@@ -144,7 +152,7 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var strokeSize = _textJson.GetInt("strokeSize");
                 var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
-                var outline = go.AddComponent<Outline>();
+                var outline = this.AddComponent<Outline>();
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);
                 outline.useGraphicAlpha = false;

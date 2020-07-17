@@ -18,17 +18,26 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext);
-            var rect = go.GetComponent<RectTransform>();
-            if (parentObject)
-            {
-                //親のパラメータがある場合､親にする 後のAnchor定義のため
-                rect.SetParent(parentObject.transform);
-            }
+            var go = CreateSelf(renderContext, parentObject);
 
             var children = RenderChildren(renderContext, go);
 
-            var toggle = go.AddComponent<Toggle>();
+            var toggle = go.GetComponent<Toggle>();
+
+            //if a text toggle is already present this means this go is part of a prefab and we skip the toggle group assignment
+            if (toggle == null)
+            {
+                toggle = go.AddComponent<Toggle>();
+                // トグルグループ名
+                var group = _toggleJson.Get("group");
+                if (group != null)
+                {
+                    var toggleGroup = renderContext.GetToggleGroup(group);
+                    //Debug.Log("toggleGroup:" + toggleGroup);
+                    toggle.group = toggleGroup;
+                }
+            }
+
 
             var targetImage =
                 ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("target_graphic_class"));
@@ -82,15 +91,6 @@ namespace I0plus.XdUnityUI.Editor
                 }
 
                 toggle.spriteState = spriteState;
-            }
-
-            // トグルグループ名
-            var group = _toggleJson.Get("group");
-            if (group != null)
-            {
-                var toggleGroup = renderContext.GetToggleGroup(group);
-                //Debug.Log("toggleGroup:" + toggleGroup);
-                toggle.group = toggleGroup;
             }
 
             ElementUtil.SetupLayoutElement(go, LayoutElementJson);

@@ -23,13 +23,13 @@ namespace I0plus.XdUnityUI.Editor
         private readonly string assetPath;
         private readonly string fontRootPath;
         private readonly string spriteRootPath;
-        private readonly Dictionary<string, GameObject> nestedPrefabs;
+        private readonly List<GameObject> nestedPrefabs;
         /// <summary>
         /// </summary>
         /// <param name="spriteRootPath"></param>
         /// <param name="fontRootPath"></param>
         /// <param name="assetPath">フルパスでの指定 Unity Assetフォルダ外もよみこめる</param>
-        public PrefabCreator(string spriteRootPath, string fontRootPath, string assetPath, Dictionary<string, GameObject> prefabs)
+        public PrefabCreator(string spriteRootPath, string fontRootPath, string assetPath, List<GameObject> prefabs)
         {
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
@@ -46,7 +46,7 @@ namespace I0plus.XdUnityUI.Editor
             var info = json.GetDic("info");
             Validation(info);
 
-            var renderer = new RenderContext(spriteRootPath, fontRootPath,nestedPrefabs);
+            var renderer = new RenderContext(spriteRootPath, fontRootPath, nestedPrefabs);
             var rootJson = json.GetDic("root");
             GameObject root = null;
 
@@ -67,19 +67,20 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
 
-            foreach (var key in nestedPrefabs.Keys.ToList())
+            foreach(var prefab in renderer.NewPrefabs.ToList())
             {
-                var prefab = nestedPrefabs[key];
-
-                //TODO: Ugly path generation
-                var nestedPrefabDirectory = Path.Combine(Application.dataPath.Replace("Assets",""),Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath()), "NestedPrefabs"));
-
-                if (!Directory.Exists(nestedPrefabDirectory))
-                    Directory.CreateDirectory(nestedPrefabDirectory);
 
                 //if we haven't created a prefab out of the referenced GO we do so now
-                if(PrefabUtility.GetPrefabAssetType(prefab) == PrefabAssetType.NotAPrefab)
-                    nestedPrefabs[key] = UnityEditor.PrefabUtility.SaveAsPrefabAssetAndConnect(prefab, Path.Combine(nestedPrefabDirectory, key + ".prefab"), UnityEditor.InteractionMode.AutomatedAction);
+                if (PrefabUtility.GetPrefabAssetType(prefab) == PrefabAssetType.NotAPrefab)
+                {
+                    //TODO: Ugly path generation
+                    var nestedPrefabDirectory = Path.Combine(Application.dataPath.Replace("Assets", ""), Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath()), "Components"));
+
+                    if (!Directory.Exists(nestedPrefabDirectory))
+                        Directory.CreateDirectory(nestedPrefabDirectory);
+
+                    nestedPrefabs.Add(UnityEditor.PrefabUtility.SaveAsPrefabAssetAndConnect(prefab, Path.Combine(nestedPrefabDirectory, prefab.name + ".prefab"), UnityEditor.InteractionMode.AutomatedAction));
+                }
             }
 
             return root;

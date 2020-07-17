@@ -4356,9 +4356,11 @@ async function createRoot(renditions, outputFolder, root) {
       case 'RepeatGrid':
       case 'SymbolInstance':
         {
-          Object.assign(json, {
-            symbolInstance: getUnityName(node)
-          })
+          if (json["type"] != "Root") {
+            Object.assign(json, {
+              symbolInstance: getUnityName(node)
+            })
+          }
 
           if (
             style.firstAsBool(STYLE_IMAGE) ||

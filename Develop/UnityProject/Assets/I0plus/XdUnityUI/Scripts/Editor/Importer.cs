@@ -301,7 +301,7 @@ namespace I0plus.XdUnityUI.Editor
 
             await Task.Delay(1000);
 
-            Dictionary<string, GameObject> prefabs = new Dictionary<string, GameObject>();
+            List<GameObject> prefabs = new List<GameObject>();
 
             // Create Prefab
             foreach (var layoutFilePath in importedPaths)

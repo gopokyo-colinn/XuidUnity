@@ -19,11 +19,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUiGameObject(renderContext);
-            var rect = go.GetComponent<RectTransform>();
-            if (parentObject)
-                //親のパラメータがある場合､親にする 後のAnchor定義のため
-                rect.SetParent(parentObject.transform);
+            var go = CreateSelf(renderContext,parentObject);
 
             var children = RenderChildren(renderContext, go);
 
