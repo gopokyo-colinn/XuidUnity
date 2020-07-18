@@ -13,9 +13,10 @@ namespace I0plus.XdUnityUI.Editor
         {
         }
 
-        protected override GameObject CreateSelf(RenderContext renderContext)
+        protected override GameObject CreateSelf(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUiGameObject(renderContext);
+            bool isPrefabChild;
+            var go = CreateUiGameObject(renderContext, parentObject, out isPrefabChild);
 
             var rect = go.GetComponent<RectTransform>();
             ElementUtil.SetupRectTransform(go, RectTransformJson);

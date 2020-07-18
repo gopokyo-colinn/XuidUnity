@@ -2,6 +2,10 @@
 using TMPro;
 #endif
 
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+
 namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
@@ -20,10 +24,11 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderer, GameObject parentObject)
         {
-            var go = CreateUiGameObject(renderer);
+            bool isPrefabChild;
+            var go = CreateUiGameObject(renderer,parentObject, out isPrefabChild);
 
             var rect = go.GetComponent<RectTransform>();
-            if (parentObject)
+            if (parentObject && !isPrefabChild)
             {
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
@@ -36,9 +41,16 @@ namespace I0plus.XdUnityUI.Editor
             var align = _textJson.Get("align");
             var type = _textJson.Get("textType");
 
-            var text = go.AddComponent<TextMeshProUGUI>();
+            var text = go.GetComponent<TextMeshProUGUI>();
+
+            //if a text component is already present this means this go is part of a prefab and we skip the font generation
+            if (text == null)
+            {
+                text = go.AddComponent<TextMeshProUGUI>();
+                text.font = renderer.GetTMPFontAsset(fontName, fontStyle);
+            }
+
             text.text = message;
-            text.font = renderer.GetTMPFontAsset(fontName, fontStyle);
             text.fontSize = fontSize.Value;
             
             // 自動的に改行されることが困ることもあるが、挙動としてはこちらのほうがXDに沿うことになる
@@ -96,7 +108,7 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var strokeSize = _textJson.GetInt("strokeSize");
                 var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
-                var outline = go.AddComponent<Outline>();
+                var outline = this.AddComponent<Outline>();
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);
                 outline.useGraphicAlpha = false;

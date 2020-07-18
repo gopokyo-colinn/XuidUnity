@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -56,11 +58,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext);
-            var rect = go.GetComponent<RectTransform>();
-            if (parentObject)
-                //親のパラメータがある場合､親にする 後のAnchor定義のため
-                rect.SetParent(parentObject.transform);
+            var go = CreateSelf(renderContext, parentObject);
 
             RenderedChildren = RenderChildren(renderContext, go);
             ElementUtil.SetupCanvasGroup(go, CanvasGroup);
@@ -115,9 +113,16 @@ namespace I0plus.XdUnityUI.Editor
             }
         }
 
-        protected virtual GameObject CreateSelf(RenderContext renderContext)
+        protected virtual GameObject CreateSelf(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateUiGameObject(renderContext);
+            bool isPrefabChild;
+            var go = CreateUiGameObject(renderContext, parentObject, out isPrefabChild);
+            var rect = go.GetComponent<RectTransform>();
+
+            if (parentObject && !isPrefabChild)
+                //親のパラメータがある場合､親にする 後のAnchor定義のため
+                rect.SetParent(parentObject.transform);
+
             return go;
         }
 
@@ -127,7 +132,7 @@ namespace I0plus.XdUnityUI.Editor
             if (maskSource == null) return;
 
             Elements.Remove(maskSource);
-            var maskImage = go.AddComponent<Image>();
+            var maskImage = this.AddComponent<Image>();
             maskImage.raycastTarget = false;
 
             var dummyMaskImage = maskSource.Render(renderContext, null);
@@ -135,7 +140,7 @@ namespace I0plus.XdUnityUI.Editor
             dummyMaskImage.GetComponent<Image>().CopyTo(maskImage);
             Object.DestroyImmediate(dummyMaskImage);
 
-            var mask = go.AddComponent<Mask>();
+            var mask = this.AddComponent<Mask>();
             mask.showMaskGraphic = false;
         }
 
@@ -146,7 +151,21 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var element in Elements)
             {
                 var go = element.Render(renderContext, parent);
-                if (go.transform.parent != parent.transform) Debug.Log("親が設定されていない" + go.name);
+                if (go.transform.parent != parent.transform) Debug.Log("No parent set" + go.name);
+
+                //if (element.IsPrefab)
+                //{
+                //    //TODO: Check if prefab names are truly unique or if the components in Adobe XD can have the same name
+                //    if(!renderContext.Prefabs.ContainsKey(go.name))
+                //        renderContext.Prefabs.Add(go.name,go);
+                //    else
+                //    {
+                //        var oldGo = go;
+                //        go = (GameObject)PrefabUtility.InstantiatePrefab(renderContext.Prefabs[oldGo.name],oldGo.transform.parent);
+
+                //        GameObject.DestroyImmediate(oldGo);
+                //    }
+                //}
 
                 list.Add(new Tuple<GameObject, Element>(go, element));
                 if (callback != null) callback.Invoke(go, element);

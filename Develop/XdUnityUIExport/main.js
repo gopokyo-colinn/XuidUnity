@@ -432,11 +432,11 @@ function parseNodeName(nodeName) {
   // https://regex101.com/r/MdGDaC/1
   const pattern = /((?<comment_out>\/\/)?(?<folder>[^{]*)\/)?(?<name>[^{]*)(?<css_declarations>{.*})?/g
   const r = pattern.exec(nodeName)
-  if(r.groups.comment_out) {
+  if (r.groups.comment_out) {
     return {}
   }
   let name = r.groups.name ? r.groups.name.trim() : null
-  let folder = r.groups.folder? r.groups.folder.trim(): null
+  let folder = r.groups.folder ? r.groups.folder.trim() : null
   let css_declarations = r.groups.css_declarations
   return {
     folder,
@@ -455,9 +455,8 @@ function getSubFolderFromNodeName(nodeName) {
  * @param {SceneNodeClass} node
  * @return {boolean}
  */
-function isLayoutRootNode(node)
-{
-  if(!node) return false
+function isLayoutRootNode(node) {
+  if (!node) return false
   return !!getSubFolderFromNodeName(node.name)
 }
 
@@ -495,7 +494,7 @@ function cssParseNodeName(nodeName) {
 
     try {
       // name部分とcss-declarationsを結合、ascii文字以外(漢字など) _ に変換する
-      const asciiNodeName = name.replace(/[^\x01-\x7E]/g, function(s) {
+      const asciiNodeName = name.replace(/[^\x01-\x7E]/g, function (s) {
         return '_'
       })
       // console.log(`parseCss(${asciiNodeName})`)
@@ -652,7 +651,7 @@ class BoundsToRectTransform {
       if (!approxEqual(beforeDrawSizeX, afterDrawSizeX)) {
         console.log(
           `${this.node.name} ${beforeDrawSizeX -
-            afterDrawSizeX}リサイズ後のBounds.x取得が正確ではないようです`,
+          afterDrawSizeX}リサイズ後のBounds.x取得が正確ではないようです`,
         )
         // beforeのサイズ差をもとに、afterを修正する
         this.after.global_draw_bounds.x =
@@ -671,7 +670,7 @@ class BoundsToRectTransform {
       if (!approxEqual(beforeDrawSizeY, afterDrawSizeY)) {
         console.log(
           `${this.node.name} ${beforeDrawSizeY -
-            afterDrawSizeY}リサイズ後のBounds.y取得がうまくいっていないようです`,
+          afterDrawSizeY}リサイズ後のBounds.y取得がうまくいっていないようです`,
         )
         // beforeのサイズ差をもとに、afterを修正する
         this.after.global_draw_bounds.y =
@@ -690,7 +689,7 @@ class BoundsToRectTransform {
       if (!approxEqual(beforeDrawSizeX, afterDrawSizeX)) {
         console.log(
           `${this.node.name} ${beforeDrawSizeX -
-            afterDrawSizeX}リサイズ後のBounds.ex取得がうまくいっていないようです`,
+          afterDrawSizeX}リサイズ後のBounds.ex取得がうまくいっていないようです`,
         )
         // beforeのサイズ差をもとに、afterを修正する
         this.after.global_draw_bounds.ex =
@@ -709,7 +708,7 @@ class BoundsToRectTransform {
       if (!approxEqual(beforeDrawSizeY, afterDrawSizeY)) {
         console.log(
           `${this.node.name} ${beforeDrawSizeY -
-            afterDrawSizeY}リサイズ後のBounds.ey取得がうまくいっていないようです`,
+          afterDrawSizeY}リサイズ後のBounds.ey取得がうまくいっていないようです`,
         )
         // beforeのサイズ差をもとに、afterを修正する
         this.after.global_draw_bounds.ey =
@@ -4297,7 +4296,7 @@ async function createRoot(renditions, outputFolder, root) {
       return
     }
 
-    if( root != node && isLayoutRootNode(node) ) {
+    if (root != node && isLayoutRootNode(node)) {
       // Root配下に出力ノードをみつけた
       return
     }
@@ -4357,6 +4356,12 @@ async function createRoot(renditions, outputFolder, root) {
       case 'RepeatGrid':
       case 'SymbolInstance':
         {
+          if (json["type"] != "Root") {
+            Object.assign(json, {
+              symbolInstance: getUnityName(node)
+            })
+          }
+
           if (
             style.firstAsBool(STYLE_IMAGE) ||
             style.firstAsBool(STYLE_IMAGE_SLICE)
@@ -4582,7 +4587,7 @@ async function exportXdUnityUI(roots, outputFolder) {
 async function checkLatestVersion() {
   let xhr = new XMLHttpRequest()
   xhr.open('GET', 'http://i0pl.us/XdUnityUI', true)
-  xhr.onload = function(e) {
+  xhr.onload = function (e) {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
         // console.log(xhr.responseText)
@@ -4591,7 +4596,7 @@ async function checkLatestVersion() {
       }
     }
   }
-  xhr.onerror = function(e) {
+  xhr.onerror = function (e) {
     console.error(xhr.statusText)
   }
   xhr.send(null)
@@ -4734,7 +4739,7 @@ async function getExportArtboards(selection) {
 async function pluginExportXdUnityUI(selection, root) {
   console.log('# export plugin')
 
-  checkLatestVersion().then(r => {})
+  checkLatestVersion().then(r => { })
 
   // エキスポートマークがついたものだけ出力するオプションは、毎回オフにする
   optionCheckMarkedForExport = false
@@ -5042,7 +5047,7 @@ async function pluginResponsiveParamName(selection, root) {
             .replace('x-y-size', 'size') // グループのresizeをやったところ､topleftも動いてしまったケース sizeのみにする
           try {
             node.name = name + ' @fix=' + fixStr
-          } catch (e) {}
+          } catch (e) { }
         }
       }
       node.children.forEach(child => {

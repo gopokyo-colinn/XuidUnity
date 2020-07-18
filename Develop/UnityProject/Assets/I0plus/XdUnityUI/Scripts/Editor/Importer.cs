@@ -301,6 +301,8 @@ namespace I0plus.XdUnityUI.Editor
 
             await Task.Delay(1000);
 
+            List<GameObject> prefabs = new List<GameObject>();
+
             // Create Prefab
             foreach (var layoutFilePath in importedPaths)
             {
@@ -317,7 +319,7 @@ namespace I0plus.XdUnityUI.Editor
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
-                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath);
+                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath, prefabs);
                     go = creator.Create();
                     var saveAssetPath =
                         Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(),
@@ -379,7 +381,7 @@ namespace I0plus.XdUnityUI.Editor
 #if UNITY_2019_1_OR_NEWER
         private static void CreateAtlas(string name, List<string> importPaths)
         {
-            var filename = Path.Combine(EditorUtil.GetBaumAtlasPath(), name + ".spriteatlas");
+            var filename = Path.Combine(EditorUtil.GetBaumAtlasAssetPath(), name + ".spriteatlas");
 
             var atlas = new SpriteAtlas();
             var settings = new SpriteAtlasPackingSettings
@@ -407,7 +409,7 @@ namespace I0plus.XdUnityUI.Editor
             atlas.SetPlatformSettings(textureImporterPlatformSettings);
 
             // アセットの生成
-            AssetDatabase.CreateAsset(atlas, EditorUtil.ToUnityPath(filename));
+            AssetDatabase.CreateAsset(atlas, EditorUtil.ToAssetPath(filename));
 
             // ディレクトリを登録する場合
             // var iconsDirectory = AssetDatabase.LoadAssetAtPath<Object>("Assets/ExternalAssets/Baum2/CreatedSprites/UIESMessenger");

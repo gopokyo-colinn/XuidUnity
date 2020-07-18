@@ -19,11 +19,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext);
-            var rect = go.GetComponent<RectTransform>();
-            if (parentObject)
-                //親のパラメータがある場合､親にする 後のAnchor定義のため
-                rect.SetParent(parentObject.transform);
+            var go = CreateSelf(renderContext, parentObject);
 
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
@@ -42,7 +38,7 @@ namespace I0plus.XdUnityUI.Editor
                 // DotScrollbarとなる
                 var dotScrollbar = go.AddComponent<DotsScrollbar>();
                 dotScrollbar.isAutoLayoutEnableOnEditMode = false;
-                dotScrollbar.DotContainer = rect;
+                dotScrollbar.DotContainer = go.GetComponent<RectTransform>();
                 dotScrollbar.DotPrefab = toggleChild.Item1.GetComponent<Toggle>();
                 // Toggleボタンの並びレイアウト
                 ElementUtil.SetupLayoutGroup(go, LayoutJson);
