@@ -1,12 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const application_1 = require("application");
 const scenegraph_1 = require("scenegraph");
 const uxp_1 = require("uxp");
 const consts = require("./consts");
 const css_1 = require("./css");
 const geometry_1 = require("./geometry");
-const node_1 = require("./node");
 const globals_1 = require("./globals");
+const node_1 = require("./node");
+const tools_1 = require("./tools");
+const application = require('application');
 const fs = uxp_1.storage.localFileSystem;
 function assignAttribute(json, attribute) {
     if (!json.hasOwnProperty('attributes')) {
@@ -58,9 +61,6 @@ function getRgb(color) {
     return `rgb(${color.r},${color.g},${color.b})`;
 }
 class UXMLGenerator {
-    constructor() {
-        this.renditions = [];
-    }
     async traverseNodeChildren(json, node) {
         let numChildren = node.children.length;
         const elements = [];
@@ -81,8 +81,12 @@ class UXMLGenerator {
             name: 'ui:VisualElement',
             attributes: {},
         });
-        this.addRoot(json, node);
+        // Base情報
         this.addName(json, node);
+        this.addBounds(json, node);
+        this.addRectangle(json, node);
+        // Type情報
+        this.addRoot(json, node);
         this.addButton(json, node);
         this.addToggle(json, node);
         this.addLabel(json, node);
@@ -90,9 +94,11 @@ class UXMLGenerator {
         this.addMinMaxSlider(json, node);
         this.addTextField(json, node);
         this.addFoldout(json, node);
-        this.addBounds(json, node);
-        this.addRectangle(json, node);
-        await this.traverseNodeChildren(json, node);
+        const r = await this.addImage(json, node);
+        const noTraverseChildren = r.noTraverseChildren === true;
+        if (!noTraverseChildren) {
+            await this.traverseNodeChildren(json, node);
+        }
     }
     async generate(rootNode) {
         globals_1.GlobalVars.reset();
@@ -352,6 +358,30 @@ class UXMLGenerator {
                 }
             }
         }
+    }
+    async addImage(json, node) {
+        // 画像のみのローカルスケール
+        // CSSによるコンテンツ書き換えのため、子供を先に処理することもある
+        // 親Boundsに合わせて画像出力機能
+        // sliceパラメータに対応
+        // これ以下のChildTraverseを止める
+        const fileName = tools_1.replaceToFileName(node_1.getUnityName(node));
+        if (this.outputFolder) {
+            const outputFile = await this.outputFolder.createFile(fileName + '.png', {
+                overwrite: true,
+            });
+            let rendition = {
+                outputFile,
+                scale: 1,
+                type: application_1.RenditionType.PNG,
+                node,
+            };
+            //TODO:ユニークな名前かチェックする
+            this.renditions.push(rendition);
+        }
+        return {
+            noTraverseChildren: true,
+        };
     }
 }
 exports.UXMLGenerator = UXMLGenerator;
