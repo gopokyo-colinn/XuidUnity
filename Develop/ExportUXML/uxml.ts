@@ -1,3 +1,8 @@
+import {
+  RenditionSettings,
+  RenditionSettingsPNG,
+  RenditionType,
+} from 'application'
 import { Color, Rectangle, SceneNode, Text } from 'scenegraph'
 import { storage } from 'uxp'
 import * as consts from './consts'
@@ -7,8 +12,11 @@ import {
   getRectTransform,
   makeGlobalBoundsRectTransform,
 } from './geometry'
-import { getNodeNameAndStyle, getUnityName, isRootNode } from './node'
 import { GlobalVars } from './globals'
+import { getNodeNameAndStyle, getUnityName, isRootNode } from './node'
+import { replaceToFileName } from './tools'
+
+const application = require('application')
 
 const fs = storage.localFileSystem
 
@@ -70,9 +78,14 @@ interface ElementJson {
   attributes: Object & { style: Object }
 }
 
+interface AddTypeResult {
+  noTraverseChildren?: boolean
+}
+
 export class UXMLGenerator {
   public json: Object
-  public renditions = []
+  public outputFolder: storage.Folder
+  public renditions: RenditionSettings[]
 
   private async traverseNodeChildren(json, node: SceneNode) {
     let numChildren = node.children.length
@@ -97,8 +110,13 @@ export class UXMLGenerator {
       name: 'ui:VisualElement',
       attributes: {},
     })
-    this.addRoot(json, node)
+    // Base情報
     this.addName(json, node)
+    this.addBounds(json, node)
+    this.addRectangle(json, node)
+
+    // Type情報
+    this.addRoot(json, node)
     this.addButton(json, node)
     this.addToggle(json, node)
     this.addLabel(json, node)
@@ -107,10 +125,12 @@ export class UXMLGenerator {
     this.addTextField(json, node)
     this.addFoldout(json, node)
 
-    this.addBounds(json, node)
-    this.addRectangle(json, node)
+    const r = await this.addImage(json, node)
+    const noTraverseChildren = r.noTraverseChildren === true
 
-    await this.traverseNodeChildren(json, node)
+    if (!noTraverseChildren) {
+      await this.traverseNodeChildren(json, node)
+    }
   }
 
   public async generate(rootNode: SceneNode) {
@@ -380,6 +400,35 @@ export class UXMLGenerator {
           })
         }
       }
+    }
+  }
+
+  async addImage(json: ElementJson, node: SceneNode): Promise<AddTypeResult> {
+    // 画像のみのローカルスケール
+    // CSSによるコンテンツ書き換えのため、子供を先に処理することもある
+    // 親Boundsに合わせて画像出力機能
+    // sliceパラメータに対応
+    // これ以下のChildTraverseを止める
+    const fileName = replaceToFileName(getUnityName(node))
+
+    if (this.outputFolder) {
+      const outputFile = await this.outputFolder.createFile(fileName + '.png', {
+        overwrite: true,
+      })
+
+      let rendition: RenditionSettingsPNG = {
+        outputFile,
+        scale: 1,
+        type: RenditionType.PNG,
+        node,
+      }
+
+      //TODO:ユニークな名前かチェックする
+      this.renditions.push(rendition)
+    }
+
+    return {
+      noTraverseChildren: true,
     }
   }
 }

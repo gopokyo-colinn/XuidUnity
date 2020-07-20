@@ -27,10 +27,13 @@
 }
 
 .text-field {
-  text-field: true
+  text-field: true;
 }
 
 .foldout {
-  foldout: true
+  foldout: true;
 }
 
+.image {
+  image: true;
+}
