@@ -7,18 +7,18 @@ using UnityEngine.UI;
 namespace I0plus.XdUnityUI
 {
     /// <summary>
-    /// @author Kazuma Kuwabara
+    ///     @author Kazuma Kuwabara
     /// </summary>
     [RequireComponent(typeof(ToggleGroup))]
     public sealed class DotsScrollbar : Scrollbar
     {
         [SerializeField] private Transform dotContainer;
 
-        private ToggleGroup _dotGroup;
-
         [SerializeField] private Toggle dotPrefab;
 
-        [SerializeField] private List<Toggle> dots = default;
+        [SerializeField] private List<Toggle> dots;
+
+        private ToggleGroup _dotGroup;
 
         private bool _scrolling;
 
@@ -40,6 +40,12 @@ namespace I0plus.XdUnityUI
         {
             base.Start();
             Setup();
+        }
+
+        private void FixedUpdate()
+        {
+            if (IsValid)
+                UpdateDots();
         }
 
         protected override void OnEnable()
@@ -64,12 +70,6 @@ namespace I0plus.XdUnityUI
                 foreach (var toggle in dots)
                     toggle.onValueChanged.RemoveListener(OnToggleValueChange);
             }
-        }
-
-        private void FixedUpdate()
-        {
-            if (IsValid)
-                UpdateDots();
         }
 
         private void Setup()

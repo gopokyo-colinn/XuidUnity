@@ -14,6 +14,8 @@ namespace I0plus.XdUnityUI.Editor
     /// </summary>
     public static class EditorUtil
     {
+        private const string ImportDirectoryMark = "_XdUnityUIImport";
+
         /// <summary>
         /// 【C#】ドライブ直下からのファイルリスト取得について - Qiita
         ///  https://qiita.com/OneK/items/8b0d02817a9f2a2fbeb0#%E8%A7%A3%E8%AA%AC
@@ -56,27 +58,21 @@ namespace I0plus.XdUnityUI.Editor
         {
             path = path.Replace("\\", "/");
             var assetPath = path;
-            if (path.StartsWith(Application.dataPath))
-            {
-                assetPath = "Assets" + path.Substring(Application.dataPath.Length);
-            }
+            if (path.StartsWith(Application.dataPath)) assetPath = "Assets" + path.Substring(Application.dataPath.Length);
             return assetPath;
         }
-        
+
         public static string FindFileAssetPath(string fileName, bool throwException = true)
         {
             var guids = AssetDatabase.FindAssets(fileName);
             if (guids.Length == 0)
             {
                 if (throwException)
-                    throw new System.ApplicationException($"{fileName}ファイルがプロジェクト内に存在しません。");
+                    throw new ApplicationException($"{fileName}ファイルがプロジェクト内に存在しません。");
                 return null;
             }
 
-            if (guids.Length > 1)
-            {
-                Debug.LogErrorFormat("{0}ファイルがプロジェクト内に複数個存在します。", fileName);
-            }
+            if (guids.Length > 1) Debug.LogErrorFormat("{0}ファイルがプロジェクト内に複数個存在します。", fileName);
 
             var fileAssetPath
                 = AssetDatabase.GUIDToAssetPath(guids[0]);
@@ -89,8 +85,6 @@ namespace I0plus.XdUnityUI.Editor
             var fileAssetPath = FindFileAssetPath(fileName, throwException);
             return Path.GetDirectoryName(fileAssetPath);
         }
-
-        private const string ImportDirectoryMark = "_XdUnityUIImport";
 
         public static string GetImportDirectoryPath()
         {

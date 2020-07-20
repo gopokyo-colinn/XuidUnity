@@ -19,7 +19,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext,parentObject);
+            var go = CreateSelf(renderContext, parentObject);
 
             var children = RenderChildren(renderContext, go);
 

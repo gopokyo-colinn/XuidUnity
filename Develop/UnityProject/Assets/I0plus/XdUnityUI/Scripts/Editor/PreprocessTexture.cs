@@ -14,11 +14,6 @@ namespace I0plus.XdUnityUI.Editor
     {
         public static Dictionary<string, SlicedTexture> SlicedTextures;
 
-        public override int GetPostprocessOrder()
-        {
-            return 990;
-        }
-
         public void OnPreprocessTexture()
         {
             /*
@@ -58,6 +53,11 @@ namespace I0plus.XdUnityUI.Editor
                 SlicedTextures.Remove(fileName);
                 if (SlicedTextures.Count == 0) SlicedTextures = null;
             }
+        }
+
+        public override int GetPostprocessOrder()
+        {
+            return 990;
         }
     }
 }

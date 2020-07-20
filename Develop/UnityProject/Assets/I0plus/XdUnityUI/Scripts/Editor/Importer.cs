@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
-
 #if UNITY_2019_1_OR_NEWER
 using UnityEditor.U2D;
 using UnityEngine.U2D;
+
 #endif
 
 namespace I0plus.XdUnityUI.Editor
@@ -23,6 +23,18 @@ namespace I0plus.XdUnityUI.Editor
         private static int progressCount;
         private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
 
+        /// <summary>
+        ///     自動インポート
+        /// </summary>
+        /// <param name="importedAssets"></param>
+        /// <param name="deletedAssets"></param>
+        /// <param name="movedAssets"></param>
+        /// <param name="movedFromAssetPaths"></param>
+        public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets,
+            string[] movedFromAssetPaths)
+        {
+        }
+
         public override int GetPostprocessOrder()
         {
             return 1000;
@@ -34,18 +46,6 @@ namespace I0plus.XdUnityUI.Editor
                 EditorUtility.DisplayProgressBar("XdUnitUI Import",
                     $"{progressCount}/{progressTotal} {message}",
                     (float) progressCount / progressTotal);
-        }
-
-        /// <summary>
-        ///     自動インポート
-        /// </summary>
-        /// <param name="importedAssets"></param>
-        /// <param name="deletedAssets"></param>
-        /// <param name="movedAssets"></param>
-        /// <param name="movedFromAssetPaths"></param>
-        public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets,
-            string[] movedFromAssetPaths)
-        {
         }
 
         /*
@@ -301,7 +301,7 @@ namespace I0plus.XdUnityUI.Editor
 
             await Task.Delay(1000);
 
-            List<GameObject> prefabs = new List<GameObject>();
+            var prefabs = new List<GameObject>();
 
             // Create Prefab
             foreach (var layoutFilePath in importedPaths)
@@ -319,7 +319,8 @@ namespace I0plus.XdUnityUI.Editor
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
-                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath, prefabs);
+                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
+                        prefabs);
                     go = creator.Create();
                     var saveAssetPath =
                         Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(),

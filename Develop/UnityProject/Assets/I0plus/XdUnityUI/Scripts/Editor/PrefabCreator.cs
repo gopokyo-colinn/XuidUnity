@@ -22,8 +22,9 @@ namespace I0plus.XdUnityUI.Editor
         private static readonly string[] Versions = {"0.6.0", "0.6.1"};
         private readonly string assetPath;
         private readonly string fontRootPath;
-        private readonly string spriteRootPath;
         private readonly List<GameObject> nestedPrefabs;
+        private readonly string spriteRootPath;
+
         /// <summary>
         /// </summary>
         /// <param name="spriteRootPath"></param>
@@ -34,7 +35,7 @@ namespace I0plus.XdUnityUI.Editor
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
             this.assetPath = assetPath;
-            this.nestedPrefabs = prefabs;
+            nestedPrefabs = prefabs;
         }
 
         public GameObject Create()
@@ -67,21 +68,20 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
 
-            foreach(var prefab in renderer.NewPrefabs.ToList())
-            {
-
+            foreach (var prefab in renderer.NewPrefabs.ToList())
                 //if we haven't created a prefab out of the referenced GO we do so now
                 if (PrefabUtility.GetPrefabAssetType(prefab) == PrefabAssetType.NotAPrefab)
                 {
                     //TODO: Ugly path generation
-                    var nestedPrefabDirectory = Path.Combine(Application.dataPath.Replace("Assets", ""), Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath()), "Components"));
+                    var nestedPrefabDirectory = Path.Combine(Application.dataPath.Replace("Assets", ""),
+                        Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath()), "Components"));
 
                     if (!Directory.Exists(nestedPrefabDirectory))
                         Directory.CreateDirectory(nestedPrefabDirectory);
 
-                    nestedPrefabs.Add(UnityEditor.PrefabUtility.SaveAsPrefabAssetAndConnect(prefab, Path.Combine(nestedPrefabDirectory, prefab.name + ".prefab"), UnityEditor.InteractionMode.AutomatedAction));
+                    nestedPrefabs.Add(PrefabUtility.SaveAsPrefabAssetAndConnect(prefab,
+                        Path.Combine(nestedPrefabDirectory, prefab.name + ".prefab"), InteractionMode.AutomatedAction));
                 }
-            }
 
             return root;
         }
