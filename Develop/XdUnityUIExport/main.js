@@ -4350,18 +4350,17 @@ async function createRoot(renditions, outputFolder, root) {
     let constructorName = node.constructor.name
     // console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
+      case 'SymbolInstance':
+        if (json["type"] != "Root") {
+          Object.assign(json, {
+            symbolInstance: getUnityName(node)
+          })
+        }
       case 'Artboard':
       case 'ScrollableGroup':
       case 'Group':
       case 'RepeatGrid':
-      case 'SymbolInstance':
         {
-          if (json["type"] != "Root") {
-            Object.assign(json, {
-              symbolInstance: getUnityName(node)
-            })
-          }
-
           if (
             style.firstAsBool(STYLE_IMAGE) ||
             style.firstAsBool(STYLE_IMAGE_SLICE)
