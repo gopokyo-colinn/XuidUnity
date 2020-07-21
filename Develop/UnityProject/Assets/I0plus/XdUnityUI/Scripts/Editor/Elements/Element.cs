@@ -18,15 +18,10 @@ namespace I0plus.XdUnityUI.Editor
 
         protected readonly Dictionary<string, object> RectTransformJson;
         protected bool? Active;
-        protected string name;
-        protected Element Parent;
-        public bool IsPrefab
-        {
-            get;
-            private set;
-        }
 
         private GameObject go;
+        protected string name;
+        protected Element Parent;
 
         protected Element(Dictionary<string, object> json, Element parent)
         {
@@ -43,6 +38,8 @@ namespace I0plus.XdUnityUI.Editor
             IsPrefab = json.Get("symbolInstance") != null;
         }
 
+        public bool IsPrefab { get; }
+
         public string Name => name;
 
         public abstract GameObject Render(RenderContext renderContext, GameObject parentObject);
@@ -58,29 +55,29 @@ namespace I0plus.XdUnityUI.Editor
             return found != null;
         }
 
-        protected GameObject CreateUiGameObject(RenderContext renderContext, GameObject parentObject, out bool isPrefabChild)
+        protected GameObject CreateUiGameObject(RenderContext renderContext, GameObject parentObject,
+            out bool isPrefabChild)
         {
             GameObject parentPrefab = null;
             isPrefabChild = false;
 
             if (parentObject != null)
-            {
                 //we need to check if the parentElement is part of a allready instantiated prefab instance...
                 parentPrefab = PrefabUtility.GetNearestPrefabInstanceRoot(parentObject);
-            }
 
             if (parentPrefab != null)
             {
                 //...and if so check if the element we want to create here has already been created as part of the prefab...
                 //TODO: This will lead to problems if we have mutliple transforms in prefab with the same name see issue https://github.com/KlingOne/XdUnityUI/issues/4
-                go = parentPrefab.GetComponentsInChildren<Transform>().FirstOrDefault(x => x.name == this.Name && x.gameObject != parentObject)?.gameObject;
+                go = parentPrefab.GetComponentsInChildren<Transform>()
+                    .FirstOrDefault(x => x.name == Name && x.gameObject != parentObject)?.gameObject;
                 isPrefabChild = true;
             }
 
             //...if not create a new GameObject
             if (go == null)
             {
-                if (this.IsPrefab)
+                if (IsPrefab)
                 {
                     //check if there already is a existing prefab with the same name from a previous artboard generation
                     //TODO: Check if prefab names are truly unique or if the components in Adobe XD can have the same name
@@ -95,7 +92,8 @@ namespace I0plus.XdUnityUI.Editor
                     }
                     else
                     {
-                        go = (GameObject)PrefabUtility.InstantiatePrefab(renderContext.ExistingPrefabs.First(x => x.name == name));
+                        go = (GameObject) PrefabUtility.InstantiatePrefab(
+                            renderContext.ExistingPrefabs.First(x => x.name == name));
                     }
                 }
                 else
@@ -109,7 +107,7 @@ namespace I0plus.XdUnityUI.Editor
 
         protected GameObject InstantiateUiGameObject()
         {
-            GameObject go = new GameObject(name);
+            var go = new GameObject(name);
             go.AddComponent<RectTransform>();
             ElementUtil.SetLayer(go, Layer);
             if (Active != null) go.SetActive(Active.Value);
@@ -119,14 +117,10 @@ namespace I0plus.XdUnityUI.Editor
         //since we do not want to read components to a prefab we use this method to add components to elements
         protected T AddComponent<T>() where T : Component
         {
-            if(!this.IsPrefab || PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.NotAPrefab || PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.MissingAsset)
-            {
+            if (!IsPrefab || PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.NotAPrefab ||
+                PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.MissingAsset)
                 return go.AddComponent<T>();
-            }
-            else
-            {
-                return go.GetComponent<T>();
-            }
+            return go.GetComponent<T>();
         }
     }
 }

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -33,14 +31,12 @@ namespace I0plus.XdUnityUI.Editor
             Elements = new List<Element>();
             var jsonElements = json.Get<List<object>>("elements");
             if (jsonElements != null)
-            {
                 foreach (var jsonElement in jsonElements)
                 {
                     var elem = ElementFactory.Generate(jsonElement as Dictionary<string, object>, this);
                     if (elem != null)
                         Elements.Add(elem);
                 }
-            }
 
             Elements.Reverse();
             CanvasGroup = json.GetDic("canvas_group");
@@ -132,7 +128,7 @@ namespace I0plus.XdUnityUI.Editor
             if (maskSource == null) return;
 
             Elements.Remove(maskSource);
-            var maskImage = this.AddComponent<Image>();
+            var maskImage = AddComponent<Image>();
             maskImage.raycastTarget = false;
 
             var dummyMaskImage = maskSource.Render(renderContext, null);
@@ -140,7 +136,7 @@ namespace I0plus.XdUnityUI.Editor
             dummyMaskImage.GetComponent<Image>().CopyTo(maskImage);
             Object.DestroyImmediate(dummyMaskImage);
 
-            var mask = this.AddComponent<Mask>();
+            var mask = AddComponent<Mask>();
             mask.showMaskGraphic = false;
         }
 

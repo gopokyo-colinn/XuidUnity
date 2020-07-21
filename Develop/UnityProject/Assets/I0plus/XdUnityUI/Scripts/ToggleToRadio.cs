@@ -18,6 +18,22 @@ namespace I0plus.XdUnityUI
 
         public string GroupName => groupName;
 
+        private void Awake()
+        {
+            // まだその名前でToggleGroupがつくられていない
+            if (_managerGameObject == null)
+            {
+                _managerGameObject = new GameObject("ToggleToRadioManager");
+                // 廃棄されないオブジェクトにする
+                DontDestroyOnLoad(_managerGameObject);
+            }
+
+            if (GroupName == null) return;
+
+            // 初期化する
+            SetGroupName(GroupName);
+        }
+
         public static ToggleGroup GetToggleGroup(string name)
         {
             ToggleGroup toggleGroup;
@@ -48,22 +64,6 @@ namespace I0plus.XdUnityUI
             // Toggleを取得し､グループを登録する
             var toggle = gameObject.GetComponent<Toggle>();
             toggle.group = toggleGroup;
-        }
-
-        private void Awake()
-        {
-            // まだその名前でToggleGroupがつくられていない
-            if (_managerGameObject == null)
-            {
-                _managerGameObject = new GameObject("ToggleToRadioManager");
-                // 廃棄されないオブジェクトにする
-                DontDestroyOnLoad(_managerGameObject);
-            }
-
-            if (GroupName == null) return;
-
-            // 初期化する
-            SetGroupName(GroupName);
         }
     }
 }

@@ -14,12 +14,6 @@ namespace I0plus.XdUnityUI
             toggle.onValueChanged.AddListener(OnValueChanged);
         }
 
-        private void OnValueChanged(bool on)
-        {
-            if (toggle == null || toggle.image == null) return;
-            toggle.image.enabled = !on;
-        }
-
         // Start is called before the first frame update
         private void Start()
         {
@@ -36,6 +30,12 @@ namespace I0plus.XdUnityUI
         {
             if (toggle == null) return;
             toggle.onValueChanged.RemoveListener(OnValueChanged);
+        }
+
+        private void OnValueChanged(bool on)
+        {
+            if (toggle == null || toggle.image == null) return;
+            toggle.image.enabled = !on;
         }
     }
 }

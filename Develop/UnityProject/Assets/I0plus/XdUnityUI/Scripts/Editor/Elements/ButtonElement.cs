@@ -24,8 +24,8 @@ namespace I0plus.XdUnityUI.Editor
             var children = RenderChildren(renderContext, go);
             var deleteObjects = new Dictionary<GameObject, bool>();
 
-            var button = this.AddComponent<Button>(); 
-           
+            var button = AddComponent<Button>();
+
 
             GameObject targetImageObject = null;
             if (ButtonJson != null)

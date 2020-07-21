@@ -21,8 +21,8 @@ namespace I0plus.XdUnityUI.Editor
 
         public override GameObject Render(RenderContext renderContext, GameObject parentObject)
         {
-            bool isPrefabChild = false;
-            var go = CreateUiGameObject(renderContext,parentObject, out isPrefabChild);
+            var isPrefabChild = false;
+            var go = CreateUiGameObject(renderContext, parentObject, out isPrefabChild);
 
             var rect = go.GetComponent<RectTransform>();
 
@@ -36,7 +36,7 @@ namespace I0plus.XdUnityUI.Editor
             //TODO: check if some parts still need to be done for prefabs that have local modifications
             if (image == null)
             {
-                image = this.AddComponent<Image>();
+                image = AddComponent<Image>();
                 var sourceImage = ImageJson.Get("source_image");
                 if (sourceImage != null)
                     image.sprite = renderContext.GetSprite(sourceImage);
