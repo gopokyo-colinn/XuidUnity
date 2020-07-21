@@ -108,17 +108,23 @@
 
 ## ChangeLog
 
+### [v0.9.3] - 2020-07-21
+- XD,Unity: Added option to convert components to Prefab.
+
+### [v0.9.2] - 2020-05-31
+- XD,Unity: Scrollable Groups support.
+
 ### [v0.9] - 2020-05-31
 - XD,Unity: Responsive resizing information is now more accurate. 
 - Unity: Import by specifying a folder.
 
+<details><summary>Details</summary><div>
 ### [v0.8] - 2020-03-16
 - XD: Fixed to output a selection.
 - Unity: fixed to work with Unity2018.
 - Unity: fixed to work with Unity2017.
 - Unity: deleted the asmdef file.
 
-<details><summary>Details</summary><div>
 ### [v0.7.2] - 2020-03-13
 - Testing the DotsScrollbar
 - Fixing mask processing
