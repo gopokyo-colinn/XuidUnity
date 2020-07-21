@@ -23,6 +23,10 @@
     "en": "Export all artboards.",
     "ja": "全てのアートボードを対象とする"
   },
+  "ExportComponentInstanceAsPrefab": {
+    "en": "Component instance as prefab.",
+    "ja": "コンポーネントインスタンスをPrefabにする"
+  },
   "ExportDialogOptionCheckExportMark": {
     "en": "Export only with export mark.",
     "ja": "エキスポートマークがついているもののみ出力する"

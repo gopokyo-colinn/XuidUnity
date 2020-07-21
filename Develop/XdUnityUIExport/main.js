@@ -46,6 +46,9 @@ let optionImageNoExport = false
 // コンテンツの変更のみかどうか
 let optionChangeContentOnly = false
 
+// SymbolInstanceをPrefabにするかどうか
+let optionSymbolInstanceAsPrefab = false
+
 /**
  * レスポンシブパラメータを保存する
  * @type {BoundsToRectTransform[]}
@@ -206,6 +209,9 @@ function getString(multiLangStr) {
     return 'no text(strings.json problem)'
   }
   let str = multiLangStr[appLanguage]
+  if (str) return str
+  // 英語にフォールする
+  str = multiLangStr['en']
   if (str) return str
   // 日本語にフォールする
   str = multiLangStr['ja']
@@ -4350,10 +4356,12 @@ async function createRoot(renditions, outputFolder, root) {
     // console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'SymbolInstance':
-        if (json['type'] !== 'Root') {
-          Object.assign(json, {
-            symbolInstance: getUnityName(node),
-          })
+        if( optionSymbolInstanceAsPrefab ) {
+          if (json['type'] !== 'Root') {
+            Object.assign(json, {
+              symbolInstance: getUnityName(node),
+            })
+          }
         }
       case 'Artboard':
       case 'ScrollableGroup':
@@ -4746,9 +4754,9 @@ async function pluginExportXdUnityUI(selection, root) {
   let inputScale
   let errorLabel
   let exportMessage
+  let checkComponentInstanceAsPrefab
   let checkImageNoExport
   let checkCheckMarkedForExport
-  let checkAllArtboard
   let checkChangeContentOnly
 
   const divStyle = {
@@ -4836,6 +4844,17 @@ async function pluginExportXdUnityUI(selection, root) {
       h('hr'),
       h('label', getString(strings.ExportDialogUnderDevelopmentOptions)),
       h('br'),
+      // Symbol instance as prefab
+      h(
+        'label',
+        divStyle,
+        (checkComponentInstanceAsPrefab = h('input', {
+          type: 'checkbox',
+        })),
+        getString(strings.ExportComponentInstanceAsPrefab),
+      ),
+      h('br'),
+      // no export image.
       h(
         'label',
         divStyle,
@@ -4845,6 +4864,7 @@ async function pluginExportXdUnityUI(selection, root) {
         getString(strings.ExportDialogOptionNotExportImage),
       ),
       h('br'),
+      // CSS change content
       h(
         'label',
         divStyle,
@@ -4881,6 +4901,7 @@ async function pluginExportXdUnityUI(selection, root) {
               }
 
               globalScale = tmpScale
+              optionSymbolInstanceAsPrefab = checkComponentInstanceAsPrefab.checked
               optionImageNoExport = checkImageNoExport.checked
               optionCheckMarkedForExport = checkCheckMarkedForExport.checked
               optionChangeContentOnly = checkChangeContentOnly.checked
@@ -4909,6 +4930,7 @@ async function pluginExportXdUnityUI(selection, root) {
     inputFolder.value = outputFolder.nativePath
   }
   // Responsive Parameter
+  checkComponentInstanceAsPrefab.checked = optionSymbolInstanceAsPrefab
   checkImageNoExport.checked = optionImageNoExport
   checkCheckMarkedForExport.checked = optionCheckMarkedForExport
   checkChangeContentOnly.checked = optionChangeContentOnly
