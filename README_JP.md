@@ -110,9 +110,17 @@
 
 ## ChangeLog
 
+### [v0.9.3] - 2020-07-21
+- XD,Unity: コンポーネントをPrefabにするオプションを追加。
+
+### [v0.9.2] - 2020-05-31
+- XD,Unity: Scrollable Groupsに対応した。 
+
 ### [v0.9] - 2020-05-31
 - XD,Unity: レスポンシブ リサイズ情報がより正確になった。 
 - Unity: フォルダ指定してインポートするようにした。
+
+<details><summary>詳細</summary><div>
 
 ### [v0.8] - 2020-03-16
 - XD: 選択を出力するように修正。
@@ -120,7 +128,6 @@
 - Unity: Unity2017で動作するように修正。
 - Unity: asmdefファイルを削除した
 
-<details><summary>詳細</summary><div>
 ### [v0.7.2] - 2020-03-13
 - DotsScrollbarのテスト
 - マスク処理の修正
