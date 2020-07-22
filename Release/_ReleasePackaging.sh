@@ -1,5 +1,5 @@
 #!/bin/sh
-# FOR PACKAGING
+echo "# Packaging"
 
 # 以下の動作はSyncToolで行うこと
 # AdobeXD developフォルダにあるプラグインソースをリポジトリに同期
@@ -9,9 +9,14 @@
 #echo "done.\n"
 
 # リポジトリ内から AdobeXDプラグインファイルを作成する
-echo "----- make AdobeXD plugin .xdx file. -----"
+echo "## make AdobeXD plugin .xdx file."
+echo "- XdUnityUIExport.xdx"
 (cd ../Develop && zip -q -r ../Release/XdUnityUIExport.xdx ./XdUnityUIExport -x \*/types/*)
+echo "- 9SliceHelper.xdx"
 (cd ../Develop && zip -q -r ../Release/9SliceHelper.xdx ./9SliceHelper -x \*/types/*)
+echo "- RoundRects.xdx"
 (cd ../Develop && zip -q -r ../Release/RoundRects.xdx ./RoundRects -x \*/types/*)
+echo "## Sample"
+echo "- Samples.zip"
 (cd .. && zip -q -r ./Release/Samples.zip ./Samples)
 echo "done.\n"
