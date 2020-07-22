@@ -17,10 +17,10 @@ namespace I0plus.XdUnityUI.Editor
     /// <summary>
     ///     based on Baum2/Editor/Scripts/BaumImporter file.
     /// </summary>
-    public sealed class updateDisplayProgressBar : AssetPostprocessor
+    public sealed class Importer : AssetPostprocessor
     {
-        private static int progressTotal = 1;
-        private static int progressCount;
+        private static int _progressTotal = 1;
+        private static int _progressCount;
         private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
 
         /// <summary>
@@ -42,10 +42,10 @@ namespace I0plus.XdUnityUI.Editor
 
         private static void UpdateDisplayProgressBar(string message = "")
         {
-            if (progressTotal > 1)
+            if (_progressTotal > 1)
                 EditorUtility.DisplayProgressBar("XdUnitUI Import",
-                    $"{progressCount}/{progressTotal} {message}",
-                    (float) progressCount / progressTotal);
+                    $"{_progressCount}/{_progressTotal} {message}",
+                    (float) _progressCount / _progressTotal);
         }
 
         /*
@@ -88,7 +88,7 @@ namespace I0plus.XdUnityUI.Editor
         public static async Task MenuImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
-            if (string.IsNullOrWhiteSpace(path)) return;
+            if (String.IsNullOrWhiteSpace(path)) return;
 
             var folders = new List<string> {path};
             await ImportFolders(folders, true, false);
@@ -117,7 +117,7 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var obj in Selection.GetFiltered(typeof(Object), SelectionMode.Assets))
             {
                 var path = AssetDatabase.GetAssetPath(obj);
-                if (!string.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
+                if (!String.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
             }
 
             return folders;
@@ -192,9 +192,9 @@ namespace I0plus.XdUnityUI.Editor
         /// <param name="deleteImportEntriesFlag"></param>
         private static async Task Import(IReadOnlyCollection<string> importedPaths)
         {
-            progressTotal = importedPaths.Count;
-            if (progressTotal == 0) return;
-            progressCount = 0;
+            _progressTotal = importedPaths.Count;
+            if (_progressTotal == 0) return;
+            _progressCount = 0;
 
             var changed = false;
 
@@ -280,7 +280,7 @@ namespace I0plus.XdUnityUI.Editor
                 changed = true;
 
                 total++;
-                progressCount += 1;
+                _progressCount += 1;
                 UpdateDisplayProgressBar(message);
 
                 // 出力されたログをカウントする
@@ -293,6 +293,39 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var keyValuePair in messageCounter)
                 Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
 
+
+            var importedLayoutFilePaths = new List<string>();
+            foreach (var layoutFilePath in importedPaths)
+            {
+                if (!layoutFilePath.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase)) continue;
+                importedLayoutFilePaths.Add(layoutFilePath);
+            }
+
+            string GetPrefabPath(string layoutFilePath)
+            {
+                var prefabFileName = Path.GetFileName(layoutFilePath).Replace(".layout.json", "") + ".prefab";
+                var subFolderName = EditorUtil.GetSubFolderName(layoutFilePath);
+                var saveAssetPath =
+                    Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(),
+                        subFolderName), prefabFileName);
+                return saveAssetPath;
+            }
+
+            /*
+            foreach (var layoutFilePath in importedLayoutFilePaths)
+            {
+                var saveAssetPath = GetPrefabPath(layoutFilePath);
+                var exists = AssetDatabase.LoadAssetAtPath(saveAssetPath, typeof(GameObject));
+                if (exists == null)
+                {
+                    var go = new GameObject("not implement");
+                    go.AddComponent<RectTransform>();
+                    var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
+                    Object.DestroyImmediate(go);
+                }
+            }
+            */
+            
             if (changed)
             {
                 AssetDatabase.Refresh();
@@ -304,27 +337,24 @@ namespace I0plus.XdUnityUI.Editor
             var prefabs = new List<GameObject>();
 
             // Create Prefab
-            foreach (var layoutFilePath in importedPaths)
+            foreach (var layoutFilePath in importedLayoutFilePaths)
             {
                 UpdateDisplayProgressBar("layout");
-                progressCount += 1;
+                _progressCount += 1;
                 GameObject go = null;
                 try
                 {
-                    if (!layoutFilePath.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase)) continue;
-                    var prefabFileName = Path.GetFileName(layoutFilePath).Replace(".layout.json", ".prefab");
-                    Debug.Log($"[XdUnityUI] in process:{prefabFileName}");
-
+                    Debug.Log($"[XdUnityUI] in process:{layoutFilePath}");
+                    // 
                     var subFolderName = EditorUtil.GetSubFolderName(layoutFilePath);
+                    var saveAssetPath = GetPrefabPath(layoutFilePath);
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
-                    var creator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
+                    // Create Prefab
+                    var prefabCreator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
                         prefabs);
-                    go = creator.Create();
-                    var saveAssetPath =
-                        Path.Combine(Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(),
-                            subFolderName), prefabFileName);
+                    go = prefabCreator.Create();
 #if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);
@@ -338,14 +368,14 @@ namespace I0plus.XdUnityUI.Editor
                 {
                     Debug.LogAssertion("[XdUnityUI] " + ex.Message + "\n" + ex.StackTrace);
                     // 変換中例外が起きた場合もテンポラリGameObjectを削除する
-                    Object.DestroyImmediate(go);
                     EditorUtility.ClearProgressBar();
                     EditorUtility.DisplayDialog("Import Failed", ex.Message, "Close");
                     throw;
                 }
-
-                // 作成に成功した
-                Object.DestroyImmediate(go);
+                finally
+                {
+                    Object.DestroyImmediate(go);
+                }
             }
 
             EditorUtility.ClearProgressBar();
@@ -431,6 +461,39 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var s = fi.Name;
                 return s.GetHashCode();
+            }
+        }
+
+        /// <summary>
+        /// 複数階層のフォルダを作成する
+        /// </summary>
+        /// <param name="path">一番子供のフォルダまでのパスe.g.)Assets/Resources/Sound/</param>
+        /// <remarks>パスは"Assets/"で始まっている必要があります。Splitなので最後のスラッシュ(/)は不要です</remarks>
+        public static void CreateFolderRecursively(string path)
+        {
+            path = path.Replace("\\", "/");
+            Debug.Assert(path.StartsWith("Assets/"),
+                "arg `path` of CreateFolderRecursively doesn't starts with `Assets/`");
+
+            // もう存在すれば処理は不要
+            if (AssetDatabase.IsValidFolder(path)) return;
+
+            // スラッシュで終わっていたら除去
+            if (path[path.Length - 1] == '/')
+            {
+                path = path.Substring(0, path.Length - 1);
+            }
+
+            var names = path.Split('/');
+            for (int i = 1; i < names.Length; i++)
+            {
+                var parent = String.Join("/", names.Take(i).ToArray());
+                var target = String.Join("/", names.Take(i + 1).ToArray());
+                var child = names[i];
+                if (!AssetDatabase.IsValidFolder(target))
+                {
+                    AssetDatabase.CreateFolder(parent, child);
+                }
             }
         }
     }
