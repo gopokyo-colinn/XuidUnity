@@ -205,10 +205,12 @@ async function resizeArtboard(selection, root) {
  * @param {RootNode} root
  * @return {Promise<void>}
  */
-async function getInteractionsCommand(selection, root) {
+async function pluginGetInteractions(selection, root) {
+  console.log("## all interactions")
   let allInteractions = require('interactions').allInteractions
   console.log(allInteractions)
 
+  console.log("## selected layer interactions")
   let node = selection.items[0]
   if (node) {
     // Print all the interactions triggered by a node
@@ -407,5 +409,6 @@ module.exports = {
     resizeArtboard,
     pluginPrintAllProperties,
     pluginPrintCheckProperties,
+    pluginGetInteractions,
   },
 }
