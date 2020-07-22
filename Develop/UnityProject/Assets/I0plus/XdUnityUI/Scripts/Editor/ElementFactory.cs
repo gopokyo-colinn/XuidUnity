@@ -28,8 +28,8 @@ namespace I0plus.XdUnityUI.Editor
 #else
                 {"TextMeshPro", (d, p) => new TextElement(d, p)},
 #endif
-                // {"Viewport", (d, p) => new ViewportElement(d, p)}, // GroupElementに統合した
-                {"Rect", (d, p) => new RectElement(d, p)}
+                {"Rect", (d, p) => new RectElement(d, p)},
+                {"Instance", (d, p) => new InstanceElement(d, p)},
             };
 
         public static Element Generate(Dictionary<string, object> json, Element parent)
@@ -40,6 +40,7 @@ namespace I0plus.XdUnityUI.Editor
                 Debug.LogError("[XdUnityUI] Unknown type: " + type);
                 return null;
             }
+            
 
             // Debug.Log($"generate {type}");
 
