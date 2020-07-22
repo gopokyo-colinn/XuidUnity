@@ -16,9 +16,11 @@ const {
   GraphicNode,
   SceneNode,
   ScrollableGroup,
+  SymbolInstance,
   root,
   selection,
 } = require('scenegraph')
+const scenegraph = require('scenegraph')
 const application = require('application')
 const fs = require('uxp').storage.localFileSystem
 const commands = require('commands')
@@ -451,9 +453,32 @@ function parseNodeName(nodeName) {
   }
 }
 
-function getSubFolderFromNodeName(nodeName) {
-  const { folder } = parseNodeName(nodeName)
+function getSubFolderNameFromNode(node) {
+  const { folder } = parseNodeName(node.name)
   return folder
+}
+
+/**
+ * 拡張子なし
+ * @param node
+ * @return {string}
+ */
+function getLayoutFileNameFromNode(node) {
+  const unityName = getUnityName(node)
+  return replaceToFileName(unityName)
+}
+
+/**
+ * @param {SymbolInstance} node
+ * @return {boolean}
+ */
+function isInstanceNode(node) {
+  if (!node) return false
+  if (node.constructor.name !== 'SymbolInstance') return false
+  const masterNode = getMasterComponentNode(node.symbolId)
+  if( !masterNode ) return false
+  console.log('name:', masterNode.name)
+  return true
 }
 
 /**
@@ -462,7 +487,8 @@ function getSubFolderFromNodeName(nodeName) {
  */
 function isLayoutRootNode(node) {
   if (!node) return false
-  return !!getSubFolderFromNodeName(node.name)
+  if (!node.isMaster) return false
+  return !!getSubFolderNameFromNode(node)
 }
 
 /**
@@ -2624,25 +2650,6 @@ function addRectTransform(json, node, style) {
 }
 
 /**
- *
- * @param json
- * @param style
- */
-function addState(json, style) {
-  /**
-   * @type {string}
-   */
-  /* 廃止
-  const styleState = style.first("state")
-  if (!styleState) return
-  const state = styleState.split(",").map(value => value.trim())
-  Object.assign(json, {
-    state
-  })
-   */
-}
-
-/**
  * @param json
  * @param {SceneNode|SceneNodeClass} node
  */
@@ -3410,7 +3417,6 @@ async function createViewport(json, node, root, funcForEachChild) {
   addActive(json, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
 
   addContentSizeFitter(json, style)
@@ -3486,7 +3492,6 @@ async function createInput(json, node, root, funcForEachChild) {
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
 }
 
@@ -3686,7 +3691,6 @@ async function createGroup(json, node, root, funcForEachChild) {
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
   //
   addComponents(json, style)
@@ -3775,7 +3779,6 @@ async function createScrollbar(json, node, funcForEachChild) {
   addActive(json, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
   //
   addCanvasGroup(json, node, style)
@@ -3839,7 +3842,6 @@ async function createSlider(json, node, funcForEachChild) {
   addActive(json, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
   //
   addCanvasGroup(json, node, style)
@@ -3916,7 +3918,6 @@ async function createToggle(json, node, root, funcForEachChild) {
   addActive(json, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
   //
   addLayoutElement(json, node, style)
@@ -3981,7 +3982,6 @@ async function createButton(json, node, root, funcForEachChild) {
   addActive(json, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
   addComponents(json, style)
   addLayoutElement(json, node, style)
@@ -4052,7 +4052,6 @@ async function createImage(
     addActive(json, style)
     addRectTransformDraw(json, node, style)
     addLayer(json, style)
-    addState(json, style)
     addParsedNames(json, node)
     addLayoutElement(json, node, style)
     // assignComponent
@@ -4085,6 +4084,37 @@ async function createImage(
     }
     repeatGrid.attachImageDataSeries(node, dataSeries)
   }
+}
+
+/**
+ *
+ * @param json
+ * @param {SceneNode|SceneNodeClass} node
+ * @param {SceneNode|SceneNodeClass} root
+ * @param funcForEachChild
+ * @return {Promise<string>}
+ */
+async function createInstance(json, node, root) {
+  let { style } = getNodeNameAndStyle(node)
+
+  const masterNode = getMasterComponentNode(node.symbolId)
+  const masterName =
+    getSubFolderNameFromNode(masterNode) +
+    '/' +
+    getLayoutFileNameFromNode(masterNode)
+
+  Object.assign(json, {
+    type: 'Instance',
+    name: getUnityName(node),
+    master: masterName,
+  })
+
+  // 基本
+  addActive(json, style)
+  addRectTransformDraw(json, node, style)
+  addLayer(json, style)
+  addParsedNames(json, node)
+  //
 }
 
 /**
@@ -4250,7 +4280,6 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   // Drawではなく、通常のレスポンシブパラメータを渡す　シャドウ等のエフェクトは自前でやる必要があるため
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
-  addState(json, style)
   addParsedNames(json, node)
 }
 
@@ -4301,8 +4330,10 @@ async function createRoot(renditions, outputFolder, root) {
       return
     }
 
-    if (root != node && isLayoutRootNode(node)) {
+    if (root != node && isInstanceNode(node)) {
       // Root配下に出力ノードをみつけた
+      // console.log('find layout root node.')
+      await createInstance(json, node, root)
       return
     }
 
@@ -4356,7 +4387,7 @@ async function createRoot(renditions, outputFolder, root) {
     // console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'SymbolInstance':
-        if( optionSymbolInstanceAsPrefab ) {
+        if (optionSymbolInstanceAsPrefab) {
           if (json['type'] !== 'Root') {
             Object.assign(json, {
               symbolInstance: getUnityName(node),
@@ -4466,6 +4497,14 @@ async function createSubFolder(outputFolder, subFolderName) {
   return subFolder
 }
 
+let globalSymbolIdToGuid = {}
+
+function getMasterComponentNode(symbolId) {
+  const guid = globalSymbolIdToGuid[symbolId]
+  if(guid == null) return null
+  return scenegraph.getNodeByGUID(guid)
+}
+
 /**
  * XdUnityUI export
  * @param {SceneNode[]} roots
@@ -4477,6 +4516,15 @@ async function exportXdUnityUI(roots, outputFolder) {
   let renditions = []
 
   console.log(`## export ${roots.length} roots`)
+
+  traverseNode(scenegraph.root, node => {
+    if (node.constructor.name === 'SymbolInstance') {
+      if (node.isMaster) {
+        console.log('find master', node.guid, node.symbolId)
+        globalSymbolIdToGuid[node.symbolId] = node.guid
+      }
+    }
+  })
 
   for (let root of roots) {
     console.log(`### ${root.name}`)
@@ -4901,7 +4949,8 @@ async function pluginExportXdUnityUI(selection, root) {
               }
 
               globalScale = tmpScale
-              optionSymbolInstanceAsPrefab = checkComponentInstanceAsPrefab.checked
+              optionSymbolInstanceAsPrefab =
+                checkComponentInstanceAsPrefab.checked
               optionImageNoExport = checkImageNoExport.checked
               optionCheckMarkedForExport = checkCheckMarkedForExport.checked
               optionChangeContentOnly = checkChangeContentOnly.checked
