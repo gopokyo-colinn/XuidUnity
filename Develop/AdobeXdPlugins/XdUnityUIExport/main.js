@@ -78,6 +78,8 @@ function resetGlobalVariables() {
   globalCssVars = {}
   cacheParseNodeName = {}
   cacheNodeNameAndStyle = {}
+  // こちらの値はRootをまたいで必要になる情報のためとっておく
+  // globalSymbolIdToPrefabGuid = {}
 }
 
 const STR_CONTENT = 'content'
@@ -433,12 +435,13 @@ function parseCssDeclarationBlock(declarationBlock) {
  * 例
  * MainMenu/vertex#scroller {fix:t v a}
  * folder:MainMenu id:scroller name:vertex#scroller
+ * folderの最後の文字に"/"は付かないようにする
  * @param {string} nodeName
  * @return {{css_declarations: string|null, name: string|null, folder: string|null}}
  */
 function parseNodeName(nodeName) {
-  // https://regex101.com/r/MdGDaC/1
-  const pattern = /((?<comment_out>\/\/)?(?<folder>[^{]*)\/)?(?<name>[^{]*)(?<css_declarations>{.*})?/g
+  // https://regex101.com/r/MdGDaC/3
+  const pattern = /(?<comment_out>\/\/)?((?<folder>[^{]*)\/)?(?<name>[^{\/]*)(?<css_declarations>{.*})?/g
   const r = pattern.exec(nodeName)
   if (r.groups.comment_out) {
     return {}
@@ -469,26 +472,31 @@ function getLayoutFileNameFromNode(node) {
 }
 
 /**
+ * 自身がインスタンスであり、PrefabになるNodeがいる場合True
  * @param {SymbolInstance} node
  * @return {boolean}
  */
-function isInstanceNode(node) {
+function isPrefabInstanceNode(node) {
   if (!node) return false
-  if (node.constructor.name !== 'SymbolInstance') return false
-  const masterNode = getMasterComponentNode(node.symbolId)
-  if( !masterNode ) return false
-  console.log('name:', masterNode.name)
-  return true
+  const masterNode = getPrefabNodeFromNode(node)
+  return !!masterNode
 }
 
 /**
+ * Prefabを作成できる条件
+ * - Componentのマスターである
+ *   - マスターの指定がないと、どれが基準かわからなくなるため
+ * - 出力サブフォルダーが指定してある
  * @param {SceneNodeClass} node
  * @return {boolean}
  */
-function isLayoutRootNode(node) {
+function isPrefabNode(node) {
   if (!node) return false
-  if (!node.isMaster) return false
-  return !!getSubFolderNameFromNode(node)
+  if (!node.symbolId || !node.isMaster) return false
+  const subFolderName = getSubFolderNameFromNode(node)
+  // console.log('subfoldername', subFolderName)
+  if (!subFolderName) return false
+  return true
 }
 
 /**
@@ -4094,13 +4102,14 @@ async function createImage(
  * @param funcForEachChild
  * @return {Promise<string>}
  */
-async function createInstance(json, node, root) {
+async function createPrefabInstance(json, node, root) {
   let { style } = getNodeNameAndStyle(node)
 
-  const masterNode = getMasterComponentNode(node.symbolId)
+  const masterNode = getPrefabNodeFromNode(node)
+
+  const masterSubFolderName = getSubFolderNameFromNode(masterNode)
   const masterName =
-    getSubFolderNameFromNode(masterNode) +
-    '/' +
+    (masterSubFolderName ? masterSubFolderName + '/' : '') +
     getLayoutFileNameFromNode(masterNode)
 
   Object.assign(json, {
@@ -4330,10 +4339,10 @@ async function createRoot(renditions, outputFolder, root) {
       return
     }
 
-    if (root != node && isInstanceNode(node)) {
+    if (root != node && isPrefabInstanceNode(node)) {
       // Root配下に出力ノードをみつけた
       // console.log('find layout root node.')
-      await createInstance(json, node, root)
+      await createPrefabInstance(json, node, root)
       return
     }
 
@@ -4497,11 +4506,13 @@ async function createSubFolder(outputFolder, subFolderName) {
   return subFolder
 }
 
-let globalSymbolIdToGuid = {}
+let globalSymbolIdToPrefabGuid = {}
 
-function getMasterComponentNode(symbolId) {
-  const guid = globalSymbolIdToGuid[symbolId]
-  if(guid == null) return null
+function getPrefabNodeFromNode(node) {
+  const symbolId = node.symbolId
+  if (!symbolId) return null
+  const guid = globalSymbolIdToPrefabGuid[symbolId]
+  if (guid == null) return null
   return scenegraph.getNodeByGUID(guid)
 }
 
@@ -4516,15 +4527,6 @@ async function exportXdUnityUI(roots, outputFolder) {
   let renditions = []
 
   console.log(`## export ${roots.length} roots`)
-
-  traverseNode(scenegraph.root, node => {
-    if (node.constructor.name === 'SymbolInstance') {
-      if (node.isMaster) {
-        console.log('find master', node.guid, node.symbolId)
-        globalSymbolIdToGuid[node.symbolId] = node.guid
-      }
-    }
-  })
 
   for (let root of roots) {
     console.log(`### ${root.name}`)
@@ -4838,7 +4840,7 @@ async function pluginExportXdUnityUI(selection, root) {
         (exportMessage = h(
           'textarea',
           { width: '400px', height: 140, readonly: true, userSelect: 'none' },
-          getExportRoots(selection.items).message,
+          createMessageFromExportRoot(getExportRoots(selection.items)),
         )),
       ),
       h('br'),
@@ -4849,7 +4851,9 @@ async function pluginExportXdUnityUI(selection, root) {
           type: 'checkbox',
           async onclick(e) {
             optionCheckMarkedForExport = checkCheckMarkedForExport.checked
-            exportMessage.value = getExportRoots(selection.items).message
+            exportMessage.value = createMessageFromExportRoot(
+              getExportRoots(selection.items),
+            )
           },
         })),
         getString(strings.ExportDialogOptionCheckExportMark),
@@ -4991,7 +4995,7 @@ async function pluginExportXdUnityUI(selection, root) {
   // Dialogの結果チェック 出力しないのなら終了
   if (result !== 'export') return
 
-  let { exportRoots } = await getExportRoots(selection.items)
+  let exportRoots = await getExportRoots(selection.items)
 
   if (exportRoots.length === 0) {
     await alert(getString(strings.ExportErrorNoTarget))
@@ -5004,6 +5008,7 @@ async function pluginExportXdUnityUI(selection, root) {
      * @type {SceneNode[]}
      */
     await exportXdUnityUI(exportRoots, outputFolder)
+    await alert('done')
   } catch (e) {
     console.log(e)
     console.log(e.stack)
@@ -5022,65 +5027,59 @@ async function pluginExportXdUnityUI(selection, root) {
 /**
  *
  * @param selectionItems {SceneNode[]}
- * @returns {{exportRoots: SceneNode[]}|null}
+ * @returns SceneNode[]
  */
 function getExportRoots(selectionItems) {
   if (!selectionItems) return null
 
-  /**
-   * @type {SceneNode[]|SceneNodeList}
-   */
-  let exportRoots = []
-
-  // 出力するアートボートの名前リスト
-  let artboards = []
-  // 出力するレイヤーの名前リスト
-  let layers = []
-
-  function addMessage(node) {
-    if (node.constructor.name === 'Artboard') {
-      artboards.push(node.name)
-    } else {
-      layers.push(node.name)
-    }
-  }
+  let exportRoots = new Set()
 
   for (let selectionItem of selectionItems) {
     if (optionCheckMarkedForExport && !selectionItem.markedForExport) {
     } else {
-      exportRoots.push(selectionItem)
-      addMessage(selectionItem)
+      exportRoots.add(selectionItem)
     }
   }
 
-  const newRoots = []
+  // 全体から出力するPrefabノードを探す
+  traverseNode(scenegraph.root, node => {
+    if (node.constructor.name === 'SymbolInstance') {
+      if (isPrefabNode(node)) {
+        // console.log('found prefab', node.guid, node.symbolId)
+        globalSymbolIdToPrefabGuid[node.symbolId] = node.guid
+      }
+    }
+  })
+
+  // 出力するノードから、必要なPrefabノードを選出し、出力リストに追加する
   for (let root of exportRoots) {
     traverseNode(root, node => {
       if (root === node) return
-      if (optionCheckMarkedForExport && !node.markedForExport) return
-      if (isLayoutRootNode(node)) {
-        // 出力サブフォルダーがみつかった
-        newRoots.push(node)
-        addMessage(node)
+      if (isPrefabInstanceNode(node)) {
+        // console.log('found prefab instance:', prefabNode.name)
+        const prefabNode = getPrefabNodeFromNode(node)
+        exportRoots.add(prefabNode)
       }
     })
   }
-  exportRoots = exportRoots.concat(newRoots)
 
-  // 名前でソート
-  artboards.sort()
-  layers.sort()
+  return Array.from(exportRoots)
+}
 
+/**
+ *
+ * @param roots {SceneNodeClass[]}
+ */
+function createMessageFromExportRoot(roots) {
   let message = ''
-
-  message +=
-    artboards.length > 0 ? '[ARTBOARD] ' + artboards.join('\n[ARTBOARD] ') : ''
-  message += layers.length > 0 ? '\n[LAYER] ' + layers.join('\n[LAYER] ') : ''
-
-  return {
-    exportRoots,
-    message,
+  for (let root of roots) {
+    let typeName = root.constructor.name
+    if( isPrefabNode(root) ) {
+      typeName = "Prefab"
+    }
+    message += `[${typeName}] ${root.name} \n`
   }
+  return message
 }
 
 /**
