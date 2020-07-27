@@ -1,4 +1,8 @@
+
 #if TMP_PRESENT
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
 using TMPro;
 #endif
 
