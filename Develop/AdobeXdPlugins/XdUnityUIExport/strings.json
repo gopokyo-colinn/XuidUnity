@@ -24,8 +24,8 @@
     "ja": "全てのアートボードを対象とする"
   },
   "ExportComponentInstanceAsPrefab": {
-    "en": "Component instance as prefab.",
-    "ja": "コンポーネントインスタンスをPrefabにする"
+    "en": "All Component instance as prefab.",
+    "ja": "全てのコンポーネントインスタンスをPrefabにする"
   },
   "ExportDialogOptionCheckExportMark": {
     "en": "Export only with export mark.",
