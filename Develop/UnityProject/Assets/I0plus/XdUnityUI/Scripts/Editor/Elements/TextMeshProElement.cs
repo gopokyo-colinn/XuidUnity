@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+
 #endif
 
 namespace I0plus.XdUnityUI.Editor
@@ -51,7 +52,11 @@ namespace I0plus.XdUnityUI.Editor
             text.fontSize = fontSize.Value;
 
             // 自動的に改行されることが困ることもあるが、挙動としてはこちらのほうがXDに沿うことになる
-            text.textInfo.textComponent.enableWordWrapping = true;
+            if (text.textInfo != null && text.textInfo.textComponent != null)
+                text.textInfo.textComponent.enableWordWrapping = true;
+            else
+                // Essential がインストールしてない場合に　NULLになる可能性
+                Debug.LogError("[XdUnityUI] Can not access text.textInfo.textComponent");
 
             var color = _textJson.Get("color");
             if (color != null) text.color = EditorUtil.HexToColor(color);
