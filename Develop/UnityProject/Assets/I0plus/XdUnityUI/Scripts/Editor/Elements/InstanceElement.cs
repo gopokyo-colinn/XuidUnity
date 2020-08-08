@@ -50,6 +50,7 @@ namespace I0plus.XdUnityUI.Editor
             ElementUtil.SetLayer(go, Layer);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
             if (Active != null) go.SetActive(Active.Value);
+            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
 
             return go;
         }

@@ -131,6 +131,8 @@ const STYLE_LAYOUT_GROUP_SPACING_X = 'layout-group-spacing-x'
 const STYLE_LAYOUT_GROUP_SPACING_Y = 'layout-group-spacing-y'
 const STYLE_LAYOUT_GROUP_START_AXIS = 'layout-group-start-axis'
 const STYLE_LAYOUT_GROUP_USE_CHILD_SCALE = 'layout-group-use-child-scale'
+const STYLE_LAYOUT_GROUP_CHILDREN_ORDER =
+  'layout-group-children-order'
 const STYLE_MATCH_LOG = 'match-log'
 const STYLE_PRESERVE_ASPECT = 'preserve-aspect'
 const STYLE_LOCK_ASPECT = 'lock-aspect' // preserve-aspectと同じ動作にする　アスペクト比を維持する
@@ -1135,6 +1137,7 @@ function getContentSizeFitterParam(style) {
  */
 function sortElementsByPositionAsc(jsonElements) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
+  console.log('sortElementsByPositionAsc')
   if (jsonElements == null) return
   jsonElements.sort((elemA, elemB) => {
     const a_y = elemA['component'] ? Number.MAX_VALUE : elemA['y']
@@ -1435,7 +1438,6 @@ function calcVLayout(json, viewportNode, maskNode, children) {
  */
 function calcHLayout(json, viewportNode, maskNode, children) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
-  //sortElementsByPositionAsc(json.elements)
   let jsonHLayout = calcLayout(json, viewportNode, maskNode, children)
   jsonHLayout['method'] = STR_HORIZONTAL
   return jsonHLayout
@@ -2420,10 +2422,14 @@ function sameParentBounds(node) {
   // 判定に使う値は、cacheにあるものを使わない
   // 同じかどうかわかれば良いので、getGlobalBounds関数もつかわなくて良い
   // ただ、Artboardのリサイズには対応できない
-  const bounds = node.globalBounds
-  const parentBounds = parent.globalBounds
+  // globalDrawBoundsでのチェックにする
+  // Pathで、輪郭サイズを太くしている場合
+  // 影の描画時、globalBoundsでは正確なチェックができない
+  const bounds = node.globalDrawBounds
+  const parentBounds = parent.globalDrawBounds
   if (!bounds || !parentBounds) return false
   // TODO:誤差を許容する判定をつかわなくてよいか
+  // console.log(`sameParentBounds`, bounds, parentBounds)
   return (
     bounds.x === parentBounds.x &&
     bounds.y === parentBounds.y &&
@@ -3054,6 +3060,11 @@ function addLayout(json, viewportNode, maskNode, children, style) {
     Object.assign(layoutJson, {
       spacing_y: parseInt(layoutSpacingY), //TODO: pxやenを無視している
     })
+  }
+
+  // 子供が位置でソートされているそれの順序を反転させる
+  if (style.first(STYLE_LAYOUT_GROUP_CHILDREN_ORDER) === 'reverse') {
+    json['elements'].reverse()
   }
 
   // console.log('addLayout:', layoutJson)
@@ -4123,7 +4134,9 @@ async function createPrefabInstance(json, node, root) {
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
-  //
+  // このPrefabがVerticalLayoutの中にはいっている場合等
+  // この情報が必要になる
+  addLayoutElement(json, node, style)
 }
 
 /**
@@ -5074,8 +5087,8 @@ function createMessageFromExportRoot(roots) {
   let message = ''
   for (let root of roots) {
     let typeName = root.constructor.name
-    if( isPrefabNode(root) ) {
-      typeName = "Prefab"
+    if (isPrefabNode(root)) {
+      typeName = 'Prefab'
     }
     message += `[${typeName}] ${root.name} \n`
   }

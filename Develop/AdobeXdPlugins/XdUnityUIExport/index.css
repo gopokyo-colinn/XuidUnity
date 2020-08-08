@@ -68,6 +68,7 @@ padding background
   layout-group-child-control-size: width height;
   layout-group-child-alignment: upper-center;
   layout-group-spacing: average;
+  layout-group-children-order: reverse;
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
