@@ -13,7 +13,6 @@ namespace I0plus.XdUnityUI.Editor
         private static readonly Dictionary<string, Func<Dictionary<string, object>, Element, Element>> Generator =
             new Dictionary<string, Func<Dictionary<string, object>, Element, Element>>
             {
-                {"Root", (d, p) => new RootElement(d, p)},
                 {"Image", (d, p) => new ImageElement(d, p)},
                 {"Mask", (d, p) => new MaskElement(d, p)},
                 {"Group", (d, p) => new GroupElement(d, p)},

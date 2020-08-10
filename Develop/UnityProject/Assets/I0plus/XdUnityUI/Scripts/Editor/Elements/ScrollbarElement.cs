@@ -17,9 +17,9 @@ namespace I0plus.XdUnityUI.Editor
             _scrollbarJson = json.GetDic("scrollbar");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            go = CreateSelf(renderContext, parentObject);
 
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
@@ -78,7 +78,6 @@ namespace I0plus.XdUnityUI.Editor
             }
 
             ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
-            return go;
         }
     }
 }

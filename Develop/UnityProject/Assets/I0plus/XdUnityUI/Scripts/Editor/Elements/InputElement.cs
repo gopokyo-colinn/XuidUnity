@@ -17,9 +17,9 @@ namespace I0plus.XdUnityUI.Editor
             InputJson = json.GetDic("input");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            go = CreateSelf(renderContext, parentObject);
 
             var children = RenderChildren(renderContext, go);
 
@@ -42,8 +42,6 @@ namespace I0plus.XdUnityUI.Editor
 
             ElementUtil.SetLayer(go, Layer);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
-
-            return go;
         }
     }
 }

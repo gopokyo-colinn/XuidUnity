@@ -24,9 +24,9 @@ namespace I0plus.XdUnityUI.Editor
             _parentElement = parent;
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            go = CreateSelf(renderContext, parentObject);
 
             ElementUtil.SetLayer(go, Layer);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
@@ -66,7 +66,6 @@ namespace I0plus.XdUnityUI.Editor
             // ScrollRectを設定した時点ではみでたContentがアジャストされる　PivotがViewport内に入っていればOK
             ElementUtil.SetupScrollRect(go, goContent, _scrollRectJson);
 
-            return go;
         }
 
 

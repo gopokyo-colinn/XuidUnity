@@ -16,10 +16,8 @@ namespace I0plus.XdUnityUI.Editor
             master = json.Get("master");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            GameObject go;
-
             var path = EditorUtil.GetOutputPrefabsFolderAssetPath() + "/" + master + ".prefab";
 
             var prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -51,8 +49,6 @@ namespace I0plus.XdUnityUI.Editor
             ElementUtil.SetupRectTransform(go, RectTransformJson);
             if (Active != null) go.SetActive(Active.Value);
             ElementUtil.SetupLayoutElement(go, LayoutElementJson);
-
-            return go;
         }
     }
 }

@@ -17,9 +17,9 @@ namespace I0plus.XdUnityUI.Editor
             _sliderJson = json.GetDic("slider");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            go = CreateSelf(renderContext, parentObject);
 
             var slider = go.AddComponent<Slider>();
 
@@ -72,7 +72,6 @@ namespace I0plus.XdUnityUI.Editor
             }
 
             ElementUtil.SetupRectTransform(go, RectTransformJson);
-            return go;
         }
     }
 }

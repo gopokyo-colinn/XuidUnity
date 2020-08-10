@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
 using MiniJSON;
 using UnityEditor;
 using UnityEngine;
@@ -38,29 +39,29 @@ namespace I0plus.XdUnityUI.Editor
             nestedPrefabs = prefabs;
         }
 
-        public GameObject Create()
+        public void Create([NotNull] ref GameObject rootObject)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
-            var text = File.ReadAllText(assetPath);
-            var json = Json.Deserialize(text) as Dictionary<string, object>;
+            var jsonText = File.ReadAllText(assetPath);
+            var json = Json.Deserialize(jsonText) as Dictionary<string, object>;
             var info = json.GetDic("info");
             Validation(info);
 
             var renderer = new RenderContext(spriteRootPath, fontRootPath, nestedPrefabs);
             var rootJson = json.GetDic("root");
-            GameObject root = null;
 
             var rootElement = ElementFactory.Generate(rootJson, null);
-            root = rootElement.Render(renderer, null);
+            
+            rootElement.Render(renderer, ref rootObject, null);
 
-            Postprocess(root);
+            Postprocess(rootObject);
 
             if (renderer.ToggleGroupMap.Count > 0)
             {
                 // ToggleGroupが作成された場合
                 var go = new GameObject("ToggleGroup");
-                go.transform.SetParent(root.transform);
+                go.transform.SetParent(rootObject.transform);
                 foreach (var keyValuePair in renderer.ToggleGroupMap)
                 {
                     var gameObject = keyValuePair.Value;
@@ -83,7 +84,6 @@ namespace I0plus.XdUnityUI.Editor
                         Path.Combine(nestedPrefabDirectory, prefab.name + ".prefab"), InteractionMode.AutomatedAction));
                 }
 
-            return root;
         }
 
         private void Postprocess(GameObject go)

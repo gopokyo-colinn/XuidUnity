@@ -351,10 +351,12 @@ namespace I0plus.XdUnityUI.Editor
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
+                    // すでにあるプレハブを読み込む
+                    go = AssetDatabase.LoadAssetAtPath<GameObject>(saveAssetPath);
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
                         prefabs);
-                    go = prefabCreator.Create();
+                    prefabCreator.Create( ref go);
 #if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,7 +20,6 @@ namespace I0plus.XdUnityUI.Editor
         protected readonly Dictionary<string, object> RectTransformJson;
         protected bool? Active;
 
-        private GameObject go;
         protected string name;
         protected Element Parent;
 
@@ -35,14 +35,11 @@ namespace I0plus.XdUnityUI.Editor
             RectTransformJson = json.GetDic("rect_transform");
             LayoutElementJson = json.GetDic("layout_element");
 
-            IsPrefab = json.Get("symbolInstance") != null;
         }
-
-        public bool IsPrefab { get; }
 
         public string Name => name;
 
-        public abstract GameObject Render(RenderContext renderContext, GameObject parentObject);
+        public abstract void Render(RenderContext renderContext, ref GameObject targetObject, GameObject parentObject);
 
         public virtual void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
         {
@@ -55,72 +52,18 @@ namespace I0plus.XdUnityUI.Editor
             return found != null;
         }
 
-        protected GameObject CreateUiGameObject(RenderContext renderContext, GameObject parentObject,
-            out bool isPrefabChild)
+        protected void CreateUiGameObject(RenderContext renderContext, [CanBeNull] ref GameObject selfObject, GameObject parentObject)
         {
-            GameObject parentPrefab = null;
-            isPrefabChild = false;
-
-            if (parentObject != null)
-                //we need to check if the parentElement is part of a allready instantiated prefab instance...
-                parentPrefab = PrefabUtility.GetNearestPrefabInstanceRoot(parentObject);
-
-            if (parentPrefab != null)
-            {
-                //...and if so check if the element we want to create here has already been created as part of the prefab...
-                //TODO: This will lead to problems if we have mutliple transforms in prefab with the same name see issue https://github.com/KlingOne/XdUnityUI/issues/4
-                go = parentPrefab.GetComponentsInChildren<Transform>()
-                    .FirstOrDefault(x => x.name == Name && x.gameObject != parentObject)?.gameObject;
-                isPrefabChild = true;
-            }
-
-            //...if not create a new GameObject
-            if (go == null)
-            {
-                if (IsPrefab)
-                {
-                    //check if there already is a existing prefab with the same name from a previous artboard generation
-                    //TODO: Check if prefab names are truly unique or if the components in Adobe XD can have the same name
-                    var existingGo = renderContext.ExistingPrefabs.FirstOrDefault(x => x.name == name);
-
-                    //...if not we register this new gameObject to be saved out as a prefab
-                    if (existingGo == null)
-                    {
-                        go = InstantiateUiGameObject();
-                        //we store new prefabs in a stack since we need to convert them into actual prefabs back to front in order for nesting to work properly
-                        renderContext.NewPrefabs.Push(go);
-                    }
-                    else
-                    {
-                        go = (GameObject) PrefabUtility.InstantiatePrefab(
-                            renderContext.ExistingPrefabs.First(x => x.name == name));
-                    }
-                }
-                else
-                {
-                    go = InstantiateUiGameObject();
-                }
-            }
-
-            return go;
-        }
-
-        protected GameObject InstantiateUiGameObject()
-        {
-            var go = new GameObject(name);
-            go.AddComponent<RectTransform>();
-            ElementUtil.SetLayer(go, Layer);
-            if (Active != null) go.SetActive(Active.Value);
-            return go;
+            selfObject = new GameObject(name);
+            selfObject.AddComponent<RectTransform>();
+            ElementUtil.SetLayer(selfObject, Layer);
+            if (Active != null) selfObject.SetActive(Active.Value);
         }
 
         //since we do not want to read components to a prefab we use this method to add components to elements
-        protected T AddComponent<T>() where T : Component
+        static protected T AddComponent<T>(GameObject go) where T : Component
         {
-            if (!IsPrefab || PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.NotAPrefab ||
-                PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.MissingAsset)
-                return go.AddComponent<T>();
-            return go.GetComponent<T>();
+            return go.AddComponent<T>();
         }
     }
 }

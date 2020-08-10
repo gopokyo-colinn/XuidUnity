@@ -16,9 +16,9 @@ namespace I0plus.XdUnityUI.Editor
             _toggleJson = json.GetDic("toggle");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            go = CreateSelf(renderContext, parentObject);
 
             var children = RenderChildren(renderContext, go);
 
@@ -95,8 +95,6 @@ namespace I0plus.XdUnityUI.Editor
 
             ElementUtil.SetupLayoutElement(go, LayoutElementJson);
             ElementUtil.SetupRectTransform(go, RectTransformJson);
-
-            return go;
         }
     }
 }
