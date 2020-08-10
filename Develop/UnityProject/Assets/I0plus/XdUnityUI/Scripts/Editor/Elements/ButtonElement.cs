@@ -18,14 +18,15 @@ namespace I0plus.XdUnityUI.Editor
             ButtonJson = json.GetDic("button");
         }
 
-        public override void Render(RenderContext renderContext, [CanBeNull] ref GameObject targetObject, GameObject parentObject)
+        public override void Render(RenderContext renderContext, [CanBeNull] ref GameObject targetObject,
+            GameObject parentObject)
         {
-            targetObject = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
             var children = RenderChildren(renderContext, targetObject);
             var deleteObjects = new Dictionary<GameObject, bool>();
 
-            var button = AddComponent<Button>(targetObject);
+            var button = GetOrAddComponent<Button>(targetObject);
 
 
             GameObject targetImageObject = null;

@@ -28,7 +28,7 @@ namespace I0plus.XdUnityUI.Editor
                 {"TextMeshPro", (d, p) => new TextElement(d, p)},
 #endif
                 {"Rect", (d, p) => new RectElement(d, p)},
-                {"Instance", (d, p) => new InstanceElement(d, p)},
+                {"Instance", (d, p) => new InstanceElement(d, p)}
             };
 
         public static Element Generate(Dictionary<string, object> json, Element parent)
@@ -39,7 +39,7 @@ namespace I0plus.XdUnityUI.Editor
                 Debug.LogError("[XdUnityUI] Unknown type: " + type);
                 return null;
             }
-            
+
 
             // Debug.Log($"generate {type}");
 

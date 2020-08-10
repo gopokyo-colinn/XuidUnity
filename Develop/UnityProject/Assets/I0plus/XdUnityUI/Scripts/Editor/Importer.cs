@@ -88,7 +88,7 @@ namespace I0plus.XdUnityUI.Editor
         public static async Task MenuImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
-            if (String.IsNullOrWhiteSpace(path)) return;
+            if (string.IsNullOrWhiteSpace(path)) return;
 
             var folders = new List<string> {path};
             await ImportFolders(folders, true, false);
@@ -117,7 +117,7 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var obj in Selection.GetFiltered(typeof(Object), SelectionMode.Assets))
             {
                 var path = AssetDatabase.GetAssetPath(obj);
-                if (!String.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
             }
 
             return folders;
@@ -325,7 +325,7 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
             */
-            
+
             if (changed)
             {
                 AssetDatabase.Refresh();
@@ -352,11 +352,18 @@ namespace I0plus.XdUnityUI.Editor
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
                     // すでにあるプレハブを読み込む
-                    go = AssetDatabase.LoadAssetAtPath<GameObject>(saveAssetPath);
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(saveAssetPath);
+                    if (prefab != null)
+                    {
+                        go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                        PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.OutermostRoot,
+                            InteractionMode.AutomatedAction);
+                    }
+
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
                         prefabs);
-                    prefabCreator.Create( ref go);
+                    prefabCreator.Create(ref go);
 #if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);
@@ -450,24 +457,8 @@ namespace I0plus.XdUnityUI.Editor
         }
 #endif
 
-        private class FileInfoComparer : IEqualityComparer<FileInfo>
-        {
-            public bool Equals(FileInfo iLhs, FileInfo iRhs)
-            {
-                if (iLhs.Name == iRhs.Name) return true;
-
-                return false;
-            }
-
-            public int GetHashCode(FileInfo fi)
-            {
-                var s = fi.Name;
-                return s.GetHashCode();
-            }
-        }
-
         /// <summary>
-        /// 複数階層のフォルダを作成する
+        ///     複数階層のフォルダを作成する
         /// </summary>
         /// <param name="path">一番子供のフォルダまでのパスe.g.)Assets/Resources/Sound/</param>
         /// <remarks>パスは"Assets/"で始まっている必要があります。Splitなので最後のスラッシュ(/)は不要です</remarks>
@@ -481,21 +472,31 @@ namespace I0plus.XdUnityUI.Editor
             if (AssetDatabase.IsValidFolder(path)) return;
 
             // スラッシュで終わっていたら除去
-            if (path[path.Length - 1] == '/')
-            {
-                path = path.Substring(0, path.Length - 1);
-            }
+            if (path[path.Length - 1] == '/') path = path.Substring(0, path.Length - 1);
 
             var names = path.Split('/');
-            for (int i = 1; i < names.Length; i++)
+            for (var i = 1; i < names.Length; i++)
             {
-                var parent = String.Join("/", names.Take(i).ToArray());
-                var target = String.Join("/", names.Take(i + 1).ToArray());
+                var parent = string.Join("/", names.Take(i).ToArray());
+                var target = string.Join("/", names.Take(i + 1).ToArray());
                 var child = names[i];
-                if (!AssetDatabase.IsValidFolder(target))
-                {
-                    AssetDatabase.CreateFolder(parent, child);
-                }
+                if (!AssetDatabase.IsValidFolder(target)) AssetDatabase.CreateFolder(parent, child);
+            }
+        }
+
+        private class FileInfoComparer : IEqualityComparer<FileInfo>
+        {
+            public bool Equals(FileInfo iLhs, FileInfo iRhs)
+            {
+                if (iLhs.Name == iRhs.Name) return true;
+
+                return false;
+            }
+
+            public int GetHashCode(FileInfo fi)
+            {
+                var s = fi.Name;
+                return s.GetHashCode();
             }
         }
     }

@@ -19,9 +19,9 @@ namespace I0plus.XdUnityUI.Editor
 
         public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref go, parentObject);
 
-            var slider = go.AddComponent<Slider>();
+            var slider = GetOrAddComponent<Slider>(go);
 
             var children = RenderChildren(renderContext, go);
 

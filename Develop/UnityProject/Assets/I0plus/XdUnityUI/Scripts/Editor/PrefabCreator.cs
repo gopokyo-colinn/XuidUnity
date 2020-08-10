@@ -48,11 +48,11 @@ namespace I0plus.XdUnityUI.Editor
             var info = json.GetDic("info");
             Validation(info);
 
-            var renderer = new RenderContext(spriteRootPath, fontRootPath, nestedPrefabs);
+            var renderer = new RenderContext(spriteRootPath, fontRootPath, rootObject);
             var rootJson = json.GetDic("root");
 
             var rootElement = ElementFactory.Generate(rootJson, null);
-            
+
             rootElement.Render(renderer, ref rootObject, null);
 
             Postprocess(rootObject);
@@ -83,7 +83,6 @@ namespace I0plus.XdUnityUI.Editor
                     nestedPrefabs.Add(PrefabUtility.SaveAsPrefabAssetAndConnect(prefab,
                         Path.Combine(nestedPrefabDirectory, prefab.name + ".prefab"), InteractionMode.AutomatedAction));
                 }
-
         }
 
         private void Postprocess(GameObject go)

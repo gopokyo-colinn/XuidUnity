@@ -14,7 +14,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override void Render(RenderContext renderContext, ref GameObject selfObject, GameObject parentObject)
         {
-            CreateUiGameObject(renderContext, ref selfObject, parentObject);
+            GetOrCreateSelfObject(renderContext, ref selfObject, parentObject);
             var rect = selfObject.GetComponent<RectTransform>();
             if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため

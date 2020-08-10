@@ -14,7 +14,7 @@ namespace I0plus.XdUnityUI.Editor
     {
         private readonly string spriteRootPath;
         private readonly string fontRootPath;
-        public List<GameObject> ExistingPrefabs { get; }
+        private readonly GameObject rootObject;
         public Stack<GameObject> NewPrefabs { get; } = new Stack<GameObject>();
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
 
@@ -41,11 +41,32 @@ namespace I0plus.XdUnityUI.Editor
             return toggleGroup;
         }
 
-        public RenderContext(string spriteRootPath, string fontRootPath, List<GameObject> prefabs)
+        public RenderContext(string spriteRootPath, string fontRootPath, GameObject rootObject)
         {
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
-            ExistingPrefabs = prefabs;
+            this.rootObject = rootObject;
+        }
+
+        public GameObject FindObject(string name)
+        {
+            if (rootObject == null || rootObject.transform == null) return null;
+            var findTransform = RecursiveFindChild(rootObject.transform, name);
+            if (findTransform == null) return null;
+            return findTransform.gameObject;
+        }
+
+        private Transform RecursiveFindChild(Transform parent, string childName)
+        {
+            var foundChild = parent.Find(childName);
+            if (foundChild) return foundChild;
+            foreach (Transform child in parent)
+            {
+                var found = RecursiveFindChild(child, childName);
+                if (found != null) return found;
+            }
+
+            return null;
         }
 
         public Sprite GetSprite(string spriteName)

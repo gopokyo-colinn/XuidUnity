@@ -4,7 +4,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
 namespace I0plus.XdUnityUI.Editor
 {
@@ -53,9 +52,10 @@ namespace I0plus.XdUnityUI.Editor
 
         public List<Tuple<GameObject, Element>> RenderedChildren { get; private set; }
 
-        public override void Render(RenderContext renderContext, [CanBeNull] ref GameObject targetObject, GameObject parentObject)
+        public override void Render(RenderContext renderContext, [CanBeNull] ref GameObject targetObject,
+            GameObject parentObject)
         {
-            targetObject = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
             RenderedChildren = RenderChildren(renderContext, targetObject);
             ElementUtil.SetupCanvasGroup(targetObject, CanvasGroup);
@@ -106,41 +106,6 @@ namespace I0plus.XdUnityUI.Editor
                     }
                 });
             }
-        }
-
-        protected GameObject CreateSelf(RenderContext renderContext, GameObject parentObject)
-        {
-            GameObject selfObject = null;
-            CreateUiGameObject(renderContext, ref selfObject, parentObject);
-            if (!(selfObject is null))
-            {
-                var rect = selfObject.GetComponent<RectTransform>();
-
-                if (parentObject)
-                    //親のパラメータがある場合､親にする 後のAnchor定義のため
-                    rect.SetParent(parentObject.transform);
-            }
-
-            return selfObject;
-        }
-
-        protected void SetMaskImage(RenderContext renderContext, GameObject go)
-        {
-            var maskSource = Elements.Find(x => x is MaskElement);
-            if (maskSource == null) return;
-
-            Elements.Remove(maskSource);
-            var maskImage = AddComponent<Image>(go);
-            maskImage.raycastTarget = false;
-
-            GameObject dummyMaskObject = null;
-            maskSource.Render(renderContext, ref dummyMaskObject, null);
-            dummyMaskObject.transform.SetParent(go.transform);
-            dummyMaskObject.GetComponent<Image>().CopyTo(maskImage);
-            Object.DestroyImmediate(dummyMaskObject);
-
-            var mask = AddComponent<Mask>(go);
-            mask.showMaskGraphic = false;
         }
 
         protected List<Tuple<GameObject, Element>> RenderChildren(RenderContext renderContext, GameObject parent,

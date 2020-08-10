@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
-using UnityEditor;
 using UnityEngine;
 
 namespace I0plus.XdUnityUI.Editor
@@ -34,7 +32,6 @@ namespace I0plus.XdUnityUI.Editor
 
             RectTransformJson = json.GetDic("rect_transform");
             LayoutElementJson = json.GetDic("layout_element");
-
         }
 
         public string Name => name;
@@ -52,6 +49,7 @@ namespace I0plus.XdUnityUI.Editor
             return found != null;
         }
 
+        /*
         protected void CreateUiGameObject(RenderContext renderContext, [CanBeNull] ref GameObject selfObject, GameObject parentObject)
         {
             selfObject = new GameObject(name);
@@ -59,10 +57,68 @@ namespace I0plus.XdUnityUI.Editor
             ElementUtil.SetLayer(selfObject, Layer);
             if (Active != null) selfObject.SetActive(Active.Value);
         }
+        */
+
+        /// <summary>
+        ///     Objectの生成か再利用　親子関係の設定、Layer、Activeの設定
+        /// </summary>
+        /// <param name="renderContext"></param>
+        /// <param name="selfObject"></param>
+        /// <param name="parentObject"></param>
+        /// <returns></returns>
+        protected void GetOrCreateSelfObject(RenderContext renderContext, ref GameObject selfObject,
+            GameObject parentObject)
+        {
+            // 指定のオブジェクトがある場合は生成・取得せずそのまま使用する
+            if (selfObject == null)
+            {
+                selfObject = GetSelfObject(renderContext, parentObject);
+                if (selfObject == null) selfObject = new GameObject(name);
+            }
+
+            ElementUtil.SetLayer(selfObject, Layer);
+            if (Active != null) selfObject.SetActive(Active.Value);
+
+            var rect = GetOrAddComponent<RectTransform>(selfObject);
+            if (parentObject)
+                //親のパラメータがある場合､親にする 後のAnchor定義のため
+                rect.SetParent(parentObject.transform);
+        }
+
+        protected GameObject GetSelfObject(RenderContext renderContext, [CanBeNull] GameObject parentObject)
+        {
+            // 出来るだけユニークな名前になるように、Rootからの名前を作成する
+            var findNames = new List<string> {name};
+            var fullName = name;
+            while (parentObject != null)
+            {
+                fullName = parentObject.name + "/" + fullName;
+                findNames.Add(fullName);
+                var parent = parentObject.transform.parent;
+                parentObject = parent ? parent.gameObject : null;
+            }
+
+            findNames.Reverse();
+
+            // Rootから名前→単体の名前の順に検索する
+            foreach (var findName in findNames)
+            {
+                var selfObject = renderContext.FindObject(findName);
+                if (selfObject != null)
+                {
+                    Debug.Log($"GetSelfObject({findName})");
+                    return selfObject;
+                }
+            }
+
+            return null;
+        }
 
         //since we do not want to read components to a prefab we use this method to add components to elements
-        static protected T AddComponent<T>(GameObject go) where T : Component
+        public static T GetOrAddComponent<T>(GameObject go) where T : Component
         {
+            var comp = go.GetComponent<T>();
+            if (comp != null) return comp;
             return go.AddComponent<T>();
         }
     }

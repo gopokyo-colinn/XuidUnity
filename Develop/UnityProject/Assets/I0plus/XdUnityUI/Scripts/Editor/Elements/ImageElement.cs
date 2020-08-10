@@ -21,7 +21,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override void Render(RenderContext renderContext, ref GameObject selfObject, GameObject parentObject)
         {
-            CreateUiGameObject(renderContext, ref selfObject, parentObject);
+            GetOrCreateSelfObject(renderContext, ref selfObject, parentObject);
 
             var rect = selfObject.GetComponent<RectTransform>();
 
@@ -35,7 +35,7 @@ namespace I0plus.XdUnityUI.Editor
             //TODO: check if some parts still need to be done for prefabs that have local modifications
             if (image == null)
             {
-                image = AddComponent<Image>(selfObject);
+                image = GetOrAddComponent<Image>(selfObject);
                 var sourceImage = ImageJson.Get("source_image");
                 if (sourceImage != null)
                     image.sprite = renderContext.GetSprite(sourceImage);
@@ -79,7 +79,6 @@ namespace I0plus.XdUnityUI.Editor
 
             ElementUtil.SetupLayoutElement(selfObject, LayoutElementJson);
             ElementUtil.SetupRectTransform(selfObject, RectTransformJson);
-
         }
     }
 }

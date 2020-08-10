@@ -18,7 +18,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
         {
-            go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref go, parentObject);
 
             var children = RenderChildren(renderContext, go);
 
@@ -27,7 +27,7 @@ namespace I0plus.XdUnityUI.Editor
             //if a text toggle is already present this means this go is part of a prefab and we skip the toggle group assignment
             if (toggle == null)
             {
-                toggle = go.AddComponent<Toggle>();
+                toggle = GetOrAddComponent<Toggle>(go);
                 // トグルグループ名
                 var group = _toggleJson.Get("group");
                 if (group != null)
@@ -41,16 +41,10 @@ namespace I0plus.XdUnityUI.Editor
 
             var targetImage =
                 ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("target_graphic_class"));
-            if (targetImage != null)
-            {
-                toggle.targetGraphic = targetImage;
-            }
+            if (targetImage != null) toggle.targetGraphic = targetImage;
 
             var graphicImage = ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("graphic_class"));
-            if (graphicImage != null)
-            {
-                toggle.graphic = graphicImage;
-            }
+            if (graphicImage != null) toggle.graphic = graphicImage;
 
             var spriteStateJson = _toggleJson.GetDic("sprite_state");
             if (spriteStateJson != null)
