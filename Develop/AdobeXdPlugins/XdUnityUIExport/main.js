@@ -1523,9 +1523,13 @@ function getUnityName(node) {
 
   const parsed = cssParseNodeName(getNodeName(node))
   if (parsed) {
+    // idを最優先
     if (parsed.id) return parsed.id
-    if (parsed.name) return parsed.name
+    // 名前があればそれを出す
     if (parsed.tagName) return parsed.tagName
+    // 全体の名前
+    if (parsed.name) return parsed.name
+    // クラスを名前とする　クラスは機能なので、名前にすることは優先順位として下位
     if (parsed.classNames && parsed.classNames.length > 0)
       return '.' + parsed.classNames.join('.')
   }
@@ -2136,6 +2140,16 @@ function getRectTransform(node) {
 }
 
 /**
+ *
+ * @param node
+ * @return {boolean}
+ */
+function getVisibleInfo(node){
+  let bounds = globalResponsiveBounds[node.guid]
+  return bounds ? bounds.before.visible : true
+}
+
+/**
  * NodeNameはXDでつけられたものをTrimしただけ
  * @param {SceneNode|SceneNodeClass} node
  * @returns {string}
@@ -2531,13 +2545,20 @@ function makeLayoutJson(root) {
 
 /**
  * @param json
+ * @param node:SceneNodeClass
  * @param {Style} style
  */
-function addActive(json, style) {
+function addActive(json, node, style) {
   if (style.first('active')) {
     Object.assign(json, {
       active: style.firstAsBool('active'),
     })
+  } else {
+    if( getVisibleInfo(node) == false ) {
+      Object.assign(json, {
+        active: false,
+      })
+    }
   }
 }
 
@@ -3433,7 +3454,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   await addContent(style, json, node, funcForEachChild, root)
 
   // 基本
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -3507,7 +3528,7 @@ async function createInput(json, node, root, funcForEachChild) {
     },
   })
   // 基本
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
@@ -3706,7 +3727,7 @@ async function createGroup(json, node, root, funcForEachChild) {
   })
 
   // 基本
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
@@ -3795,7 +3816,7 @@ async function createScrollbar(json, node, funcForEachChild) {
   await funcForEachChild()
 
   // 基本
-  addActive(json, style)
+  addActive(json, node,  style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -3858,7 +3879,7 @@ async function createSlider(json, node, funcForEachChild) {
   await funcForEachChild()
 
   // 基本
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -3934,7 +3955,7 @@ async function createToggle(json, node, root, funcForEachChild) {
   }
 
   // 基本パラメータ・コンポーネント
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -3998,7 +4019,7 @@ async function createButton(json, node, root, funcForEachChild) {
   })
 
   // 基本パラメータ
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -4068,7 +4089,7 @@ async function createImage(
       name: unityName,
     })
     // 基本パラメータ
-    addActive(json, style)
+    addActive(json, node, style)
     addRectTransformDraw(json, node, style)
     addLayer(json, style)
     addParsedNames(json, node)
@@ -4130,7 +4151,7 @@ async function createPrefabInstance(json, node, root) {
   })
 
   // 基本
-  addActive(json, style)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -4298,7 +4319,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   })
 
   // 基本パラメータ
-  addActive(json, style)
+  addActive(json, node, style)
   // Drawではなく、通常のレスポンシブパラメータを渡す　シャドウ等のエフェクトは自前でやる必要があるため
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4617,6 +4638,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         // IMAGEであった場合、そのグループの不可視情報はそのまま活かすため
         // 自身は可視にし、子供の不可視情報は生かす
         // 本来は sourceImageをNaturalWidth,Heightで出力する
+        // TODO: Pathなど、レンダリングされるものもノータッチであるべきではないか
         if (
           style.firstAsBool(STYLE_IMAGE) ||
           style.firstAsBool(STYLE_IMAGE_SLICE)
