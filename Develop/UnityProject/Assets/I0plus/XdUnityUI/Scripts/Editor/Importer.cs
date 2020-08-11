@@ -84,15 +84,26 @@ namespace I0plus.XdUnityUI.Editor
         }
         */
 
-        [MenuItem("Assets/XdUnityUI/Folder Import...")]
+        [MenuItem("Assets/XdUnityUI/Clean Import...")]
         public static async Task MenuImportSpecifiedFolder()
         {
-            var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
+            var path = EditorUtility.OpenFolderPanel("Clean import:Specify Folder", "", "");
             if (string.IsNullOrWhiteSpace(path)) return;
 
             var folders = new List<string> {path};
-            await ImportFolders(folders, true, false);
+            await ImportFolders(folders, false, true, false);
         }
+
+        [MenuItem("Assets/XdUnityUI/(experimental)Overwrite Import...")]
+        public static async Task MenuOverwriteImportSpecifiedFolder()
+        {
+            var path = EditorUtility.OpenFolderPanel("Overwrite Import:Specify Folder", "", "");
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            var folders = new List<string> {path};
+            await ImportFolders(folders, true, true, false);
+        }
+
 
         /*
         [MenuItem("Assets/XdUnityUI/Specify Folder Import(layout only)...")]
@@ -124,7 +135,8 @@ namespace I0plus.XdUnityUI.Editor
         }
 
 
-        private static async Task ImportFolders(IEnumerable<string> importFolderPaths, bool convertImageFlag,
+        private static async Task ImportFolders(IEnumerable<string> importFolderPaths, bool overwriteImportFlag,
+            bool convertImageFlag,
             bool deleteAssetsFlag)
         {
             var importedAssets = new List<string>();
@@ -159,7 +171,9 @@ namespace I0plus.XdUnityUI.Editor
                 if (!result) return;
             }
 
-            await Import(importedAssets);
+            await Import(importedAssets, overwriteImportFlag);
+
+            // インポートしたアセットのソース削除が必要ならここでするべきかも
             EditorUtility.DisplayDialog("Import", "Done.", "Ok");
         }
 
@@ -190,7 +204,7 @@ namespace I0plus.XdUnityUI.Editor
         /// <param name="importedPaths"></param>
         /// <param name="movedAssets"></param>
         /// <param name="deleteImportEntriesFlag"></param>
-        private static async Task Import(IReadOnlyCollection<string> importedPaths)
+        private static async Task Import(IReadOnlyCollection<string> importedPaths, bool overwriteImportFlag)
         {
             _progressTotal = importedPaths.Count;
             if (_progressTotal == 0) return;
@@ -351,19 +365,31 @@ namespace I0plus.XdUnityUI.Editor
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
-                    // すでにあるプレハブを読み込む
-                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(saveAssetPath);
-                    if (prefab != null)
+
+                    // overwriteImportFlagがTrueなら、ベースとなるPrefab上に生成していく
+                    // 利用できるオブジェクトは利用していく
+                    if (overwriteImportFlag)
                     {
-                        go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-                        PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.OutermostRoot,
-                            InteractionMode.AutomatedAction);
+                        // すでにあるプレハブを読み込む
+                        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(saveAssetPath);
+                        if (prefab != null)
+                        {
+                            go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                            PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.OutermostRoot,
+                                InteractionMode.AutomatedAction);
+                        }
+                    }
+
+                    // Render Context
+                    var renderContext = new RenderContext(spriteOutputFolderAssetPath, fontAssetPath, go);
+                    if (overwriteImportFlag)
+                    {
+                        renderContext.OptionAddXdGuid = true;
                     }
 
                     // Create Prefab
-                    var prefabCreator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
-                        prefabs);
-                    prefabCreator.Create(ref go);
+                    var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
+                    prefabCreator.Create(ref go, renderContext);
 #if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);

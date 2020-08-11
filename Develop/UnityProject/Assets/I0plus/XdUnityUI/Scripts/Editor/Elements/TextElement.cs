@@ -17,7 +17,7 @@ namespace I0plus.XdUnityUI.Editor
             _textJson = json.GetDic("text");
         }
 
-        public override void Render(RenderContext renderContext, ref GameObject selfObject, GameObject parentObject)
+        public override void Render(ref GameObject selfObject, RenderContext renderContext, GameObject parentObject)
         {
             GetOrCreateSelfObject(renderContext, ref selfObject, parentObject);
 

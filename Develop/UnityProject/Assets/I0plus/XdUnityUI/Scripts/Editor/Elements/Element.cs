@@ -19,11 +19,13 @@ namespace I0plus.XdUnityUI.Editor
         protected bool? Active;
 
         protected string name;
+        protected string Guid;
         protected Element Parent;
 
         protected Element(Dictionary<string, object> json, Element parent)
         {
             Parent = parent;
+            Guid = json.Get("guid");
             name = json.Get("name");
             //Debug.Log($"parsing {name}");
             Active = json.GetBool("active");
@@ -36,7 +38,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public string Name => name;
 
-        public abstract void Render(RenderContext renderContext, ref GameObject targetObject, GameObject parentObject);
+        public abstract void Render([NotNull] ref GameObject targetObject, RenderContext renderContext, GameObject parentObject);
 
         public virtual void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
         {
@@ -72,14 +74,15 @@ namespace I0plus.XdUnityUI.Editor
             // 指定のオブジェクトがある場合は生成・取得せずそのまま使用する
             if (selfObject == null)
             {
-                selfObject = renderContext.OccupyObject( name, parentObject);
+                selfObject = renderContext.OccupyObject( Guid, name, parentObject);
                 if (selfObject != null)
                 {
+                    selfObject.name = name;
                 }
                 else
                 {
                     // 再利用できなかった新規に作成
-                    Debug.Log($"新規にGameObjectを生成しました:{name}");
+                    // Debug.Log($"新規にGameObjectを生成しました:{name}");
                     selfObject = new GameObject(name);
                 }
             }
@@ -88,7 +91,10 @@ namespace I0plus.XdUnityUI.Editor
             if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            
+            if (renderContext.OptionAddXdGuid)
+            {
+                ElementUtil.SetGuid(selfObject, Guid);
+            }
             ElementUtil.SetActive(selfObject, Active);
             ElementUtil.SetLayer(selfObject, Layer);
         }

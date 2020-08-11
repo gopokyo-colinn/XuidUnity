@@ -10,6 +10,18 @@ using TMPro;
 
 namespace I0plus.XdUnityUI.Editor
 {
+    public class Identifier
+    {
+        public string Name { get; }
+        public string XdGuid { get; }
+
+        public Identifier(string name, string xdGuid)
+        {
+            Name = name;
+            XdGuid = xdGuid;
+        }
+    }
+
     public class RenderContext
     {
         private readonly string spriteRootPath;
@@ -18,9 +30,15 @@ namespace I0plus.XdUnityUI.Editor
         public Stack<GameObject> NewPrefabs { get; } = new Stack<GameObject>();
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
 
-        public Dictionary<GameObject, string> FreeChildObjects
+        public Dictionary<GameObject, Identifier> FreeChildObjects { get; }
+
+        /// <summary>
+        /// XdGuid compornentをAddするかどうか
+        /// </summary>
+        public bool OptionAddXdGuid
         {
             get;
+            set;
         }
 
         public ToggleGroup GetToggleGroup(string name)
@@ -51,7 +69,8 @@ namespace I0plus.XdUnityUI.Editor
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
             this.rootObject = rootObject;
-            this.FreeChildObjects = new Dictionary<GameObject, string>();
+            OptionAddXdGuid = false;
+            FreeChildObjects = new Dictionary<GameObject, Identifier>();
             if (rootObject != null)
             {
                 var rects = rootObject.GetComponentsInChildren<RectTransform>();
@@ -66,7 +85,14 @@ namespace I0plus.XdUnityUI.Editor
                         parent = parent.parent;
                     }
 
-                    FreeChildObjects.Add(rect.gameObject, name);
+                    string xdGuid = null;
+                    var xdGuidComponent = rect.gameObject.GetComponent<XdGuid>();
+                    if (xdGuidComponent != null)
+                    {
+                        xdGuid = xdGuidComponent.guid;
+                    }
+
+                    FreeChildObjects.Add(rect.gameObject, new Identifier(name: name, xdGuid: xdGuid));
                 }
             }
         }
@@ -93,7 +119,7 @@ namespace I0plus.XdUnityUI.Editor
         }
 
         /// <summary>
-        /// 親の名前も使用して検索する
+        ///     親の名前も使用して検索する
         /// </summary>
         /// <param name="name"></param>
         /// <param name="parentObject"></param>
@@ -118,10 +144,8 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var selfObject = FindObject(findName);
                 if (selfObject != null)
-                {
                     // Debug.Log($"GetSelfObject({findName})");
                     return selfObject;
-                }
             }
 
             return null;
@@ -148,10 +172,10 @@ namespace I0plus.XdUnityUI.Editor
             {
                 foreach (var keyValuePair in FreeChildObjects)
                 {
-                    if (keyValuePair.Value.EndsWith(findName))
-                    {
+                    var pathName = keyValuePair.Value.Name;
+                    var xdGuid = keyValuePair.Value.XdGuid;
+                    if (pathName != null && pathName.EndsWith(findName))
                         founds.Add(keyValuePair.Key);
-                    }
                 }
 
                 if (founds.Count > 0) break;
@@ -160,12 +184,38 @@ namespace I0plus.XdUnityUI.Editor
             return founds;
         }
 
-        public GameObject OccupyObject(string name, GameObject parentObject)
+        public GameObject FindObjectFromXdGuid(string guid)
         {
-            var founds = FindObjects(name, parentObject);
-            if (founds == null || founds.Count == 0) return null;
-            var found = founds[0];
-            FreeChildObjects.Remove(found);
+            foreach (var freeChildObject in FreeChildObjects)
+            {
+                var xdGuid = freeChildObject.Value.XdGuid;
+                if (xdGuid == guid) return freeChildObject.Key;
+            }
+
+            return null;
+        }
+
+        public GameObject OccupyObject(string guid, string name, GameObject parentObject)
+        {
+            GameObject found = null;
+            if (guid != null)
+            {
+                found = FindObjectFromXdGuid(guid);
+            }
+
+            if (found == null && name != null)
+            {
+                // Debug.Log($"guidで見つからなかった:{name}");
+                var founds = FindObjects(name, parentObject);
+                if (founds == null || founds.Count == 0) return null;
+                found = founds[0];
+            }
+
+            if (found != null)
+            {
+                FreeChildObjects.Remove(found);
+            }
+            
             return found;
         }
 

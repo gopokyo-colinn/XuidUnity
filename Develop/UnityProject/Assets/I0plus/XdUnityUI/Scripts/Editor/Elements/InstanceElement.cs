@@ -13,7 +13,7 @@ namespace I0plus.XdUnityUI.Editor
             master = json.Get("master");
         }
 
-        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
             var path = EditorUtil.GetOutputPrefabsFolderAssetPath() + "/" + master + ".prefab";
 
@@ -37,17 +37,17 @@ namespace I0plus.XdUnityUI.Editor
                 prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             }
 
-            go = renderContext.FindObject(name, parentObject);
-            if (go == null) go = (GameObject) PrefabUtility.InstantiatePrefab(prefabObject);
+            targetObject = renderContext.FindObject(name, parentObject);
+            if (targetObject == null) targetObject = (GameObject) PrefabUtility.InstantiatePrefab(prefabObject);
 
-            var rect = GetOrAddComponent<RectTransform>(go);
+            var rect = GetOrAddComponent<RectTransform>(targetObject);
             rect.SetParent(parentObject.transform);
 
-            go.name = Name;
-            ElementUtil.SetLayer(go, Layer);
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
-            if (Active != null) go.SetActive(Active.Value);
-            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
+            targetObject.name = Name;
+            ElementUtil.SetLayer(targetObject, Layer);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
+            if (Active != null) targetObject.SetActive(Active.Value);
+            ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
         }
     }
 }

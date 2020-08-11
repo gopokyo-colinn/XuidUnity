@@ -52,7 +52,8 @@ namespace I0plus.XdUnityUI.Editor
 
         public List<Tuple<GameObject, Element>> RenderedChildren { get; private set; }
 
-        public override void Render(RenderContext renderContext, [CanBeNull] ref GameObject targetObject,
+        public override void Render([CanBeNull] ref GameObject targetObject,
+            RenderContext renderContext,
             GameObject parentObject)
         {
             GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
@@ -115,7 +116,7 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var element in Elements)
             {
                 GameObject go = null;
-                element.Render(renderContext, ref go, parent);
+                element.Render(ref go, renderContext, parent);
                 if (go.transform.parent != parent.transform) Debug.Log("No parent set" + go.name);
 
                 //if (element.IsPrefab)

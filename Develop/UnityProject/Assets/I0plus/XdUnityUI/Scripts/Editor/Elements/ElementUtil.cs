@@ -601,6 +601,11 @@ namespace I0plus.XdUnityUI.Editor
             if (offsetMax != null) rect.offsetMax = offsetMax.Value;
         }
 
+        public static void SetGuid(GameObject go, string guid)
+        {
+            var xdGuid = Element.GetOrAddComponent<XdGuid>(go);
+            xdGuid.guid = guid;
+        }
         public static void SetActive(GameObject go, bool? active)
         {
             if (active != null)

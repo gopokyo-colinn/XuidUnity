@@ -17,7 +17,7 @@ namespace I0plus.XdUnityUI.Editor
             InputJson = json.GetDic("input");
         }
 
-        public override void Render(RenderContext renderContext, ref GameObject targetObject, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
             GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 

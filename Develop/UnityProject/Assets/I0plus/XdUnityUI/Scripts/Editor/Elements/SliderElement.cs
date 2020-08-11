@@ -17,7 +17,7 @@ namespace I0plus.XdUnityUI.Editor
             _sliderJson = json.GetDic("slider");
         }
 
-        public override void Render(RenderContext renderContext, ref GameObject go, GameObject parentObject)
+        public override void Render(ref GameObject go, RenderContext renderContext, GameObject parentObject)
         {
             GetOrCreateSelfObject(renderContext, ref go, parentObject);
 

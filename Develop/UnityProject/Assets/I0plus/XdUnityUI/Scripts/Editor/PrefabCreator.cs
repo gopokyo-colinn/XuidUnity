@@ -22,24 +22,20 @@ namespace I0plus.XdUnityUI.Editor
     {
         private static readonly string[] Versions = {"0.6.0", "0.6.1"};
         private readonly string assetPath;
-        private readonly string fontRootPath;
         private readonly List<GameObject> nestedPrefabs;
-        private readonly string spriteRootPath;
 
         /// <summary>
         /// </summary>
         /// <param name="spriteRootPath"></param>
         /// <param name="fontRootPath"></param>
         /// <param name="assetPath">フルパスでの指定 Unity Assetフォルダ外もよみこめる</param>
-        public PrefabCreator(string spriteRootPath, string fontRootPath, string assetPath, List<GameObject> prefabs)
+        public PrefabCreator(string assetPath, List<GameObject> prefabs)
         {
-            this.spriteRootPath = spriteRootPath;
-            this.fontRootPath = fontRootPath;
             this.assetPath = assetPath;
             nestedPrefabs = prefabs;
         }
 
-        public void Create([NotNull] ref GameObject rootObject)
+        public void Create([NotNull] ref GameObject targetObject, RenderContext renderer)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
@@ -48,20 +44,19 @@ namespace I0plus.XdUnityUI.Editor
             var info = json.GetDic("info");
             Validation(info);
 
-            var renderer = new RenderContext(spriteRootPath, fontRootPath, rootObject);
             var rootJson = json.GetDic("root");
 
             var rootElement = ElementFactory.Generate(rootJson, null);
 
-            rootElement.Render(renderer, ref rootObject, null);
+            rootElement.Render(ref targetObject, renderer, null);
 
-            Postprocess(rootObject);
+            // Postprocess(rootObject);
 
             if (renderer.ToggleGroupMap.Count > 0)
             {
                 // ToggleGroupが作成された場合
                 var go = new GameObject("ToggleGroup");
-                go.transform.SetParent(rootObject.transform);
+                go.transform.SetParent(targetObject.transform);
                 foreach (var keyValuePair in renderer.ToggleGroupMap)
                 {
                     var gameObject = keyValuePair.Value;

@@ -18,7 +18,8 @@ namespace I0plus.XdUnityUI.Editor
             ButtonJson = json.GetDic("button");
         }
 
-        public override void Render(RenderContext renderContext, [CanBeNull] ref GameObject targetObject,
+        public override void Render([CanBeNull] ref GameObject targetObject,
+            RenderContext renderContext,
             GameObject parentObject)
         {
             GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
