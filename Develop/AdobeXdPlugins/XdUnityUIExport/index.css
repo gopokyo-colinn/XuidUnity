@@ -136,6 +136,10 @@ first-childになる
   unity-name: 'rg-child(${childIndex})';
 }
 
+.guid-name {
+  unity-name: '${guid}';
+}
+
 
 [typeof='ScrollableGroup'] {
   create-content: true;
@@ -372,3 +376,6 @@ XD内では無理なので、Unity内で作成する
   component: true;
 }
 
+.no-instance {
+  instance-if-possible: false
+}

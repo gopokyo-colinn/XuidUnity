@@ -198,6 +198,7 @@ const STYLE_ADD_COMPONENT = 'add-component'
 const STYLE_MASK = 'mask'
 const STYLE_UNITY_NAME = 'unity-name'
 const STYLE_CHECK_LOG = 'check-log'
+const STYLE_INSTANCE_IF_POSSIBLE = 'instance-if-possible'
 
 const appLanguage = application.appLanguage
 
@@ -395,6 +396,16 @@ class CssDeclarations {
 
   firstAsBool(property) {
     return asBool(this.first(property))
+  }
+
+  /**
+   * @param property
+   * @return {null|boolean}
+   */
+  firstAsNullOrBool(property) {
+    const first = this.first(property)
+    if( first == null) return null;
+    return asBool(first)
   }
 }
 
@@ -1518,6 +1529,9 @@ function getUnityName(node) {
     //childIndexを子供番号で置き換え
     const childIndex = getChildIndex(node)
     unityName = unityName.replace(/\${childIndex}/, childIndex)
+    //guidで置き換え
+    unityName = unityName.replace(/\${guid}/, node.guid)
+
     return unityName
   }
 
@@ -2269,6 +2283,12 @@ class Style {
 
   firstAsBool(property) {
     const first = this.first(property)
+    return asBool(first)
+  }
+
+  firstAsNullOrBool(property) {
+    const first = this.first(property)
+    if( first == null) return null;
     return asBool(first)
   }
 
@@ -3234,6 +3254,15 @@ function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
 /**
  *
  * @param json
+ * @param node: SceneClassNode
+ */
+function addGuid(json, node) {
+  Object.assign(json, { guid: node.guid })
+}
+
+/**
+ *
+ * @param json
  * @param {Style} style
  */
 function addLayer(json, style) {
@@ -3418,10 +3447,11 @@ function addContent(style, json, node) {
     rect_transform,
   })
 
+  //TODO:GUIDを仮にでも生成できると良い
+  addLayer(contentJson, contentStyle)
   addRectTransformAnchorOffset(contentJson, contentStyle) // anchor設定を上書きする
   addContentSizeFitter(contentJson, contentStyle)
   addLayoutElement(contentJson, contentNode, contentStyle, contentDrawBounds) // DrawBoundsを渡す
-  addLayer(contentJson, contentStyle)
 }
 
 /**
@@ -3454,6 +3484,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   await addContent(style, json, node, funcForEachChild, root)
 
   // 基本
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -3528,6 +3559,7 @@ async function createInput(json, node, root, funcForEachChild) {
     },
   })
   // 基本
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
@@ -3727,6 +3759,7 @@ async function createGroup(json, node, root, funcForEachChild) {
   })
 
   // 基本
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
@@ -3816,6 +3849,7 @@ async function createScrollbar(json, node, funcForEachChild) {
   await funcForEachChild()
 
   // 基本
+  addGuid(json, node);
   addActive(json, node,  style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -3879,6 +3913,7 @@ async function createSlider(json, node, funcForEachChild) {
   await funcForEachChild()
 
   // 基本
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -3955,6 +3990,7 @@ async function createToggle(json, node, root, funcForEachChild) {
   }
 
   // 基本パラメータ・コンポーネント
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4019,6 +4055,7 @@ async function createButton(json, node, root, funcForEachChild) {
   })
 
   // 基本パラメータ
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4089,6 +4126,7 @@ async function createImage(
       name: unityName,
     })
     // 基本パラメータ
+    addGuid(json, node);
     addActive(json, node, style)
     addRectTransformDraw(json, node, style)
     addLayer(json, style)
@@ -4151,6 +4189,7 @@ async function createPrefabInstance(json, node, root) {
   })
 
   // 基本
+  addGuid(json, node);
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4319,6 +4358,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   })
 
   // 基本パラメータ
+  addGuid(json, node);
   addActive(json, node, style)
   // Drawではなく、通常のレスポンシブパラメータを渡す　シャドウ等のエフェクトは自前でやる必要があるため
   addRectTransformDraw(json, node, style)
@@ -4355,7 +4395,7 @@ function traverseNode(node, func) {
 }
 
 /**
- * アートボードの処理
+ * Root処理
  * @param {*} renditions
  * @param outputFolder
  * @param {SceneNode|SceneNodeClass} root
@@ -4374,10 +4414,14 @@ async function createRoot(renditions, outputFolder, root) {
     }
 
     if (root != node && isPrefabInstanceNode(node)) {
-      // Root配下に出力ノードをみつけた
+      // インスタンスノードをみつけた
       // console.log('find layout root node.')
-      await createPrefabInstance(json, node, root)
-      return
+      let {style} = getNodeNameAndStyle(node)
+      if( style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false ) {
+        // 明確なFALSEでなければ
+        await createPrefabInstance(json, node, root)
+        return
+      }
     }
 
     // 子Node処理関数
