@@ -69,6 +69,8 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
 
+            var notUsedchilds = renderer.FreeChildObjects;
+
             foreach (var prefab in renderer.NewPrefabs.ToList())
                 //if we haven't created a prefab out of the referenced GO we do so now
                 if (PrefabUtility.GetPrefabAssetType(prefab) == PrefabAssetType.NotAPrefab)

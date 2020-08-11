@@ -601,6 +601,13 @@ namespace I0plus.XdUnityUI.Editor
             if (offsetMax != null) rect.offsetMax = offsetMax.Value;
         }
 
+        public static void SetActive(GameObject go, bool? active)
+        {
+            if (active != null)
+            {
+                go.SetActive(active.Value);
+            }
+        }
         public static void SetLayer(GameObject go, string layerName)
         {
             switch (layerName)

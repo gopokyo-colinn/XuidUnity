@@ -18,6 +18,11 @@ namespace I0plus.XdUnityUI.Editor
         public Stack<GameObject> NewPrefabs { get; } = new Stack<GameObject>();
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
 
+        public Dictionary<GameObject, string> FreeChildObjects
+        {
+            get;
+        }
+
         public ToggleGroup GetToggleGroup(string name)
         {
             ToggleGroup toggleGroup;
@@ -46,14 +51,24 @@ namespace I0plus.XdUnityUI.Editor
             this.spriteRootPath = spriteRootPath;
             this.fontRootPath = fontRootPath;
             this.rootObject = rootObject;
-        }
+            this.FreeChildObjects = new Dictionary<GameObject, string>();
+            if (rootObject != null)
+            {
+                var rects = rootObject.GetComponentsInChildren<RectTransform>();
+                foreach (var rect in rects)
+                {
+                    // 後の名前検索で正確にできるように/を前にいれる
+                    var name = "/" + rect.gameObject.name;
+                    var parent = rect.parent;
+                    while (parent)
+                    {
+                        name = "/" + parent.name + name;
+                        parent = parent.parent;
+                    }
 
-        public GameObject FindObject(string name)
-        {
-            if (rootObject == null || rootObject.transform == null) return null;
-            var findTransform = RecursiveFindChild(rootObject.transform, name);
-            if (findTransform == null) return null;
-            return findTransform.gameObject;
+                    FreeChildObjects.Add(rect.gameObject, name);
+                }
+            }
         }
 
         private Transform RecursiveFindChild(Transform parent, string childName)
@@ -67,6 +82,91 @@ namespace I0plus.XdUnityUI.Editor
             }
 
             return null;
+        }
+
+        public GameObject FindObject(string name)
+        {
+            if (rootObject == null || rootObject.transform == null) return null;
+            var findTransform = RecursiveFindChild(rootObject.transform, name);
+            if (findTransform == null) return null;
+            return findTransform.gameObject;
+        }
+
+        /// <summary>
+        /// 親の名前も使用して検索する
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="parentObject"></param>
+        /// <returns></returns>
+        public GameObject FindObject(string name, GameObject parentObject)
+        {
+            // 出来るだけユニークな名前になるように、Rootからの名前を作成する
+            var findNames = new List<string> {name};
+            var fullName = name;
+            while (parentObject != null)
+            {
+                fullName = parentObject.name + "/" + fullName;
+                findNames.Add(fullName);
+                var parent = parentObject.transform.parent;
+                parentObject = parent ? parent.gameObject : null;
+            }
+
+            findNames.Reverse();
+
+            // Rootから親のパス付名 → 単体の名前の順に検索する
+            foreach (var findName in findNames)
+            {
+                var selfObject = FindObject(findName);
+                if (selfObject != null)
+                {
+                    // Debug.Log($"GetSelfObject({findName})");
+                    return selfObject;
+                }
+            }
+
+            return null;
+        }
+
+        public List<GameObject> FindObjects(string name, GameObject parentObject)
+        {
+            // 出来るだけユニークな名前になるように、Rootからの名前を作成する
+            var findNames = new List<string> {name};
+            var fullName = "/" + name;
+            while (parentObject != null)
+            {
+                fullName = "/" + parentObject.name + fullName;
+                findNames.Add(fullName);
+                var parent = parentObject.transform.parent;
+                parentObject = parent ? parent.gameObject : null;
+            }
+
+            // Rootから親のパス付名 → 単体の名前の順に検索する
+            findNames.Reverse();
+
+            var founds = new List<GameObject>();
+            foreach (var findName in findNames)
+            {
+                foreach (var keyValuePair in FreeChildObjects)
+                {
+                    if (keyValuePair.Value.EndsWith(findName))
+                    {
+                        founds.Add(keyValuePair.Key);
+                    }
+                }
+
+                if (founds.Count > 0) break;
+            }
+
+            return founds;
+        }
+
+        public GameObject OccupyObject(string name, GameObject parentObject)
+        {
+            var founds = FindObjects(name, parentObject);
+            if (founds == null || founds.Count == 0) return null;
+            var found = founds[0];
+            FreeChildObjects.Remove(found);
+            return found;
         }
 
         public Sprite GetSprite(string spriteName)

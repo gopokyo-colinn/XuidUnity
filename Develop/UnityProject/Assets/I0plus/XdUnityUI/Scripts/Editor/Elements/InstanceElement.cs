@@ -37,7 +37,7 @@ namespace I0plus.XdUnityUI.Editor
                 prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             }
 
-            go = GetSelfObject(renderContext, parentObject);
+            go = renderContext.FindObject(name, parentObject);
             if (go == null) go = (GameObject) PrefabUtility.InstantiatePrefab(prefabObject);
 
             var rect = GetOrAddComponent<RectTransform>(go);
