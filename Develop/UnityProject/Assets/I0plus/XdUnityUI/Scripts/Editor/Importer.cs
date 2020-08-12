@@ -30,9 +30,40 @@ namespace I0plus.XdUnityUI.Editor
         /// <param name="deletedAssets"></param>
         /// <param name="movedAssets"></param>
         /// <param name="movedFromAssetPaths"></param>
-        public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets,
+        public static async void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets,
+            string[] movedAssets,
             string[] movedFromAssetPaths)
         {
+            var importFolderAssetPath = EditorUtil.GetImportFolderAssetPath();
+
+            var forImportAssetPaths = new List<string>();
+            foreach (var importedAsset in importedAssets)
+            {
+                if (importedAsset.StartsWith(importFolderAssetPath))
+                {
+                    forImportAssetPaths.Add(importedAsset);
+                }
+            }
+
+            if (forImportAssetPaths.Count > 0)
+            {
+                await Import(forImportAssetPaths, false);
+                foreach (var forImportAssetPath in forImportAssetPaths)
+                {
+                    if (IsFolder(forImportAssetPath))
+                    {
+                        continue;
+                    }
+                    AssetDatabase.DeleteAsset(forImportAssetPath);
+                    var folderName = Path.GetDirectoryName(forImportAssetPath);
+                    var files = Directory.GetFiles( folderName );
+                    if (files.Length == 0)
+                    {
+                        AssetDatabase.DeleteAsset(folderName);
+                    }
+                }
+                AssetDatabase.Refresh();
+            }
         }
 
         public override int GetPostprocessOrder()
@@ -143,16 +174,17 @@ namespace I0plus.XdUnityUI.Editor
 
             foreach (var importFolderPath in importFolderPaths)
             {
-                // ディレクトリの追加
-                importedAssets.Add(importFolderPath);
+                // トップディレクトリの追加
+                // importedAssets.Add(importFolderPath);
 
-                var folders = Directory.EnumerateDirectories(importFolderPath);
-                importedAssets.AddRange(folders);
+                // var folders = Directory.EnumerateDirectories(importFolderPath);
+                // importedAssets.AddRange(folders);
 
-                // ファイルの追加
+                // ファイルのリストアップ
                 var files = Directory.EnumerateFiles(
                     importFolderPath, "*", SearchOption.AllDirectories);
 
+                // 関係あるファイルのみ追加
                 foreach (var file in files)
                 {
                     if (!convertImageFlag && !file.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase))
@@ -192,29 +224,36 @@ namespace I0plus.XdUnityUI.Editor
             return false;
         }
 
-        private static void DeleteEntry(string path)
-        {
-            File.Delete(path);
-        }
-
-
         /// <summary>
         ///     Assetディレクトリに追加されたファイルを確認、インポート処理を行う
         /// </summary>
-        /// <param name="importedPaths"></param>
-        /// <param name="movedAssets"></param>
-        /// <param name="deleteImportEntriesFlag"></param>
-        private static async Task Import(IReadOnlyCollection<string> importedPaths, bool overwriteImportFlag)
+        /// <param name="importedAssetPaths"></param>
+        /// <param name="overwriteImportFlag"></param>
+        private static async Task Import(IEnumerable<string> importedAssetPaths, bool overwriteImportFlag)
         {
-            _progressTotal = importedPaths.Count;
+            var importedPaths = importedAssetPaths.ToList();
+            _progressTotal = importedPaths.Count();
             if (_progressTotal == 0) return;
             _progressCount = 0;
 
             var changed = false;
 
-            // ディレクトリインポート
+            // インポートされたファイルからフォルダパスリストを作成する
+            var importedFolderAssetPaths = new HashSet<string>();
+            foreach (var importedAssetPath in importedAssetPaths)
+            {
+                if (IsFolder(importedAssetPath))
+                {
+                    // すでにフォルダパスはスルー
+                    continue;
+                }
+
+                var folderPath = Path.GetDirectoryName(importedAssetPath);
+                importedFolderAssetPaths.Add(folderPath);
+            }
+
             // 出力フォルダの作成
-            foreach (var importedPath in importedPaths)
+            foreach (var importedPath in importedFolderAssetPaths)
             {
                 if (!IsFolder(importedPath)) continue;
 
