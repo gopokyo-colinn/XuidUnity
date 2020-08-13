@@ -288,14 +288,14 @@ namespace I0plus.XdUnityUI.Editor
 
 
                 var isSpriteFolder = importedFolderInfo.Value.Contains(".png");
-                // スプライト出力フォルダの作成
+                // スプライト出力フォルダの準備
                 if (isSpriteFolder)
                 {
                     var outputSpritesFolderAssetPath = Path.Combine(
                         EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     if (Directory.Exists(outputSpritesFolderAssetPath))
                     {
-                        // すでにあるフォルダ　インポートファイルと比較して、出力先にある必要のないファイルを削除する
+                        // フォルダがすでにある　インポートファイルと比較して、出力先にある必要のないファイルを削除する
                         // ダブっている分は比較し、異なっている場合に上書きするようにする
                         var outputFolderInfo = new DirectoryInfo(outputSpritesFolderAssetPath);
                         var importFolderInfo = new DirectoryInfo(importedFullPath);
@@ -304,12 +304,26 @@ namespace I0plus.XdUnityUI.Editor
                         var importSpritePaths = importFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
 
                         // outputフォルダにある importにはないファイルをリストアップする
-                        var deleteEntries = existSpritePaths.Except(importSpritePaths, new FileInfoComparer());
-                        // outputフォルダ内
+                        var deleteEntries = existSpritePaths.Except(importSpritePaths, new FileInfoComparer()).ToList();
+                        // スプライト出力フォルダがすでにある場合はTextureハッシュキャッシュを削除する
+                        deleteEntries.Add(new FileInfo(outputSpritesFolderAssetPath + "/" +
+                                                       TextureUtil.ImageHashMapCacheFileName));
+                        deleteEntries.Add(new FileInfo(outputSpritesFolderAssetPath + "/" +
+                                                       TextureUtil.ImagePathMapCacheFileName));
+                        // 削除する
                         foreach (var fileInfo in deleteEntries)
                         {
-                            File.Delete(fileInfo.FullName);
-                            File.Delete(fileInfo.FullName + ".meta");
+                            if (File.Exists(fileInfo.FullName))
+                            {
+                                File.Delete(fileInfo.FullName);
+                            }
+
+                            var metaFileName = fileInfo.FullName + ".meta";
+                            if (File.Exists(metaFileName))
+                            {
+                                File.Delete(metaFileName);
+                            }
+
                             changed = true;
                         }
                     }
@@ -354,7 +368,6 @@ namespace I0plus.XdUnityUI.Editor
                 //
                 if (!clearedImageMap)
                 {
-                    TextureUtil.ClearImageMap();
                     clearedImageMap = true;
                 }
 
@@ -377,11 +390,11 @@ namespace I0plus.XdUnityUI.Editor
                 Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
 
 
-            var importedLayoutFilePaths = new List<string>();
+            var importLayoutFilePaths = new List<string>();
             foreach (var layoutFilePath in importedPaths)
             {
                 if (!layoutFilePath.EndsWith(".layout.json", StringComparison.OrdinalIgnoreCase)) continue;
-                importedLayoutFilePaths.Add(layoutFilePath);
+                importLayoutFilePaths.Add(layoutFilePath);
             }
 
             string GetPrefabPath(string layoutFilePath)
@@ -420,14 +433,14 @@ namespace I0plus.XdUnityUI.Editor
             var prefabs = new List<GameObject>();
 
             // Create Prefab
-            foreach (var layoutFilePath in importedLayoutFilePaths)
+            foreach (var layoutFilePath in importLayoutFilePaths)
             {
                 UpdateDisplayProgressBar("layout");
                 _progressCount += 1;
                 GameObject go = null;
                 try
                 {
-                    Debug.Log($"[XdUnityUI] in process:{layoutFilePath}");
+                    Debug.Log($"[XdUnityUI] in process...{Path.GetFileName(layoutFilePath)}");
                     // 
                     var subFolderName = EditorUtil.GetSubFolderName(layoutFilePath);
                     var saveAssetPath = GetPrefabPath(layoutFilePath);
@@ -460,7 +473,7 @@ namespace I0plus.XdUnityUI.Editor
                     var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
                     prefabCreator.Create(ref go, renderContext);
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
-                    Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);
+                    Debug.Log($"[XdUnityUI] Created. {Path.GetFileName(saveAssetPath)}", savedAsset);
                 }
                 catch (Exception ex)
                 {

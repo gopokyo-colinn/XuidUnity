@@ -24,8 +24,8 @@ namespace I0plus.XdUnityUI.Editor
 
     public class RenderContext
     {
-        private readonly string spriteRootPath;
-        private readonly string fontRootPath;
+        private readonly string spriteOutputFolderAssetPath;
+        private readonly string fontFolderAssetPath;
         private readonly GameObject rootObject;
         public Stack<GameObject> NewPrefabs { get; } = new Stack<GameObject>();
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
@@ -64,10 +64,10 @@ namespace I0plus.XdUnityUI.Editor
             return toggleGroup;
         }
 
-        public RenderContext(string spriteRootPath, string fontRootPath, GameObject rootObject)
+        public RenderContext(string spriteOutputFolderAssetPath, string fontFolderAssetPath, GameObject rootObject)
         {
-            this.spriteRootPath = spriteRootPath;
-            this.fontRootPath = fontRootPath;
+            this.spriteOutputFolderAssetPath = spriteOutputFolderAssetPath;
+            this.fontFolderAssetPath = fontFolderAssetPath;
             this.rootObject = rootObject;
             OptionAddXdGuid = false;
             FreeChildObjects = new Dictionary<GameObject, Identifier>();
@@ -221,22 +221,20 @@ namespace I0plus.XdUnityUI.Editor
 
         public Sprite GetSprite(string spriteName)
         {
-            var path = Path.Combine(spriteRootPath, spriteName) + ".png";
+            var spriteAssetPath = Path.Combine(spriteOutputFolderAssetPath, spriteName) + ".png";
             // 相対パスの記述に対応した
-            var fileInfo = new FileInfo(path);
-            var fullName = TextureUtil.GetSameImagePath(fileInfo.FullName);
-            // TextureUtil.SliceSprite(fullName);
-            var unityPath = EditorUtil.ToAssetPath(fullName);
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(unityPath);
-            if (sprite == null) Debug.LogError($"[XdUnityUI] sprite \"{unityPath}\" is not found.");
+            // var fileInfo = new FileInfo(path); なぜフルパスにしたか忘れた
+            spriteAssetPath = TextureUtil.GetSameImagePath(spriteAssetPath);
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spriteAssetPath);
+            if (sprite == null) Debug.LogError($"[XdUnityUI] sprite \"{spriteAssetPath}\" is not found.");
 
             return sprite;
         }
 
         public Font GetFont(string fontName)
         {
-            var font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontRootPath, fontName) + ".ttf");
-            if (font == null) font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontRootPath, fontName) + ".otf");
+            var font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".ttf");
+            if (font == null) font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".otf");
             if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
             if (font == null) Debug.LogError($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found");
 
