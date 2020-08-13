@@ -14,7 +14,7 @@ namespace I0plus.XdUnityUI.Editor
     /// </summary>
     public static class EditorUtil
     {
-        private const string ImportDirectoryMark = "_XdUnityUIImport";
+        private const string ImportFolderMarkFilename = "_XdUnityUIImport";
 
         /// <summary>
         ///     【C#】ドライブ直下からのファイルリスト取得について - Qiita
@@ -84,31 +84,24 @@ namespace I0plus.XdUnityUI.Editor
         public static string FindFolderAssetPath(string fileName, bool throwException = true)
         {
             var fileAssetPath = FindFileAssetPath(fileName, throwException);
-            return Path.GetDirectoryName(fileAssetPath);
-        }
-
-        public static string GetImportDirectoryPath()
-        {
-            var path = FindFolderAssetPath(ImportDirectoryMark + "1", false);
-            if (path != null) return path;
-            return FindFolderAssetPath(ImportDirectoryMark);
+            return Path.GetDirectoryName(fileAssetPath)?.Replace("\\","/");
         }
 
         /// <summary>
         ///     優先順位に基づき、みつかったマークファイル名を返す
         /// </summary>
         /// <returns></returns>
-        public static string GetImportDirectoryMark()
+        public static string GetImportFolderAssetPath()
         {
-            var marks = new[]
+            var markFiles = new[]
             {
-                ImportDirectoryMark + "1",
-                ImportDirectoryMark
+                ImportFolderMarkFilename + "1",
+                ImportFolderMarkFilename
             };
-            foreach (var mark in marks)
+            foreach (var markFile in markFiles)
             {
-                var path = FindFolderAssetPath(mark, false);
-                if (path != null) return mark;
+                var path = FindFolderAssetPath(markFile, false);
+                if (path != null) return path;
             }
 
             return null;

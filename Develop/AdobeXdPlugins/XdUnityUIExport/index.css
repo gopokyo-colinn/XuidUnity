@@ -379,3 +379,7 @@ XD内では無理なので、Unity内で作成する
 .no-instance {
   instance-if-possible: false
 }
+
+.graphic-swap {
+  toggle-graphic-swap: true;
+}

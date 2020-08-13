@@ -1148,7 +1148,6 @@ function getContentSizeFitterParam(style) {
  */
 function sortElementsByPositionAsc(jsonElements) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
-  console.log('sortElementsByPositionAsc')
   if (jsonElements == null) return
   jsonElements.sort((elemA, elemB) => {
     const a_y = elemA['component'] ? Number.MAX_VALUE : elemA['y']
@@ -4633,7 +4632,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     /** @type {Folder} */
     let subFolder
     // アートボード毎にフォルダを作成する
-    if (!optionChangeContentOnly && !optionImageNoExport && outputFolder) {
+    if (!optionChangeContentOnly && outputFolder) {
       let subFolderName = rootFilename
       // サブフォルダ名を取得
       const parsedName = cssParseNodeName(root.name)
@@ -4972,6 +4971,17 @@ async function pluginExportXdUnityUI(selection, root) {
           value: '4.0',
         })),
       ),
+      h('br'),
+      // no export image.
+      h(
+        'label',
+        divStyle,
+        (checkImageNoExport = h('input', {
+          type: 'checkbox',
+        })),
+        getString(strings.ExportDialogOptionNotExportImage),
+      ),
+      h('br'),
       h('hr'),
       h('label', getString(strings.ExportDialogUnderDevelopmentOptions)),
       h('br'),
@@ -4983,16 +4993,6 @@ async function pluginExportXdUnityUI(selection, root) {
           type: 'checkbox',
         })),
         getString(strings.ExportComponentInstanceAsPrefab),
-      ),
-      h('br'),
-      // no export image.
-      h(
-        'label',
-        divStyle,
-        (checkImageNoExport = h('input', {
-          type: 'checkbox',
-        })),
-        getString(strings.ExportDialogOptionNotExportImage),
       ),
       h('br'),
       // CSS change content
