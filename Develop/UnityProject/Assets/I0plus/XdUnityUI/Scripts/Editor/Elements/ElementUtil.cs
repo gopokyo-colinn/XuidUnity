@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -52,6 +53,62 @@ namespace I0plus.XdUnityUI.Editor
             return null;
         }
 
+        public static SpriteState CreateSpriteState(Dictionary<string, object> spriteStateJson,
+            List<Tuple<GameObject, Element>> children, ref Dictionary<GameObject, bool> deleteObjects)
+        {
+            var spriteState = new SpriteState();
+            var highlightedSprite =
+                spriteStateJson.GetArray("highlighted_sprite")?.Select(o => o.ToString()).ToList();
+            if (highlightedSprite != null && highlightedSprite.Count > 0)
+            {
+                var image = ElementUtil.FindComponentByNames<Image>(children, highlightedSprite);
+                if (image != null)
+                {
+                    spriteState.highlightedSprite = image.sprite;
+                    deleteObjects[image.gameObject] = true;
+                }
+            }
+
+            var pressedSprite =
+                spriteStateJson.GetArray("pressed_sprite")?.Select(o => o.ToString()).ToList();
+            if (pressedSprite != null && pressedSprite.Count > 0)
+            {
+                var image = ElementUtil.FindComponentByNames<Image>(children, pressedSprite);
+                if (image != null)
+                {
+                    spriteState.pressedSprite = image.sprite;
+                    deleteObjects[image.gameObject] = true;
+                }
+            }
+
+#if UNITY_2019_1_OR_NEWER
+            var selectedSprite =
+                spriteStateJson.GetArray("selected_sprite")?.Select(o => o.ToString()).ToList();
+            if (selectedSprite != null && selectedSprite.Count > 0)
+            {
+                var image = ElementUtil.FindComponentByNames<Image>(children, selectedSprite);
+                if (image != null)
+                {
+                    spriteState.selectedSprite = image.sprite;
+                    deleteObjects[image.gameObject] = true;
+                }
+            }
+#endif
+            var disabledSprite =
+                spriteStateJson.GetArray("disabled_sprite")?.Select(o => o.ToString()).ToList();
+            if (disabledSprite != null && disabledSprite.Count > 0)
+            {
+                var image = ElementUtil.FindComponentByNames<Image>(children, disabledSprite);
+                if (image != null)
+                {
+                    spriteState.disabledSprite = image.sprite;
+                    deleteObjects[image.gameObject] = true;
+                }
+            }
+
+            return spriteState;
+        }
+
         public static T FindComponentByClassName<T>(
             List<Tuple<GameObject, Element>> children,
             string className
@@ -71,6 +128,36 @@ namespace I0plus.XdUnityUI.Editor
                 if (element is GroupElement groupElement)
                 {
                     component = FindComponentByClassName<T>(groupElement.RenderedChildren, className);
+                    if (component != null) return true;
+                }
+
+                return false;
+            });
+            return component;
+        }
+
+        public static T FindComponentByNames<T>(
+            List<Tuple<GameObject, Element>> children,
+            List<string> names
+        )
+        {
+            var component = default(T);
+            var found = children.Find(child =>
+            {
+                // StateNameがNULLなら、ClassNameチェックなし
+                var (gameObject, element) = child;
+                foreach (var name in names)
+                {
+                    if (name == null || element.HasParsedName(name))
+                    {
+                        component = gameObject.GetComponent<T>();
+                        if (component != null) return true;
+                    }
+                }
+
+                if (element is GroupElement groupElement)
+                {
+                    component = FindComponentByNames<T>(groupElement.RenderedChildren, names);
                     if (component != null) return true;
                 }
 
@@ -606,6 +693,7 @@ namespace I0plus.XdUnityUI.Editor
             var xdGuid = Element.GetOrAddComponent<XdGuid>(go);
             xdGuid.guid = guid;
         }
+
         public static void SetActive(GameObject go, bool? active)
         {
             if (active != null)
@@ -613,6 +701,7 @@ namespace I0plus.XdUnityUI.Editor
                 go.SetActive(active.Value);
             }
         }
+
         public static void SetLayer(GameObject go, string layerName)
         {
             switch (layerName)
