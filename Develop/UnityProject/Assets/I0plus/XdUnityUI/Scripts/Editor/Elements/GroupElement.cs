@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
 namespace I0plus.XdUnityUI.Editor
 {
@@ -52,27 +52,27 @@ namespace I0plus.XdUnityUI.Editor
 
         public List<Tuple<GameObject, Element>> RenderedChildren { get; private set; }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render([CanBeNull] ref GameObject targetObject,
+            RenderContext renderContext,
+            GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            RenderedChildren = RenderChildren(renderContext, go);
-            ElementUtil.SetupCanvasGroup(go, CanvasGroup);
-            ElementUtil.SetupChildImageComponent(go, RenderedChildren);
-            ElementUtil.SetupFillColor(go, FillColorJson);
-            ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
-            ElementUtil.SetupLayoutGroup(go, LayoutJson);
-            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
-            ElementUtil.SetupComponents(go, ComponentsJson);
-            ElementUtil.SetupMask(go, MaskJson);
-            ElementUtil.SetupRectMask2D(go, RectMask2D);
+            RenderedChildren = RenderChildren(renderContext, targetObject);
+            ElementUtil.SetupCanvasGroup(targetObject, CanvasGroup);
+            ElementUtil.SetupChildImageComponent(targetObject, RenderedChildren);
+            ElementUtil.SetupFillColor(targetObject, FillColorJson);
+            ElementUtil.SetupContentSizeFitter(targetObject, ContentSizeFitterJson);
+            ElementUtil.SetupLayoutGroup(targetObject, LayoutJson);
+            ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
+            ElementUtil.SetupComponents(targetObject, ComponentsJson);
+            ElementUtil.SetupMask(targetObject, MaskJson);
+            ElementUtil.SetupRectMask2D(targetObject, RectMask2D);
             // ScrollRectを設定した時点で、はみでたContentがアジャストされる　PivotがViewport内に入っていればOK
             GameObject goContent = null;
             if (RenderedChildren.Count > 0) goContent = RenderedChildren[0].Item1;
-            ElementUtil.SetupScrollRect(go, goContent, ScrollRectJson);
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
-
-            return go;
+            ElementUtil.SetupScrollRect(targetObject, goContent, ScrollRectJson);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
 
         public override void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
@@ -109,44 +109,14 @@ namespace I0plus.XdUnityUI.Editor
             }
         }
 
-        protected virtual GameObject CreateSelf(RenderContext renderContext, GameObject parentObject)
-        {
-            bool isPrefabChild;
-            var go = CreateUiGameObject(renderContext, parentObject, out isPrefabChild);
-            var rect = go.GetComponent<RectTransform>();
-
-            if (parentObject && !isPrefabChild)
-                //親のパラメータがある場合､親にする 後のAnchor定義のため
-                rect.SetParent(parentObject.transform);
-
-            return go;
-        }
-
-        protected void SetMaskImage(RenderContext renderContext, GameObject go)
-        {
-            var maskSource = Elements.Find(x => x is MaskElement);
-            if (maskSource == null) return;
-
-            Elements.Remove(maskSource);
-            var maskImage = AddComponent<Image>();
-            maskImage.raycastTarget = false;
-
-            var dummyMaskImage = maskSource.Render(renderContext, null);
-            dummyMaskImage.transform.SetParent(go.transform);
-            dummyMaskImage.GetComponent<Image>().CopyTo(maskImage);
-            Object.DestroyImmediate(dummyMaskImage);
-
-            var mask = AddComponent<Mask>();
-            mask.showMaskGraphic = false;
-        }
-
         protected List<Tuple<GameObject, Element>> RenderChildren(RenderContext renderContext, GameObject parent,
             Action<GameObject, Element> callback = null)
         {
             var list = new List<Tuple<GameObject, Element>>();
             foreach (var element in Elements)
             {
-                var go = element.Render(renderContext, parent);
+                GameObject go = null;
+                element.Render(ref go, renderContext, parent);
                 if (go.transform.parent != parent.transform) Debug.Log("No parent set" + go.name);
 
                 //if (element.IsPrefab)

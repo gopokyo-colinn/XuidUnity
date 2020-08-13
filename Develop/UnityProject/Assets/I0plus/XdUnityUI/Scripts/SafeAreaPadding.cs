@@ -3,8 +3,8 @@
 namespace I0plus.XdUnityUI
 {
     /**
- * 【Unity】Device Simulatorでノッチとセーフエリアの対策 - テラシュールブログ
- * http://tsubakit1.hateblo.jp/entry/2019/10/30/235150
+     * 【Unity】Device Simulatorでノッチとセーフエリアの対策 - テラシュールブログ
+     * http://tsubakit1.hateblo.jp/entry/2019/10/30/235150
      */
     [RequireComponent(typeof(RectTransform))]
     [ExecuteAlways]

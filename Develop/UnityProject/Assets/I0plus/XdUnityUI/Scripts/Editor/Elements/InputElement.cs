@@ -17,13 +17,13 @@ namespace I0plus.XdUnityUI.Editor
             InputJson = json.GetDic("input");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var children = RenderChildren(renderContext, go);
+            var children = RenderChildren(renderContext, targetObject);
 
-            var inputField = go.AddComponent<InputField>();
+            var inputField = GetOrAddComponent<InputField>(targetObject);
             inputField.transition = Selectable.Transition.None;
             if (InputJson != null)
             {
@@ -40,10 +40,8 @@ namespace I0plus.XdUnityUI.Editor
                 if (targetGraphic != null) inputField.targetGraphic = targetGraphic;
             }
 
-            ElementUtil.SetLayer(go, Layer);
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
-
-            return go;
+            ElementUtil.SetLayer(targetObject, Layer);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
 }

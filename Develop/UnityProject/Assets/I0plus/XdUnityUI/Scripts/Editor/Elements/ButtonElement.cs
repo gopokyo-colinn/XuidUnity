@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,14 +18,16 @@ namespace I0plus.XdUnityUI.Editor
             ButtonJson = json.GetDic("button");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render([CanBeNull] ref GameObject targetObject,
+            RenderContext renderContext,
+            GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var children = RenderChildren(renderContext, go);
+            var children = RenderChildren(renderContext, targetObject);
             var deleteObjects = new Dictionary<GameObject, bool>();
 
-            var button = AddComponent<Button>();
+            var button = GetOrAddComponent<Button>(targetObject);
 
 
             GameObject targetImageObject = null;
@@ -114,18 +117,17 @@ namespace I0plus.XdUnityUI.Editor
             {
                 // 子供からImage持ちを探す
 
-                var image = go.GetComponentInChildren<Image>();
+                var image = targetObject.GetComponentInChildren<Image>();
                 if (image == null)
                     // componentでないか探す
-                    image = go.GetComponent<Image>();
+                    image = targetObject.GetComponent<Image>();
 
                 button.targetGraphic = image;
             }
 
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
-            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
-            ElementUtil.SetupComponents(go, ComponentsJson);
-            return go;
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
+            ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
+            ElementUtil.SetupComponents(targetObject, ComponentsJson);
         }
     }
 }

@@ -17,9 +17,9 @@ namespace I0plus.XdUnityUI.Editor
             _scrollbarJson = json.GetDic("scrollbar");
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject go, RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref go, parentObject);
 
             ElementUtil.SetupRectTransform(go, RectTransformJson);
 
@@ -31,7 +31,7 @@ namespace I0plus.XdUnityUI.Editor
             Scrollbar scrollbar;
             if (toggleChild == null)
             {
-                scrollbar = go.AddComponent<Scrollbar>();
+                scrollbar = GetOrAddComponent<Scrollbar>(go);
             }
             else
             {
@@ -78,7 +78,6 @@ namespace I0plus.XdUnityUI.Editor
             }
 
             ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
-            return go;
         }
     }
 }

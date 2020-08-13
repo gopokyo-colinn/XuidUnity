@@ -12,18 +12,15 @@ namespace I0plus.XdUnityUI.Editor
         {
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject selfObject, RenderContext renderContext, GameObject parentObject)
         {
-            bool isPrefabChild;
-            var go = CreateUiGameObject(renderContext, parentObject, out isPrefabChild);
-            var rect = go.GetComponent<RectTransform>();
-            if (parentObject && !isPrefabChild)
+            GetOrCreateSelfObject(renderContext, ref selfObject, parentObject);
+            var rect = selfObject.GetComponent<RectTransform>();
+            if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
 
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
-
-            return go;
+            ElementUtil.SetupRectTransform(selfObject, RectTransformJson);
         }
     }
 }

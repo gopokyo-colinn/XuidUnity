@@ -84,15 +84,26 @@ namespace I0plus.XdUnityUI.Editor
         }
         */
 
-        [MenuItem("Assets/XdUnityUI/Folder Import...")]
+        [MenuItem("Assets/XdUnityUI/Clean Import...")]
         public static async Task MenuImportSpecifiedFolder()
         {
-            var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");
-            if (String.IsNullOrWhiteSpace(path)) return;
+            var path = EditorUtility.OpenFolderPanel("Clean import:Specify Folder", "", "");
+            if (string.IsNullOrWhiteSpace(path)) return;
 
             var folders = new List<string> {path};
-            await ImportFolders(folders, true, false);
+            await ImportFolders(folders, false, true, false);
         }
+
+        [MenuItem("Assets/XdUnityUI/(experimental)Overwrite Import...")]
+        public static async Task MenuOverwriteImportSpecifiedFolder()
+        {
+            var path = EditorUtility.OpenFolderPanel("Overwrite Import:Specify Folder", "", "");
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            var folders = new List<string> {path};
+            await ImportFolders(folders, true, true, false);
+        }
+
 
         /*
         [MenuItem("Assets/XdUnityUI/Specify Folder Import(layout only)...")]
@@ -117,14 +128,15 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var obj in Selection.GetFiltered(typeof(Object), SelectionMode.Assets))
             {
                 var path = AssetDatabase.GetAssetPath(obj);
-                if (!String.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path)) folders.Add(path);
             }
 
             return folders;
         }
 
 
-        private static async Task ImportFolders(IEnumerable<string> importFolderPaths, bool convertImageFlag,
+        private static async Task ImportFolders(IEnumerable<string> importFolderPaths, bool overwriteImportFlag,
+            bool convertImageFlag,
             bool deleteAssetsFlag)
         {
             var importedAssets = new List<string>();
@@ -159,7 +171,9 @@ namespace I0plus.XdUnityUI.Editor
                 if (!result) return;
             }
 
-            await Import(importedAssets);
+            await Import(importedAssets, overwriteImportFlag);
+
+            // インポートしたアセットのソース削除が必要ならここでするべきかも
             EditorUtility.DisplayDialog("Import", "Done.", "Ok");
         }
 
@@ -190,7 +204,7 @@ namespace I0plus.XdUnityUI.Editor
         /// <param name="importedPaths"></param>
         /// <param name="movedAssets"></param>
         /// <param name="deleteImportEntriesFlag"></param>
-        private static async Task Import(IReadOnlyCollection<string> importedPaths)
+        private static async Task Import(IReadOnlyCollection<string> importedPaths, bool overwriteImportFlag)
         {
             _progressTotal = importedPaths.Count;
             if (_progressTotal == 0) return;
@@ -325,7 +339,7 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
             */
-            
+
             if (changed)
             {
                 AssetDatabase.Refresh();
@@ -351,10 +365,31 @@ namespace I0plus.XdUnityUI.Editor
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
                     var fontAssetPath = EditorUtil.GetFontsAssetPath();
+
+                    // overwriteImportFlagがTrueなら、ベースとなるPrefab上に生成していく
+                    // 利用できるオブジェクトは利用していく
+                    if (overwriteImportFlag)
+                    {
+                        // すでにあるプレハブを読み込む
+                        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(saveAssetPath);
+                        if (prefab != null)
+                        {
+                            go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                            PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.OutermostRoot,
+                                InteractionMode.AutomatedAction);
+                        }
+                    }
+
+                    // Render Context
+                    var renderContext = new RenderContext(spriteOutputFolderAssetPath, fontAssetPath, go);
+                    if (overwriteImportFlag)
+                    {
+                        renderContext.OptionAddXdGuid = true;
+                    }
+
                     // Create Prefab
-                    var prefabCreator = new PrefabCreator(spriteOutputFolderAssetPath, fontAssetPath, layoutFilePath,
-                        prefabs);
-                    go = prefabCreator.Create();
+                    var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
+                    prefabCreator.Create(ref go, renderContext);
 #if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);
@@ -448,24 +483,8 @@ namespace I0plus.XdUnityUI.Editor
         }
 #endif
 
-        private class FileInfoComparer : IEqualityComparer<FileInfo>
-        {
-            public bool Equals(FileInfo iLhs, FileInfo iRhs)
-            {
-                if (iLhs.Name == iRhs.Name) return true;
-
-                return false;
-            }
-
-            public int GetHashCode(FileInfo fi)
-            {
-                var s = fi.Name;
-                return s.GetHashCode();
-            }
-        }
-
         /// <summary>
-        /// 複数階層のフォルダを作成する
+        ///     複数階層のフォルダを作成する
         /// </summary>
         /// <param name="path">一番子供のフォルダまでのパスe.g.)Assets/Resources/Sound/</param>
         /// <remarks>パスは"Assets/"で始まっている必要があります。Splitなので最後のスラッシュ(/)は不要です</remarks>
@@ -479,21 +498,31 @@ namespace I0plus.XdUnityUI.Editor
             if (AssetDatabase.IsValidFolder(path)) return;
 
             // スラッシュで終わっていたら除去
-            if (path[path.Length - 1] == '/')
-            {
-                path = path.Substring(0, path.Length - 1);
-            }
+            if (path[path.Length - 1] == '/') path = path.Substring(0, path.Length - 1);
 
             var names = path.Split('/');
-            for (int i = 1; i < names.Length; i++)
+            for (var i = 1; i < names.Length; i++)
             {
-                var parent = String.Join("/", names.Take(i).ToArray());
-                var target = String.Join("/", names.Take(i + 1).ToArray());
+                var parent = string.Join("/", names.Take(i).ToArray());
+                var target = string.Join("/", names.Take(i + 1).ToArray());
                 var child = names[i];
-                if (!AssetDatabase.IsValidFolder(target))
-                {
-                    AssetDatabase.CreateFolder(parent, child);
-                }
+                if (!AssetDatabase.IsValidFolder(target)) AssetDatabase.CreateFolder(parent, child);
+            }
+        }
+
+        private class FileInfoComparer : IEqualityComparer<FileInfo>
+        {
+            public bool Equals(FileInfo iLhs, FileInfo iRhs)
+            {
+                if (iLhs.Name == iRhs.Name) return true;
+
+                return false;
+            }
+
+            public int GetHashCode(FileInfo fi)
+            {
+                var s = fi.Name;
+                return s.GetHashCode();
             }
         }
     }

@@ -102,7 +102,7 @@ namespace I0plus.XdUnityUI.Editor
             if (childImageBeComponent != null)
             {
                 var imageComponent = childImageBeComponent.Item1.GetComponent<Image>();
-                goImage = gameObject.AddComponent<Image>();
+                goImage = Element.GetOrAddComponent<Image>(gameObject);
                 goImage.sprite = imageComponent.sprite;
                 goImage.type = imageComponent.type;
 
@@ -120,7 +120,7 @@ namespace I0plus.XdUnityUI.Editor
             // 背景のフィルカラー
             if (fillColor != null)
             {
-                var image = go.AddComponent<Image>();
+                var image = Element.GetOrAddComponent<Image>(go);
                 Color color;
                 if (ColorUtility.TryParseHtmlString(fillColor, out color)) image.color = color;
             }
@@ -132,7 +132,8 @@ namespace I0plus.XdUnityUI.Editor
             var componentContentSizeFitter = go.GetComponent<ContentSizeFitter>();
             if (contentSizeFitter == null) return componentContentSizeFitter; // 引数がNULLでも持っていたら返す
 
-            if (componentContentSizeFitter == null) componentContentSizeFitter = go.AddComponent<ContentSizeFitter>();
+            if (componentContentSizeFitter == null)
+                componentContentSizeFitter = Element.GetOrAddComponent<ContentSizeFitter>(go);
 
             if (contentSizeFitter.ContainsKey("vertical_fit"))
             {
@@ -354,13 +355,13 @@ namespace I0plus.XdUnityUI.Editor
 
             if (method == "vertical")
             {
-                var verticalLayoutGroup = go.AddComponent<VerticalLayoutGroup>();
+                var verticalLayoutGroup = Element.GetOrAddComponent<VerticalLayoutGroup>(go);
                 layoutGroup = verticalLayoutGroup;
             }
 
             if (method == "horizontal")
             {
-                var horizontalLayoutGroup = go.AddComponent<HorizontalLayoutGroup>();
+                var horizontalLayoutGroup = Element.GetOrAddComponent<HorizontalLayoutGroup>(go);
                 layoutGroup = horizontalLayoutGroup;
             }
 
@@ -435,7 +436,7 @@ namespace I0plus.XdUnityUI.Editor
         {
             if (layoutJson == null) return null;
 
-            var layoutGroup = go.AddComponent<GridLayoutGroup>();
+            var layoutGroup = Element.GetOrAddComponent<GridLayoutGroup>(go);
 
             if (layoutJson.ContainsKey("padding"))
             {
@@ -494,7 +495,7 @@ namespace I0plus.XdUnityUI.Editor
         public static void SetupLayoutElement(GameObject go, Dictionary<string, object> layoutElement)
         {
             if (layoutElement == null) return;
-            var componentLayoutElement = go.AddComponent<LayoutElement>();
+            var componentLayoutElement = Element.GetOrAddComponent<LayoutElement>(go);
 
             var minWidth = layoutElement.GetFloat("min_width");
             if (minWidth != null) componentLayoutElement.minWidth = minWidth.Value;
@@ -538,19 +539,19 @@ namespace I0plus.XdUnityUI.Editor
 
         public static void SetupCanvasGroup(GameObject go, Dictionary<string, object> canvasGroup)
         {
-            if (canvasGroup != null) go.AddComponent<CanvasGroup>();
+            if (canvasGroup != null) Element.GetOrAddComponent<CanvasGroup>(go);
         }
 
         public static void SetupRectMask2D(GameObject go, bool? param)
         {
-            if (param != null && param.Value) go.AddComponent<RectMask2D>(); // setupMask
+            if (param != null && param.Value) Element.GetOrAddComponent<RectMask2D>(go); // setupMask
         }
 
         public static void SetupMask(GameObject go, Dictionary<string, object> param)
         {
             if (param != null)
             {
-                var mask = go.AddComponent<Mask>(); // setupMask
+                var mask = Element.GetOrAddComponent<Mask>(go); // setupMask
                 var showMaskGraphic = param.GetBool("show_mask_graphic");
                 if (showMaskGraphic != null) mask.showMaskGraphic = showMaskGraphic.Value;
             }
@@ -569,7 +570,7 @@ namespace I0plus.XdUnityUI.Editor
         {
             if (scrollRect == null) return;
 
-            var scrollRectComponent = goViewport.AddComponent<ScrollRect>();
+            var scrollRectComponent = Element.GetOrAddComponent<ScrollRect>(goViewport);
             if (goContent != null) scrollRectComponent.content = goContent.GetComponent<RectTransform>(); // Content
 
             scrollRectComponent.viewport = goViewport.GetComponent<RectTransform>(); // 自分自身がViewportになる
@@ -600,6 +601,18 @@ namespace I0plus.XdUnityUI.Editor
             if (offsetMax != null) rect.offsetMax = offsetMax.Value;
         }
 
+        public static void SetGuid(GameObject go, string guid)
+        {
+            var xdGuid = Element.GetOrAddComponent<XdGuid>(go);
+            xdGuid.guid = guid;
+        }
+        public static void SetActive(GameObject go, bool? active)
+        {
+            if (active != null)
+            {
+                go.SetActive(active.Value);
+            }
+        }
         public static void SetLayer(GameObject go, string layerName)
         {
             switch (layerName)

@@ -9,16 +9,16 @@ using UnityEngine.UI;
 namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// EditorUtil class.
-    /// based on Baum2.Editor.EditorUtil class.
+    ///     EditorUtil class.
+    ///     based on Baum2.Editor.EditorUtil class.
     /// </summary>
     public static class EditorUtil
     {
         private const string ImportDirectoryMark = "_XdUnityUIImport";
 
         /// <summary>
-        /// 【C#】ドライブ直下からのファイルリスト取得について - Qiita
-        ///  https://qiita.com/OneK/items/8b0d02817a9f2a2fbeb0#%E8%A7%A3%E8%AA%AC
+        ///     【C#】ドライブ直下からのファイルリスト取得について - Qiita
+        ///     https://qiita.com/OneK/items/8b0d02817a9f2a2fbeb0#%E8%A7%A3%E8%AA%AC
         /// </summary>
         /// <param name="dirPath"></param>
         /// <returns></returns>
@@ -49,8 +49,8 @@ namespace I0plus.XdUnityUI.Editor
         }
 
         /// <summary>
-        /// Assets以下のパスにする
-        /// \を/におきかえる
+        ///     Assets以下のパスにする
+        ///     \を/におきかえる
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -58,7 +58,8 @@ namespace I0plus.XdUnityUI.Editor
         {
             path = path.Replace("\\", "/");
             var assetPath = path;
-            if (path.StartsWith(Application.dataPath)) assetPath = "Assets" + path.Substring(Application.dataPath.Length);
+            if (path.StartsWith(Application.dataPath))
+                assetPath = "Assets" + path.Substring(Application.dataPath.Length);
             return assetPath;
         }
 
@@ -94,7 +95,7 @@ namespace I0plus.XdUnityUI.Editor
         }
 
         /// <summary>
-        /// 優先順位に基づき、みつかったマークファイル名を返す
+        ///     優先順位に基づき、みつかったマークファイル名を返す
         /// </summary>
         /// <returns></returns>
         public static string GetImportDirectoryMark()
@@ -142,7 +143,7 @@ namespace I0plus.XdUnityUI.Editor
         }
 
         /// <summary>
-        /// サブディレクトリを含めたスプライトの出力パスを取得する
+        ///     サブディレクトリを含めたスプライトの出力パスを取得する
         /// </summary>
         /// <param name="spritePath"></param>
         /// <returns></returns>

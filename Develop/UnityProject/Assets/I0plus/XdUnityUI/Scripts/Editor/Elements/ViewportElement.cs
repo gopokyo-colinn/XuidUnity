@@ -24,21 +24,21 @@ namespace I0plus.XdUnityUI.Editor
             _parentElement = parent;
         }
 
-        public override GameObject Render(RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            var go = CreateSelf(renderContext, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            ElementUtil.SetLayer(go, Layer);
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
+            ElementUtil.SetLayer(targetObject, Layer);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
 
             // タッチイベントを取得するイメージコンポーネントになる
-            ElementUtil.SetupFillColor(go, FillColorJson);
+            ElementUtil.SetupFillColor(targetObject, FillColorJson);
 
             // コンテンツ部分を入れるコンテナ
             var goContent = new GameObject("$Content");
             ElementUtil.SetLayer(goContent, Layer); // Viewportと同じレイヤー
-            var contentRect = goContent.AddComponent<RectTransform>();
-            goContent.transform.SetParent(go.transform);
+            var contentRect = GetOrAddComponent<RectTransform>(goContent);
+            goContent.transform.SetParent(targetObject.transform);
 
             if (_contentJson != null)
             {
@@ -62,11 +62,9 @@ namespace I0plus.XdUnityUI.Editor
             //Viewportのチャイルドはもとより、content向けのAnchor・Offsetを持っている
             RenderChildren(renderContext, goContent);
 
-            ElementUtil.SetupRectMask2D(go, RectMask2D);
+            ElementUtil.SetupRectMask2D(targetObject, RectMask2D);
             // ScrollRectを設定した時点ではみでたContentがアジャストされる　PivotがViewport内に入っていればOK
-            ElementUtil.SetupScrollRect(go, goContent, _scrollRectJson);
-
-            return go;
+            ElementUtil.SetupScrollRect(targetObject, goContent, _scrollRectJson);
         }
 
 

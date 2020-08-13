@@ -13,7 +13,6 @@ namespace I0plus.XdUnityUI.Editor
         private static readonly Dictionary<string, Func<Dictionary<string, object>, Element, Element>> Generator =
             new Dictionary<string, Func<Dictionary<string, object>, Element, Element>>
             {
-                {"Root", (d, p) => new RootElement(d, p)},
                 {"Image", (d, p) => new ImageElement(d, p)},
                 {"Mask", (d, p) => new MaskElement(d, p)},
                 {"Group", (d, p) => new GroupElement(d, p)},
@@ -29,7 +28,7 @@ namespace I0plus.XdUnityUI.Editor
                 {"TextMeshPro", (d, p) => new TextElement(d, p)},
 #endif
                 {"Rect", (d, p) => new RectElement(d, p)},
-                {"Instance", (d, p) => new InstanceElement(d, p)},
+                {"Instance", (d, p) => new InstanceElement(d, p)}
             };
 
         public static Element Generate(Dictionary<string, object> json, Element parent)
@@ -40,7 +39,7 @@ namespace I0plus.XdUnityUI.Editor
                 Debug.LogError("[XdUnityUI] Unknown type: " + type);
                 return null;
             }
-            
+
 
             // Debug.Log($"generate {type}");
 

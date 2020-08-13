@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
 using MiniJSON;
 using UnityEditor;
 using UnityEngine;
@@ -21,52 +22,49 @@ namespace I0plus.XdUnityUI.Editor
     {
         private static readonly string[] Versions = {"0.6.0", "0.6.1"};
         private readonly string assetPath;
-        private readonly string fontRootPath;
         private readonly List<GameObject> nestedPrefabs;
-        private readonly string spriteRootPath;
 
         /// <summary>
         /// </summary>
         /// <param name="spriteRootPath"></param>
         /// <param name="fontRootPath"></param>
         /// <param name="assetPath">フルパスでの指定 Unity Assetフォルダ外もよみこめる</param>
-        public PrefabCreator(string spriteRootPath, string fontRootPath, string assetPath, List<GameObject> prefabs)
+        public PrefabCreator(string assetPath, List<GameObject> prefabs)
         {
-            this.spriteRootPath = spriteRootPath;
-            this.fontRootPath = fontRootPath;
             this.assetPath = assetPath;
             nestedPrefabs = prefabs;
         }
 
-        public GameObject Create()
+        public void Create([NotNull] ref GameObject targetObject, RenderContext renderer)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
-            var text = File.ReadAllText(assetPath);
-            var json = Json.Deserialize(text) as Dictionary<string, object>;
+            var jsonText = File.ReadAllText(assetPath);
+            var json = Json.Deserialize(jsonText) as Dictionary<string, object>;
             var info = json.GetDic("info");
             Validation(info);
 
-            var renderer = new RenderContext(spriteRootPath, fontRootPath, nestedPrefabs);
             var rootJson = json.GetDic("root");
-            GameObject root = null;
 
             var rootElement = ElementFactory.Generate(rootJson, null);
-            root = rootElement.Render(renderer, null);
 
-            Postprocess(root);
+            rootElement.Render(ref targetObject, renderer, null);
+
+            // Postprocess(rootObject);
 
             if (renderer.ToggleGroupMap.Count > 0)
             {
                 // ToggleGroupが作成された場合
                 var go = new GameObject("ToggleGroup");
-                go.transform.SetParent(root.transform);
+                go.transform.SetParent(targetObject.transform);
                 foreach (var keyValuePair in renderer.ToggleGroupMap)
                 {
                     var gameObject = keyValuePair.Value;
                     gameObject.transform.SetParent(go.transform);
                 }
             }
+
+            var notUsedchilds = renderer.FreeChildObjects;
 
             foreach (var prefab in renderer.NewPrefabs.ToList())
                 //if we haven't created a prefab out of the referenced GO we do so now
@@ -82,8 +80,6 @@ namespace I0plus.XdUnityUI.Editor
                     nestedPrefabs.Add(PrefabUtility.SaveAsPrefabAssetAndConnect(prefab,
                         Path.Combine(nestedPrefabDirectory, prefab.name + ".prefab"), InteractionMode.AutomatedAction));
                 }
-
-            return root;
         }
 
         private void Postprocess(GameObject go)

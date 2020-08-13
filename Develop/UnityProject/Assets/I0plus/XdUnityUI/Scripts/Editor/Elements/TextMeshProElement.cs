@@ -44,7 +44,7 @@ namespace I0plus.XdUnityUI.Editor
             //if a text component is already present this means this go is part of a prefab and we skip the font generation
             if (text == null)
             {
-                text = go.AddComponent<TextMeshProUGUI>();
+                text = GetOrAddComponent<TextMeshProUGUI>(go);
                 text.font = renderer.GetTMPFontAsset(fontName, fontStyle);
             }
 
