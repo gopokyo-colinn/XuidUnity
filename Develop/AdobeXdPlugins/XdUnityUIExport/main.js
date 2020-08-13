@@ -2859,6 +2859,7 @@ async function addImage(
   let hashStringLength = 5
   // ファイル名が長すぎるとエラーになる可能性もある
   let fileName = replaceToFileName(unityName, true)
+  fileName = fileName.substr(0, 20)
   while (true) {
     const guidStr = '+' + node.guid.slice(0, hashStringLength)
     // すでに同じものがあるか検索

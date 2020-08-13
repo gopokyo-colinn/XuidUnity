@@ -319,7 +319,7 @@ first-childになる
 [class$='-button'],
 [class$='_button'] {
   button: true;
-  button-transition-target-graphic: '.target-image';
+  button-transition-target-graphic: '.target-graphic';
   button-transition-highlighted-sprite-target: '.highlighted-image';
   button-transition-pressed-sprite-target: '.pressed-image';
   button-transition-selected-sprite-target: '.selected-image';
@@ -333,12 +333,12 @@ first-childになる
 [class$='-toggle'],
 [class$='_toggle'] {
   toggle: true;
-  toggle-transition-target-graphic: '.target-image';
+  toggle-transition-target-graphic: '.target-graphic';
   toggle-transition-highlighted-sprite-target: '.highlighted-image';
   toggle-transition-pressed-sprite-target: '.pressed-image';
   toggle-transition-selected-sprite-target: '.selected-image';
   toggle-transition-disabled-sprite-target: '.disabled-image';
-  toggle-graphic-target: '.checked-image'; /* ONのときのチェック画像 */
+  toggle-on-graphic: '.on-graphic'; /* ONのときのチェック画像 */
 }
 
 .no-slice {
