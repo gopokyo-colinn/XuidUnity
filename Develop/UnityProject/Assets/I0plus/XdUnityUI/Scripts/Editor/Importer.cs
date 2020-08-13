@@ -24,7 +24,7 @@ namespace I0plus.XdUnityUI.Editor
         private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
 
         /// <summary>
-        ///     自動インポート
+        ///     自動インポート 自動削除
         /// </summary>
         /// <param name="importedAssets"></param>
         /// <param name="deletedAssets"></param>
@@ -48,20 +48,28 @@ namespace I0plus.XdUnityUI.Editor
             if (forImportAssetPaths.Count > 0)
             {
                 await Import(forImportAssetPaths, false);
+
+                // インポートしたファイルを削除し、そのフォルダが空になったらフォルダも削除する
                 foreach (var forImportAssetPath in forImportAssetPaths)
                 {
+                    // フォルダの場合はスルー
                     if (IsFolder(forImportAssetPath))
                     {
                         continue;
                     }
+
+                    // インポートするファイルを削除
                     AssetDatabase.DeleteAsset(forImportAssetPath);
+                    // ファイルがあったフォルダが空になったかチェック
                     var folderName = Path.GetDirectoryName(forImportAssetPath);
-                    var files = Directory.GetFiles( folderName );
+                    var files = Directory.GetFiles(folderName);
                     if (files.Length == 0)
                     {
+                        // フォルダの削除
                         AssetDatabase.DeleteAsset(folderName);
                     }
                 }
+
                 AssetDatabase.Refresh();
             }
         }
@@ -224,6 +232,20 @@ namespace I0plus.XdUnityUI.Editor
             return false;
         }
 
+        private class FolderInfos : Dictionary<string, HashSet<string>>
+        {
+            public void Add(string path, string fileExtension)
+            {
+                if (!this.Keys.Contains(path))
+                {
+                    var extentions = new HashSet<string>() {fileExtension};
+                    this[path] = extentions;
+                }
+
+                this[path].Add(fileExtension);
+            }
+        };
+
         /// <summary>
         ///     Assetディレクトリに追加されたファイルを確認、インポート処理を行う
         /// </summary>
@@ -239,7 +261,9 @@ namespace I0plus.XdUnityUI.Editor
             var changed = false;
 
             // インポートされたファイルからフォルダパスリストを作成する
-            var importedFolderAssetPaths = new HashSet<string>();
+            // Key: AssetPath
+            // Value: ディレクトリにあるファイルの拡張子
+            var importedFolderAssetPaths = new FolderInfos();
             foreach (var importedAssetPath in importedAssetPaths)
             {
                 if (IsFolder(importedAssetPath))
@@ -249,46 +273,52 @@ namespace I0plus.XdUnityUI.Editor
                 }
 
                 var folderPath = Path.GetDirectoryName(importedAssetPath);
-                importedFolderAssetPaths.Add(folderPath);
+                var extension = Path.GetExtension(importedAssetPath);
+                importedFolderAssetPaths.Add(folderPath, extension);
             }
 
             // 出力フォルダの作成
-            foreach (var importedPath in importedFolderAssetPaths)
+            foreach (var importedFolderInfo in importedFolderAssetPaths)
             {
-                if (!IsFolder(importedPath)) continue;
+                if (!IsFolder(importedFolderInfo.Key)) continue;
 
                 // フォルダであった場合
-                var importedFullPath = Path.GetFullPath(importedPath);
-                var subFolderName = Path.GetFileName(importedPath);
+                var importedFullPath = Path.GetFullPath(importedFolderInfo.Key);
+                var subFolderName = Path.GetFileName(importedFolderInfo.Key);
 
+
+                var isSpriteFolder = importedFolderInfo.Value.Contains(".png");
                 // スプライト出力フォルダの作成
-                var outputSpritesFolderAssetPath = Path.Combine(
-                    EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
-                if (Directory.Exists(outputSpritesFolderAssetPath))
+                if (isSpriteFolder)
                 {
-                    // すでにあるフォルダ　インポートファイルと比較して、出力先にある必要のないファイルを削除する
-                    // ダブっている分は比較し、異なっている場合に上書きするようにする
-                    var outputFolderInfo = new DirectoryInfo(outputSpritesFolderAssetPath);
-                    var importFolderInfo = new DirectoryInfo(importedFullPath);
-
-                    var existSpritePaths = outputFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
-                    var importSpritePaths = importFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
-
-                    // outputフォルダにある importにはないファイルをリストアップする
-                    var deleteEntries = existSpritePaths.Except(importSpritePaths, new FileInfoComparer());
-                    // outputフォルダ内
-                    foreach (var fileInfo in deleteEntries)
+                    var outputSpritesFolderAssetPath = Path.Combine(
+                        EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
+                    if (Directory.Exists(outputSpritesFolderAssetPath))
                     {
-                        File.Delete(fileInfo.FullName);
-                        File.Delete(fileInfo.FullName + ".meta");
+                        // すでにあるフォルダ　インポートファイルと比較して、出力先にある必要のないファイルを削除する
+                        // ダブっている分は比較し、異なっている場合に上書きするようにする
+                        var outputFolderInfo = new DirectoryInfo(outputSpritesFolderAssetPath);
+                        var importFolderInfo = new DirectoryInfo(importedFullPath);
+
+                        var existSpritePaths = outputFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
+                        var importSpritePaths = importFolderInfo.GetFiles("*.png", SearchOption.AllDirectories);
+
+                        // outputフォルダにある importにはないファイルをリストアップする
+                        var deleteEntries = existSpritePaths.Except(importSpritePaths, new FileInfoComparer());
+                        // outputフォルダ内
+                        foreach (var fileInfo in deleteEntries)
+                        {
+                            File.Delete(fileInfo.FullName);
+                            File.Delete(fileInfo.FullName + ".meta");
+                            changed = true;
+                        }
+                    }
+                    else
+                    {
+                        AssetDatabase.CreateFolder(EditorUtil.GetOutputSpritesFolderAssetPath(),
+                            subFolderName);
                         changed = true;
                     }
-                }
-                else
-                {
-                    AssetDatabase.CreateFolder(EditorUtil.GetOutputSpritesFolderAssetPath(),
-                        subFolderName);
-                    changed = true;
                 }
 
                 var prefabsOutputPath = Path.Combine(EditorUtil.GetOutputPrefabsFolderAssetPath(), subFolderName);
@@ -429,14 +459,8 @@ namespace I0plus.XdUnityUI.Editor
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
                     prefabCreator.Create(ref go, renderContext);
-#if UNITY_2018_3_OR_NEWER
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log("[XdUnityUI] Created prefab: " + saveAssetPath, savedAsset);
-#else
-                    Object originalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(savePath);
-                    if (originalPrefab == null) originalPrefab = PrefabUtility.CreateEmptyPrefab(savePath);
-                    PrefabUtility.ReplacePrefab(go, originalPrefab, ReplacePrefabOptions.ReplaceNameBased);
-#endif
                 }
                 catch (Exception ex)
                 {
