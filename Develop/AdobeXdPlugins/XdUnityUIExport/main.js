@@ -96,14 +96,14 @@ const STYLE_BUTTON = 'button'
 const STYLE_BUTTON_TRANSITION = 'button-transition'
 const STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC =
   'button-transition-target-graphic'
-const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_TARGET =
-  'button-transition-highlighted-sprite-target'
-const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_TARGET =
-  'button-transition-pressed-sprite-target'
-const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_TARGET =
-  'button-transition-selected-sprite-target'
-const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_TARGET =
-  'button-transition-disabled-sprite-target'
+const STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE =
+  'button-transition-highlighted-sprite'
+const STYLE_BUTTON_TRANSITION_PRESSED_SPRITE =
+  'button-transition-pressed-sprite'
+const STYLE_BUTTON_TRANSITION_SELECTED_SPRITE =
+  'button-transition-selected-sprite'
+const STYLE_BUTTON_TRANSITION_DISABLED_SPRITE =
+  'button-transition-disabled-sprite'
 const STYLE_CANVAS_GROUP = 'canvas-group' // 削除予定
 const STYLE_COMMENT_OUT = 'comment-out'
 const STYLE_COMPONENT = 'component'
@@ -131,8 +131,7 @@ const STYLE_LAYOUT_GROUP_SPACING_X = 'layout-group-spacing-x'
 const STYLE_LAYOUT_GROUP_SPACING_Y = 'layout-group-spacing-y'
 const STYLE_LAYOUT_GROUP_START_AXIS = 'layout-group-start-axis'
 const STYLE_LAYOUT_GROUP_USE_CHILD_SCALE = 'layout-group-use-child-scale'
-const STYLE_LAYOUT_GROUP_CHILDREN_ORDER =
-  'layout-group-children-order'
+const STYLE_LAYOUT_GROUP_CHILDREN_ORDER = 'layout-group-children-order'
 const STYLE_MATCH_LOG = 'match-log'
 const STYLE_PRESERVE_ASPECT = 'preserve-aspect'
 const STYLE_LOCK_ASPECT = 'lock-aspect' // preserve-aspectと同じ動作にする　アスペクト比を維持する
@@ -164,17 +163,18 @@ const STYLE_TEXTMP = 'textmp' // textmeshpro
 const STYLE_TEXT_STRING = 'text-string'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
-const STYLE_TOGGLE_GRAPHIC_TARGET = 'toggle-graphic-target'
-const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_TARGET =
-  'toggle-transition-target-graphic-target'
-const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_TARGET =
-  'toggle-transition-highlighted-sprite-target'
-const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_TARGET =
-  'toggle-transition-pressed-sprite-target'
-const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_TARGET =
-  'toggle-transition-selected-sprite-target'
-const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_TARGET =
-  'toggle-transition-disabled-sprite-target'
+const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC =
+  'toggle-transition-target-graphic'
+const STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE =
+  'toggle-transition-highlighted-sprite'
+const STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE =
+  'toggle-transition-pressed-sprite'
+const STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE =
+  'toggle-transition-selected-sprite'
+const STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE =
+  'toggle-transition-disabled-sprite'
+const STYLE_TOGGLE_ON_GRAPHIC = 'toggle-on-graphic'
+const STYLE_TOGGLE_GRAPHIC_SWAP = 'toggle-graphic-swap' // on/off でイメージを変更する
 const STYLE_TOGGLE_GROUP = 'toggle-group'
 const STYLE_INPUT = 'input'
 const STYLE_INPUT_TRANSITION = 'input-transition'
@@ -404,7 +404,7 @@ class CssDeclarations {
    */
   firstAsNullOrBool(property) {
     const first = this.first(property)
-    if( first == null) return null;
+    if (first == null) return null
     return asBool(first)
   }
 }
@@ -2157,7 +2157,7 @@ function getRectTransform(node) {
  * @param node
  * @return {boolean}
  */
-function getVisibleInfo(node){
+function getVisibleInfo(node) {
   let bounds = globalResponsiveBounds[node.guid]
   return bounds ? bounds.before.visible : true
 }
@@ -2287,7 +2287,7 @@ class Style {
 
   firstAsNullOrBool(property) {
     const first = this.first(property)
-    if( first == null) return null;
+    if (first == null) return null
     return asBool(first)
   }
 
@@ -2573,7 +2573,7 @@ function addActive(json, node, style) {
       active: style.firstAsBool('active'),
     })
   } else {
-    if( getVisibleInfo(node) == false ) {
+    if (getVisibleInfo(node) == false) {
       Object.assign(json, {
         active: false,
       })
@@ -2859,6 +2859,7 @@ async function addImage(
   let hashStringLength = 5
   // ファイル名が長すぎるとエラーになる可能性もある
   let fileName = replaceToFileName(unityName, true)
+  fileName = fileName.substr(0, 20)
   while (true) {
     const guidStr = '+' + node.guid.slice(0, hashStringLength)
     // すでに同じものがあるか検索
@@ -3483,7 +3484,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   await addContent(style, json, node, funcForEachChild, root)
 
   // 基本
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -3558,7 +3559,7 @@ async function createInput(json, node, root, funcForEachChild) {
     },
   })
   // 基本
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
@@ -3758,7 +3759,7 @@ async function createGroup(json, node, root, funcForEachChild) {
   })
 
   // 基本
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
@@ -3848,8 +3849,8 @@ async function createScrollbar(json, node, funcForEachChild) {
   await funcForEachChild()
 
   // 基本
-  addGuid(json, node);
-  addActive(json, node,  style)
+  addGuid(json, node)
+  addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
@@ -3912,7 +3913,7 @@ async function createSlider(json, node, funcForEachChild) {
   await funcForEachChild()
 
   // 基本
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -3950,46 +3951,53 @@ async function createToggle(json, node, root, funcForEachChild) {
     })
   }
 
-  const graphic_class = style.first(STYLE_TOGGLE_GRAPHIC_TARGET)
-  if (graphic_class) {
+  const target_graphic = style.values(STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC)
+  if (target_graphic) {
     Object.assign(toggleJson, {
-      graphic_class,
+      target_graphic,
     })
   }
+
+  const on_graphic = style.values(STYLE_TOGGLE_ON_GRAPHIC)
+  if (on_graphic) {
+    Object.assign(toggleJson, {
+      on_graphic,
+    })
+  }
+
+  const graphic_swap = style.first(STYLE_TOGGLE_GRAPHIC_SWAP)
+  if (graphic_swap) {
+    Object.assign(toggleJson, {
+      graphic_swap,
+    })
+  }
+
+  let transition = style.first(STYLE_TOGGLE_TRANSITION)
+  if (transition) {
+    Object.assign(toggleJson, {
+      transition,
+    })
+  }
+
+  const highlighted_sprite = style.values(
+    STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE,
+  )
+  const pressed_sprite = style.values(STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE)
+  const selected_sprite = style.values(STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE)
+  const disabled_sprite = style.values(STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE)
+  Object.assign(toggleJson, {
+    sprite_state: {
+      highlighted_sprite,
+      pressed_sprite,
+      selected_sprite,
+      disabled_sprite,
+    },
+  })
 
   await funcForEachChild()
 
-  let styleToggleTransition = style.first(STYLE_TOGGLE_TRANSITION)
-  if (styleToggleTransition) {
-    const target_graphic_target = style.first(
-      STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC_TARGET,
-    )
-    const highlighted_sprite_target = style.first(
-      STYLE_TOGGLE_TRANSITION_HIGHLIGHTED_SPRITE_TARGET,
-    )
-    const pressed_sprite_target = style.first(
-      STYLE_TOGGLE_TRANSITION_PRESSED_SPRITE_TARGET,
-    )
-    const selected_sprite_target = style.first(
-      STYLE_TOGGLE_TRANSITION_SELECTED_SPRITE_TARGET,
-    )
-    const disabled_sprite_target = style.first(
-      STYLE_TOGGLE_TRANSITION_DISABLED_SPRITE_TARGET,
-    )
-    Object.assign(toggleJson, {
-      target_graphic_target,
-      transition: styleToggleTransition,
-      sprite_state: {
-        highlighted_sprite_target,
-        pressed_sprite_target,
-        selected_sprite_target,
-        disabled_sprite_target,
-      },
-    })
-  }
-
   // 基本パラメータ・コンポーネント
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4018,27 +4026,21 @@ async function createButton(json, node, root, funcForEachChild) {
 
   if (funcForEachChild) await funcForEachChild() // 子供を作成するかどうか選択できる createImageから呼び出された場合は子供の処理をしない
 
-  const target_graphic = style.first(STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC)
-  const highlighted_sprite_target = style.first(
-    STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE_TARGET,
+  const target_graphic = style.values(STYLE_BUTTON_TRANSITION_TARGET_GRAPHIC)
+  const highlighted_sprite = style.values(
+    STYLE_BUTTON_TRANSITION_HIGHLIGHTED_SPRITE,
   )
-  const pressed_sprite_target = style.first(
-    STYLE_BUTTON_TRANSITION_PRESSED_SPRITE_TARGET,
-  )
-  const selected_sprite_target = style.first(
-    STYLE_BUTTON_TRANSITION_SELECTED_SPRITE_TARGET,
-  )
-  const disabled_sprite_target = style.first(
-    STYLE_BUTTON_TRANSITION_DISABLED_SPRITE_TARGET,
-  )
+  const pressed_sprite = style.values(STYLE_BUTTON_TRANSITION_PRESSED_SPRITE)
+  const selected_sprite = style.values(STYLE_BUTTON_TRANSITION_SELECTED_SPRITE)
+  const disabled_sprite = style.values(STYLE_BUTTON_TRANSITION_DISABLED_SPRITE)
 
   const buttonJson = {
     target_graphic,
     sprite_state: {
-      highlighted_sprite_target,
-      pressed_sprite_target,
-      selected_sprite_target,
-      disabled_sprite_target,
+      highlighted_sprite,
+      pressed_sprite,
+      selected_sprite,
+      disabled_sprite,
     },
   }
 
@@ -4054,7 +4056,7 @@ async function createButton(json, node, root, funcForEachChild) {
   })
 
   // 基本パラメータ
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4125,7 +4127,7 @@ async function createImage(
       name: unityName,
     })
     // 基本パラメータ
-    addGuid(json, node);
+    addGuid(json, node)
     addActive(json, node, style)
     addRectTransformDraw(json, node, style)
     addLayer(json, style)
@@ -4188,7 +4190,7 @@ async function createPrefabInstance(json, node, root) {
   })
 
   // 基本
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
   addLayer(json, style)
@@ -4357,7 +4359,7 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   })
 
   // 基本パラメータ
-  addGuid(json, node);
+  addGuid(json, node)
   addActive(json, node, style)
   // Drawではなく、通常のレスポンシブパラメータを渡す　シャドウ等のエフェクトは自前でやる必要があるため
   addRectTransformDraw(json, node, style)
@@ -4415,8 +4417,8 @@ async function createRoot(renditions, outputFolder, root) {
     if (root != node && isPrefabInstanceNode(node)) {
       // インスタンスノードをみつけた
       // console.log('find layout root node.')
-      let {style} = getNodeNameAndStyle(node)
-      if( style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false ) {
+      let { style } = getNodeNameAndStyle(node)
+      if (style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false) {
         // 明確なFALSEでなければ
         await createPrefabInstance(json, node, root)
         return

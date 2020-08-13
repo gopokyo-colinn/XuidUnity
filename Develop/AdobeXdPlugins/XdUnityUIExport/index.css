@@ -319,11 +319,11 @@ first-childになる
 [class$='-button'],
 [class$='_button'] {
   button: true;
-  button-transition-target-graphic: '.target-image';
-  button-transition-highlighted-sprite-target: '.highlighted-image';
-  button-transition-pressed-sprite-target: '.pressed-image';
-  button-transition-selected-sprite-target: '.selected-image';
-  button-transition-disabled-sprite-target: '.disabled-image';
+  button-transition-target-graphic: '.target-graphic' '.target-image';
+  button-transition-highlighted-sprite: '.highlighted-image';
+  button-transition-pressed-sprite: '.pressed-image';
+  button-transition-selected-sprite: '.selected-image';
+  button-transition-disabled-sprite: '.disabled-image';
 }
 
 .toggle,
@@ -333,26 +333,18 @@ first-childになる
 [class$='-toggle'],
 [class$='_toggle'] {
   toggle: true;
-  toggle-transition-target-graphic: '.target-image';
+  toggle-transition-target-graphic: '.target-graphic' '.target-image';
   toggle-transition-highlighted-sprite-target: '.highlighted-image';
   toggle-transition-pressed-sprite-target: '.pressed-image';
   toggle-transition-selected-sprite-target: '.selected-image';
   toggle-transition-disabled-sprite-target: '.disabled-image';
-  toggle-graphic-target: '.checked-image'; /* ONのときのチェック画像 */
+  toggle-on-graphic: '.on-graphic' '.on-image'; /* ONのときのチェック画像 */
 }
 
 .no-slice {
   image-slice: false;
 }
 
-/*
-このクラス直下のイメージは親のサイズでSpriteを作成する
-XD内では無理なので、Unity内で作成する
-*/
-.image-each-child > * {
-  image: true;
-  image-fit-parent-bounds: true;
-}
 
 .input,
 [tag-name$='input'],
@@ -382,4 +374,17 @@ XD内では無理なので、Unity内で作成する
 
 .graphic-swap {
   toggle-graphic-swap: true;
+}
+
+.sprite-swap {
+  button-transition: "sprite-swap";
+  toggle-transition: "sprite-swap";
+}
+
+/*
+このクラス直下のイメージは親のサイズでSpriteを作成する
+同一サイズにはUnity内で処理する
+*/
+.sprite-swap > * {
+  image-fit-parent-bounds: true;
 }

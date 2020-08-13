@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,54 +39,46 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
 
-
+            GameObject targetImageObject = null;
+            var targetGraphics = _toggleJson.GetArray("target_graphic").Select(o => o.ToString()).ToList();
             var targetImage =
-                ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("target_graphic_class"));
-            if (targetImage != null) toggle.targetGraphic = targetImage;
+                ElementUtil.FindComponentByNames<Image>(children, targetGraphics);
+            if (targetImage != null)
+            {
+                toggle.targetGraphic = targetImage;
+                targetImageObject = targetImage.gameObject;
+            }
 
-            var graphicImage = ElementUtil.FindComponentByClassName<Image>(children, _toggleJson.Get("graphic_class"));
-            if (graphicImage != null) toggle.graphic = graphicImage;
+            // ON graphic
+            var onGraphics = _toggleJson.GetArray("on_graphic").Select(o => o.ToString()).ToList();
+            var graphicImage = ElementUtil.FindComponentByNames<Image>(children, onGraphics);
+            if (graphicImage != null)
+            {
+                toggle.graphic = graphicImage;
+                //TODO: 強制的にActiveにする
+                graphicImage.gameObject.SetActive(true);
+            }
 
+            // ON/OFF が画像の入れ替えとして動作するコンポーネント
+            var graphicSwap = _toggleJson.GetBool("graphic_swap");
+            if (graphicSwap != null && graphicSwap.Value == true)
+            {
+                GetOrAddComponent<ToggleGraphicSwap>(go);
+            }
+
+            var deleteObjects = new Dictionary<GameObject, bool>();
             var spriteStateJson = _toggleJson.GetDic("sprite_state");
             if (spriteStateJson != null)
             {
-                var spriteState = new SpriteState();
-                var image = ElementUtil.FindComponentByClassName<Image>(children,
-                    spriteStateJson.Get("highlighted_sprite_class"));
-                if (image != null)
-                {
-                    spriteState.highlightedSprite = image.sprite;
-                    Object.DestroyImmediate(image.gameObject);
-                }
-
-                image = ElementUtil.FindComponentByClassName<Image>(children,
-                    spriteStateJson.Get("pressed_sprite_class"));
-                if (image != null)
-                {
-                    spriteState.pressedSprite = image.sprite;
-                    Object.DestroyImmediate(image.gameObject);
-                }
-
-                image = ElementUtil.FindComponentByClassName<Image>(children,
-                    spriteStateJson.Get("selected_sprite_class"));
-                if (image != null)
-                {
-#if UNITY_2019_1_OR_NEWER
-                    spriteState.selectedSprite = image.sprite;
-                    Object.DestroyImmediate(image.gameObject);
-#endif
-                }
-
-                image = ElementUtil.FindComponentByClassName<Image>(children,
-                    spriteStateJson.Get("disabled_sprite_class"));
-                if (image != null)
-                {
-                    spriteState.disabledSprite = image.sprite;
-                    Object.DestroyImmediate(image.gameObject);
-                }
-
+                var spriteState = ElementUtil.CreateSpriteState(spriteStateJson, RenderedChildren, ref deleteObjects);
                 toggle.spriteState = spriteState;
             }
+
+            foreach (var keyValuePair in deleteObjects)
+                // 他の状態にtargetImageの画像が使われている可能性もあるためチェックする
+                if (keyValuePair.Key != targetImageObject)
+                    Object.DestroyImmediate(keyValuePair.Key);
+
 
             ElementUtil.SetupLayoutElement(go, LayoutElementJson);
             ElementUtil.SetupRectTransform(go, RectTransformJson);

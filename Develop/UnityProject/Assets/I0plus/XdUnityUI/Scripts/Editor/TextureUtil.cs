@@ -1,16 +1,59 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MiniJSON;
 using OnionRing;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace I0plus.XdUnityUI.Editor
 {
+    /// <summary>
+    /// シリアライズできるDictionaryクラス
+    /// </summary>
+    public class Dict : Dictionary<string, string>, ISerializationCallbackReceiver
+    {
+        [SerializeField] private List<string> keys = new List<string>();
+        [SerializeField] private List<string> vals = new List<string>();
+
+        public void OnBeforeSerialize()
+        {
+            keys.Clear();
+            vals.Clear();
+
+            var e = GetEnumerator();
+
+            while (e.MoveNext())
+            {
+                keys.Add(e.Current.Key);
+                vals.Add(e.Current.Value);
+            }
+        }
+
+        public void OnAfterDeserialize()
+        {
+            this.Clear();
+
+            var cnt = (keys.Count <= vals.Count) ? keys.Count : vals.Count;
+            for (var i = 0; i < cnt; ++i)
+                this[keys[i]] = vals[i];
+        }
+    }
+
     public class TextureUtil
     {
-        private static readonly Dictionary<string, string> imageHashMap = new Dictionary<string, string>();
-        private static readonly Dictionary<string, string> imagePathMap = new Dictionary<string, string>();
+        /// <summary>
+        /// Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）
+        /// <Hash, path> テクスチャハッシュHashは、pathテクスチャファイルがある、という情報
+        /// </summary>
+        private static Dictionary<string, string> imageHashMap = new Dict();
+
+        /// <summary>
+        /// Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）
+        /// <path1, path2> path1のテクスチャは、path2を利用する、という情報
+        /// </summary>
+        private static Dictionary<string, string> imagePathMap = new Dict();
 
         /// <summary>
         ///     読み込み可能なTextureを作成する
@@ -92,25 +135,62 @@ namespace I0plus.XdUnityUI.Editor
             return texture;
         }
 
-        public static void ClearImageMap()
-        {
-            imageHashMap.Clear();
-            imagePathMap.Clear();
-        }
-
         public static string GetSameImagePath(string path)
         {
-            var fi = new FileInfo(path);
-            path = fi.FullName;
-            return imagePathMap.ContainsKey(path) ? imagePathMap[path] : path;
+            path = path.Replace("\\", "/");
+            if (imagePathMap.ContainsKey(path))
+            {
+                return imagePathMap[path];
+            }
+
+            return path;
+        }
+
+        public const string ImageHashMapCacheFileName = "ImageHashMap.xdunityui-cache";
+        public const string ImagePathMapCacheFileName = "ImagePathMap.xdunityui-cache";
+
+        static void Save(string folderAssetPath)
+        {
+            var jsonImageHashMap = JsonUtility.ToJson(imageHashMap);
+            File.WriteAllText(folderAssetPath + "/" + ImageHashMapCacheFileName, jsonImageHashMap);
+            var jsonImagePathMap = JsonUtility.ToJson(imagePathMap);
+            File.WriteAllText(folderAssetPath + "/" + ImagePathMapCacheFileName, jsonImagePathMap);
+        }
+
+        static void Load(string folderAssetPath)
+        {
+            try
+            {
+                var jsonImageHashMap = File.ReadAllText(folderAssetPath + "/" + ImageHashMapCacheFileName);
+                imageHashMap = JsonUtility.FromJson<Dict>(jsonImageHashMap);
+            }
+            catch (Exception ex)
+            {
+                Debug.Log($"exception: Read ImageHashMap cache. {ex.Message}");
+                imageHashMap = new Dict();
+            }
+
+            try
+            {
+                var jsonImagePathMap = File.ReadAllText(folderAssetPath + "/" + ImagePathMapCacheFileName);
+                imagePathMap = JsonUtility.FromJson<Dict>(jsonImagePathMap);
+            }
+            catch (Exception ex)
+            {
+                Debug.Log($"exception: Read ImagePathMap cache. {ex.Message}");
+                imagePathMap = new Dict();
+            }
         }
 
         // Textureデータの書き出し
         // 同じファイル名の場合書き込みしない
-        private static string CheckWrite(string newPath, byte[] pngData, Hash128 pngHash)
+        private static string CheckWrite(string writePngPath, byte[] pngData, Hash128 pngHash)
         {
-            var fi = new FileInfo(newPath);
-            newPath = fi.FullName;
+            // HashMapキャッシュファイルを作成のために
+            // - \を/にする
+            // - 相対パスである
+            writePngPath = writePngPath.Replace("\\", "/");
+            Load(Path.GetDirectoryName(writePngPath));
 
             var hashStr = pngHash.ToString();
 
@@ -119,27 +199,32 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var name = imageHashMap[hashStr];
                 // Debug.Log("shared texture " + Path.GetFileName(newPath) + "==" + Path.GetFileName(name));
-                imagePathMap[newPath] = name;
+                imagePathMap[writePngPath] = name;
+                Save(Path.GetDirectoryName(writePngPath));
                 return "Shared other path texture.";
             }
 
             // ハッシュからのパスを登録
-            imageHashMap[hashStr] = newPath;
+            imageHashMap[hashStr] = writePngPath;
             // 置き換え対象のパスを登録
-            imagePathMap[newPath] = newPath;
+            imagePathMap[writePngPath] = writePngPath;
 
             // 同じファイル名のテクスチャがある（前の変換時に生成されたテクスチャ）
-            if (File.Exists(newPath))
+            if (File.Exists(writePngPath))
             {
-                var oldPngData = File.ReadAllBytes(newPath);
+                var oldPngData = File.ReadAllBytes(writePngPath);
                 // 中身をチェックする
                 if (oldPngData.Length == pngData.Length && pngData.SequenceEqual(oldPngData))
+                {
                     // 全く同じだった場合、書き込まないでそのまま利用する
                     // UnityのDB更新を防ぐ
+                    Save(Path.GetDirectoryName(writePngPath));
                     return "Same texture existed.";
+                }
             }
 
-            File.WriteAllBytes(newPath, pngData);
+            File.WriteAllBytes(writePngPath, pngData);
+            Save(Path.GetDirectoryName(writePngPath));
             return "Created new texture.";
         }
 
