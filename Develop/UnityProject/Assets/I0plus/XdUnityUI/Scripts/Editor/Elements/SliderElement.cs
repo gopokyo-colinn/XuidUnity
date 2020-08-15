@@ -21,7 +21,7 @@ namespace I0plus.XdUnityUI.Editor
         {
             GetOrCreateSelfObject(renderContext, ref go, parentObject);
 
-            var slider = GetOrAddComponent<Slider>(go);
+            var slider = ElementUtil.GetOrAddComponent<Slider>(go);
 
             var children = RenderChildren(renderContext, go);
 

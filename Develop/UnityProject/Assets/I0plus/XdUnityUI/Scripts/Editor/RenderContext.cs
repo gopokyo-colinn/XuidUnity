@@ -10,16 +10,16 @@ using TMPro;
 
 namespace I0plus.XdUnityUI.Editor
 {
-    public class Identifier
+    public class GameObjectIdentifier
     {
-        public string Name { get; }
-        public string XdGuid { get; }
-
-        public Identifier(string name, string xdGuid)
+        public GameObjectIdentifier(string name, string xdGuid)
         {
             Name = name;
             XdGuid = xdGuid;
         }
+
+        public string Name { get; }
+        public string XdGuid { get; }
     }
 
     public class RenderContext
@@ -30,16 +30,22 @@ namespace I0plus.XdUnityUI.Editor
         public Stack<GameObject> NewPrefabs { get; } = new Stack<GameObject>();
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();
 
-        public Dictionary<GameObject, Identifier> FreeChildObjects { get; }
+        public Dictionary<GameObject, GameObjectIdentifier> FreeChildObjects { get; }
 
         /// <summary>
-        /// XdGuid compornentをAddするかどうか
+        ///     XdGuid compornentをAddする
         /// </summary>
-        public bool OptionAddXdGuid
-        {
-            get;
-            set;
-        }
+        public bool OptionAddXdGuidComponent { get; set; }
+
+        /// <summary>
+        ///     Overwrite時、再利用されなかったオブジェクトを移動する
+        /// </summary>
+        public bool OptionMoveNotUsedObjectOnOverwrite { get; set; } = true;
+
+        /// <summary>
+        ///     Overwrite時、再利用されなかったXdオブジェクトを移動する
+        /// </summary>
+        public bool OptionMoveNotUsedXdObject { get; set; } = true;
 
         public ToggleGroup GetToggleGroup(string name)
         {
@@ -69,30 +75,34 @@ namespace I0plus.XdUnityUI.Editor
             this.spriteOutputFolderAssetPath = spriteOutputFolderAssetPath;
             this.fontFolderAssetPath = fontFolderAssetPath;
             this.rootObject = rootObject;
-            OptionAddXdGuid = false;
-            FreeChildObjects = new Dictionary<GameObject, Identifier>();
+            OptionAddXdGuidComponent = false;
+            FreeChildObjects = new Dictionary<GameObject, GameObjectIdentifier>();
             if (rootObject != null)
             {
-                var rects = rootObject.GetComponentsInChildren<RectTransform>();
-                foreach (var rect in rects)
+                // 全ての子供を取得する
+                var allChildren = new List<GameObject>();
+                ElementUtil.GetChildRecursive(rootObject, ref allChildren);
+                foreach (var obj in allChildren)
                 {
+                    if (obj == rootObject)
+                        // 自分自身はスキップする
+                        continue;
+
                     // 後の名前検索で正確にできるように/を前にいれる
-                    var name = "/" + rect.gameObject.name;
-                    var parent = rect.parent;
+                    var name = "/" + obj.name;
+                    var parent = obj.transform.parent;
                     while (parent)
                     {
                         name = "/" + parent.name + name;
                         parent = parent.parent;
                     }
 
+                    // XdGuidコンポーネントがある場合、Guidも情報にいれる
                     string xdGuid = null;
-                    var xdGuidComponent = rect.gameObject.GetComponent<XdGuid>();
-                    if (xdGuidComponent != null)
-                    {
-                        xdGuid = xdGuidComponent.guid;
-                    }
+                    var xdGuidComponent = obj.GetComponent<XdGuid>();
+                    if (xdGuidComponent != null) xdGuid = xdGuidComponent.guid;
 
-                    FreeChildObjects.Add(rect.gameObject, new Identifier(name: name, xdGuid: xdGuid));
+                    FreeChildObjects.Add(obj, new GameObjectIdentifier(name, xdGuid));
                 }
             }
         }
@@ -151,7 +161,7 @@ namespace I0plus.XdUnityUI.Editor
             return null;
         }
 
-        public List<GameObject> FindObjects(string name, GameObject parentObject)
+        public List<GameObject> FindFreeObjectsByName(string name, GameObject parentObject)
         {
             // 出来るだけユニークな名前になるように、Rootからの名前を作成する
             var findNames = new List<string> {name};
@@ -184,7 +194,7 @@ namespace I0plus.XdUnityUI.Editor
             return founds;
         }
 
-        public GameObject FindObjectFromXdGuid(string guid)
+        public GameObject FindFreeObjectFromXdGuid(string guid)
         {
             foreach (var freeChildObject in FreeChildObjects)
             {
@@ -198,24 +208,18 @@ namespace I0plus.XdUnityUI.Editor
         public GameObject OccupyObject(string guid, string name, GameObject parentObject)
         {
             GameObject found = null;
-            if (guid != null)
-            {
-                found = FindObjectFromXdGuid(guid);
-            }
+            if (guid != null) found = FindFreeObjectFromXdGuid(guid);
 
             if (found == null && name != null)
             {
                 // Debug.Log($"guidで見つからなかった:{name}");
-                var founds = FindObjects(name, parentObject);
+                var founds = FindFreeObjectsByName(name, parentObject);
                 if (founds == null || founds.Count == 0) return null;
                 found = founds[0];
             }
 
-            if (found != null)
-            {
-                FreeChildObjects.Remove(found);
-            }
-            
+            if (found != null) FreeChildObjects.Remove(found);
+
             return found;
         }
 
@@ -234,7 +238,8 @@ namespace I0plus.XdUnityUI.Editor
         public Font GetFont(string fontName)
         {
             var font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".ttf");
-            if (font == null) font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".otf");
+            if (font == null)
+                font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".otf");
             if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
             if (font == null) Debug.LogError($"[XdUnityUI] font {fontName}.ttf (or .otf) is not found");
 

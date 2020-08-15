@@ -38,25 +38,18 @@ namespace I0plus.XdUnityUI.Editor
 
             var forImportAssetPaths = new List<string>();
             foreach (var importedAsset in importedAssets)
-            {
                 if (importedAsset.StartsWith(importFolderAssetPath))
-                {
                     forImportAssetPaths.Add(importedAsset);
-                }
-            }
 
             if (forImportAssetPaths.Count > 0)
             {
-                await Import(forImportAssetPaths, false);
+                await Import(forImportAssetPaths, true);
 
                 // インポートしたファイルを削除し、そのフォルダが空になったらフォルダも削除する
                 foreach (var forImportAssetPath in forImportAssetPaths)
                 {
                     // フォルダの場合はスルー
-                    if (IsFolder(forImportAssetPath))
-                    {
-                        continue;
-                    }
+                    if (IsFolder(forImportAssetPath)) continue;
 
                     // インポートするファイルを削除
                     AssetDatabase.DeleteAsset(forImportAssetPath);
@@ -64,10 +57,8 @@ namespace I0plus.XdUnityUI.Editor
                     var folderName = Path.GetDirectoryName(forImportAssetPath);
                     var files = Directory.GetFiles(folderName);
                     if (files.Length == 0)
-                    {
                         // フォルダの削除
                         AssetDatabase.DeleteAsset(folderName);
-                    }
                 }
 
                 AssetDatabase.Refresh();
@@ -232,20 +223,6 @@ namespace I0plus.XdUnityUI.Editor
             return false;
         }
 
-        private class FolderInfos : Dictionary<string, HashSet<string>>
-        {
-            public void Add(string path, string fileExtension)
-            {
-                if (!this.Keys.Contains(path))
-                {
-                    var extentions = new HashSet<string>() {fileExtension};
-                    this[path] = extentions;
-                }
-
-                this[path].Add(fileExtension);
-            }
-        };
-
         /// <summary>
         ///     Assetディレクトリに追加されたファイルを確認、インポート処理を行う
         /// </summary>
@@ -267,10 +244,8 @@ namespace I0plus.XdUnityUI.Editor
             foreach (var importedAssetPath in importedAssetPaths)
             {
                 if (IsFolder(importedAssetPath))
-                {
                     // すでにフォルダパスはスルー
                     continue;
-                }
 
                 var folderPath = Path.GetDirectoryName(importedAssetPath);
                 var extension = Path.GetExtension(importedAssetPath);
@@ -313,16 +288,10 @@ namespace I0plus.XdUnityUI.Editor
                         // 削除する
                         foreach (var fileInfo in deleteEntries)
                         {
-                            if (File.Exists(fileInfo.FullName))
-                            {
-                                File.Delete(fileInfo.FullName);
-                            }
+                            if (File.Exists(fileInfo.FullName)) File.Delete(fileInfo.FullName);
 
                             var metaFileName = fileInfo.FullName + ".meta";
-                            if (File.Exists(metaFileName))
-                            {
-                                File.Delete(metaFileName);
-                            }
+                            if (File.Exists(metaFileName)) File.Delete(metaFileName);
 
                             changed = true;
                         }
@@ -366,10 +335,7 @@ namespace I0plus.XdUnityUI.Editor
             {
                 if (!importedAsset.EndsWith(".png", StringComparison.Ordinal)) continue;
                 //
-                if (!clearedImageMap)
-                {
-                    clearedImageMap = true;
-                }
+                if (!clearedImageMap) clearedImageMap = true;
 
                 // スライス処理
                 var message = TextureUtil.SliceSprite(importedAsset);
@@ -464,10 +430,7 @@ namespace I0plus.XdUnityUI.Editor
 
                     // Render Context
                     var renderContext = new RenderContext(spriteOutputFolderAssetPath, fontAssetPath, go);
-                    if (overwriteImportFlag)
-                    {
-                        renderContext.OptionAddXdGuid = true;
-                    }
+                    if (overwriteImportFlag) renderContext.OptionAddXdGuidComponent = true;
 
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
@@ -583,6 +546,20 @@ namespace I0plus.XdUnityUI.Editor
                 var target = string.Join("/", names.Take(i + 1).ToArray());
                 var child = names[i];
                 if (!AssetDatabase.IsValidFolder(target)) AssetDatabase.CreateFolder(parent, child);
+            }
+        }
+
+        private class FolderInfos : Dictionary<string, HashSet<string>>
+        {
+            public void Add(string path, string fileExtension)
+            {
+                if (!Keys.Contains(path))
+                {
+                    var extentions = new HashSet<string> {fileExtension};
+                    this[path] = extentions;
+                }
+
+                this[path].Add(fileExtension);
             }
         }
 

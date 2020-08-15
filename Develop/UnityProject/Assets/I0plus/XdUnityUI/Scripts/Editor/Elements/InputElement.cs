@@ -23,7 +23,7 @@ namespace I0plus.XdUnityUI.Editor
 
             var children = RenderChildren(renderContext, targetObject);
 
-            var inputField = GetOrAddComponent<InputField>(targetObject);
+            var inputField = ElementUtil.GetOrAddComponent<InputField>(targetObject);
             inputField.transition = Selectable.Transition.None;
             if (InputJson != null)
             {

@@ -35,7 +35,7 @@ namespace I0plus.XdUnityUI.Editor
             //TODO: check if some parts still need to be done for prefabs that have local modifications
             if (image == null)
             {
-                image = GetOrAddComponent<Image>(selfObject);
+                image = ElementUtil.GetOrAddComponent<Image>(selfObject);
                 var sourceImage = ImageJson.Get("source_image");
                 if (sourceImage != null)
                     image.sprite = renderContext.GetSprite(sourceImage);

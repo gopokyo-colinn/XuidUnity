@@ -8,7 +8,7 @@ namespace I0plus.XdUnityUI
     {
         private Toggle toggle;
 
-        private Toggle Toggle => toggle ? toggle : (toggle = GetComponent<Toggle>());
+        private Toggle Toggle => toggle ? toggle : toggle = GetComponent<Toggle>();
 
         private void Awake()
         {

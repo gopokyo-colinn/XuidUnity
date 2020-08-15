@@ -28,7 +28,7 @@ namespace I0plus.XdUnityUI.Editor
             var children = RenderChildren(renderContext, targetObject);
             var deleteObjects = new Dictionary<GameObject, bool>();
 
-            var button = GetOrAddComponent<Button>(targetObject);
+            var button = ElementUtil.GetOrAddComponent<Button>(targetObject);
 
 
             GameObject targetImageObject = null;
@@ -50,7 +50,8 @@ namespace I0plus.XdUnityUI.Editor
                 var spriteStateJson = ButtonJson.GetDic("sprite_state");
                 if (spriteStateJson != null)
                 {
-                    var spriteState = ElementUtil.CreateSpriteState(spriteStateJson, RenderedChildren, ref deleteObjects);
+                    var spriteState =
+                        ElementUtil.CreateSpriteState(spriteStateJson, RenderedChildren, ref deleteObjects);
                     button.spriteState = spriteState;
                 }
 
