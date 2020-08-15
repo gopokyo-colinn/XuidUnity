@@ -40,7 +40,7 @@ namespace I0plus.XdUnityUI.Editor
             targetObject = renderContext.FindObject(name, parentObject);
             if (targetObject == null) targetObject = (GameObject) PrefabUtility.InstantiatePrefab(prefabObject);
 
-            var rect = GetOrAddComponent<RectTransform>(targetObject);
+            var rect = ElementUtil.GetOrAddComponent<RectTransform>(targetObject);
             rect.SetParent(parentObject.transform);
 
             targetObject.name = Name;

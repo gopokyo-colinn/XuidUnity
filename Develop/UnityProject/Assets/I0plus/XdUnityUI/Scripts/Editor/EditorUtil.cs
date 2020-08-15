@@ -84,7 +84,7 @@ namespace I0plus.XdUnityUI.Editor
         public static string FindFolderAssetPath(string fileName, bool throwException = true)
         {
             var fileAssetPath = FindFileAssetPath(fileName, throwException);
-            return Path.GetDirectoryName(fileAssetPath)?.Replace("\\","/");
+            return Path.GetDirectoryName(fileAssetPath)?.Replace("\\", "/");
         }
 
         /// <summary>

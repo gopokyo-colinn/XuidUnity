@@ -17,9 +17,9 @@ namespace I0plus.XdUnityUI.Editor
 
         protected readonly Dictionary<string, object> RectTransformJson;
         protected bool? Active;
+        protected string Guid;
 
         protected string name;
-        protected string Guid;
         protected Element Parent;
 
         protected Element(Dictionary<string, object> json, Element parent)
@@ -38,7 +38,8 @@ namespace I0plus.XdUnityUI.Editor
 
         public string Name => name;
 
-        public abstract void Render([NotNull] ref GameObject targetObject, RenderContext renderContext, GameObject parentObject);
+        public abstract void Render([NotNull] ref GameObject targetObject, RenderContext renderContext,
+            GameObject parentObject);
 
         public virtual void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
         {
@@ -73,39 +74,15 @@ namespace I0plus.XdUnityUI.Editor
         {
             // 指定のオブジェクトがある場合は生成・取得せずそのまま使用する
             if (selfObject == null)
-            {
-                selfObject = renderContext.OccupyObject( Guid, name, parentObject);
-                if (selfObject != null)
-                {
-                    selfObject.name = name;
-                }
-                else
-                {
-                    // 再利用できなかった新規に作成
-                    // Debug.Log($"新規にGameObjectを生成しました:{name}");
-                    selfObject = new GameObject(name);
-                }
-            }
+                selfObject = ElementUtil.GetOrCreateGameObject(renderContext, Guid, name, parentObject);
 
-            var rect = GetOrAddComponent<RectTransform>(selfObject);
+            var rect = ElementUtil.GetOrAddComponent<RectTransform>(selfObject);
             if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
-            if (renderContext.OptionAddXdGuid)
-            {
-                ElementUtil.SetGuid(selfObject, Guid);
-            }
+            if (renderContext.OptionAddXdGuidComponent) ElementUtil.SetGuid(selfObject, Guid);
             ElementUtil.SetActive(selfObject, Active);
             ElementUtil.SetLayer(selfObject, Layer);
-        }
-
-
-        //since we do not want to read components to a prefab we use this method to add components to elements
-        public static T GetOrAddComponent<T>(GameObject go) where T : Component
-        {
-            var comp = go.GetComponent<T>();
-            if (comp != null) return comp;
-            return go.AddComponent<T>();
         }
     }
 }

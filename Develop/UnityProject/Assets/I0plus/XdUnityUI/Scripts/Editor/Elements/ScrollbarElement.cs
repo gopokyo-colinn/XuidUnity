@@ -31,7 +31,7 @@ namespace I0plus.XdUnityUI.Editor
             Scrollbar scrollbar;
             if (toggleChild == null)
             {
-                scrollbar = GetOrAddComponent<Scrollbar>(go);
+                scrollbar = ElementUtil.GetOrAddComponent<Scrollbar>(go);
             }
             else
             {

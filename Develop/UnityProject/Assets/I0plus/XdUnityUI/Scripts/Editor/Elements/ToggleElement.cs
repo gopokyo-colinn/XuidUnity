@@ -28,7 +28,7 @@ namespace I0plus.XdUnityUI.Editor
             //if a text toggle is already present this means this go is part of a prefab and we skip the toggle group assignment
             if (toggle == null)
             {
-                toggle = GetOrAddComponent<Toggle>(go);
+                toggle = ElementUtil.GetOrAddComponent<Toggle>(go);
                 // トグルグループ名
                 var group = _toggleJson.Get("group");
                 if (group != null)
@@ -61,10 +61,7 @@ namespace I0plus.XdUnityUI.Editor
 
             // ON/OFF が画像の入れ替えとして動作するコンポーネント
             var graphicSwap = _toggleJson.GetBool("graphic_swap");
-            if (graphicSwap != null && graphicSwap.Value == true)
-            {
-                GetOrAddComponent<ToggleGraphicSwap>(go);
-            }
+            if (graphicSwap != null && graphicSwap.Value) ElementUtil.GetOrAddComponent<ToggleGraphicSwap>(go);
 
             var deleteObjects = new Dictionary<GameObject, bool>();
             var spriteStateJson = _toggleJson.GetDic("sprite_state");

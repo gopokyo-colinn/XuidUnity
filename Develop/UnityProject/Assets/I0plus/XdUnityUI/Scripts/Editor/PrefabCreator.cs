@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using MiniJSON;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 #if TMP_PRESENT
 using TMPro;
@@ -35,7 +36,7 @@ namespace I0plus.XdUnityUI.Editor
             nestedPrefabs = prefabs;
         }
 
-        public void Create([NotNull] ref GameObject targetObject, RenderContext renderer)
+        public void Create([NotNull] ref GameObject targetObject, RenderContext renderContext)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
@@ -48,25 +49,44 @@ namespace I0plus.XdUnityUI.Editor
 
             var rootElement = ElementFactory.Generate(rootJson, null);
 
-            rootElement.Render(ref targetObject, renderer, null);
+            rootElement.Render(ref targetObject, renderContext, null);
 
             // Postprocess(rootObject);
 
-            if (renderer.ToggleGroupMap.Count > 0)
+            if (renderContext.ToggleGroupMap.Count > 0)
             {
                 // ToggleGroupが作成された場合
                 var go = new GameObject("ToggleGroup");
                 go.transform.SetParent(targetObject.transform);
-                foreach (var keyValuePair in renderer.ToggleGroupMap)
+                foreach (var keyValuePair in renderContext.ToggleGroupMap)
                 {
                     var gameObject = keyValuePair.Value;
                     gameObject.transform.SetParent(go.transform);
                 }
             }
 
-            var notUsedchilds = renderer.FreeChildObjects;
+            // 使われなかったオブジェクトの退避グループ
+            var notUsedGroupObject =
+                ElementUtil.GetOrCreateGameObject(renderContext, null, "!XdUnityUI Not Used", null);
+            var notUsedchilds = renderContext.FreeChildObjects;
+            if (notUsedchilds.Count > 0)
+            {
+                notUsedGroupObject.SetActive(false);
+                var groupRect = ElementUtil.GetOrAddComponent<RectTransform>(notUsedGroupObject);
+                groupRect.SetParent(targetObject.transform);
+                foreach (var keyValuePair in notUsedchilds)
+                {
+                    var go = keyValuePair.Key;
+                    var goRect = ElementUtil.GetOrAddComponent<RectTransform>(go);
+                    goRect.SetParent(groupRect);
+                }
+            }
+            else
+            {
+                Object.DestroyImmediate(notUsedGroupObject);
+            }
 
-            foreach (var prefab in renderer.NewPrefabs.ToList())
+            foreach (var prefab in renderContext.NewPrefabs.ToList())
                 //if we haven't created a prefab out of the referenced GO we do so now
                 if (PrefabUtility.GetPrefabAssetType(prefab) == PrefabAssetType.NotAPrefab)
                 {

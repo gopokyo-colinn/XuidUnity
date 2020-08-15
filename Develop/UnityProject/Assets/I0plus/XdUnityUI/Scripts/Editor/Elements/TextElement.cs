@@ -37,7 +37,7 @@ namespace I0plus.XdUnityUI.Editor
             //if a text component is already present this means this go is part of a prefab and we skip the font generation
             if (text == null)
             {
-                text = GetOrAddComponent<Text>(selfObject);
+                text = ElementUtil.GetOrAddComponent<Text>(selfObject);
 
                 // 検索するフォント名を決定する
                 var fontFilename = fontName;
@@ -129,7 +129,7 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var strokeSize = _textJson.GetInt("strokeSize");
                 var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
-                var outline = GetOrAddComponent<Outline>(selfObject);
+                var outline = ElementUtil.GetOrAddComponent<Outline>(selfObject);
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);
                 outline.useGraphicAlpha = false;

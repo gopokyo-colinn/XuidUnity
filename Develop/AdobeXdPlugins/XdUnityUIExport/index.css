@@ -16,6 +16,17 @@
   layer: UI;
 }
 
+
+/*
+ ArtboardはUnityで配置時親ににぴったりはまるようにする
+ */
+[typeof='Artboard'] {
+  rect-transform-anchor-offset-x: 0 1 0 0;
+  rect-transform-anchor-offset-y: 0 1 0 0;
+}
+
+
+
 /*
  横にならべる
  */
@@ -374,11 +385,11 @@ first-childになる
 
 .graphic-swap {
   toggle-graphic-swap: true;
+  toggle-transition: "sprite-swap";
 }
 
 .sprite-swap {
   button-transition: "sprite-swap";
-  toggle-transition: "sprite-swap";
 }
 
 /*

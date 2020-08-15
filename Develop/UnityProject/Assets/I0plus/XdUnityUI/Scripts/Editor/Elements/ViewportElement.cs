@@ -37,7 +37,7 @@ namespace I0plus.XdUnityUI.Editor
             // コンテンツ部分を入れるコンテナ
             var goContent = new GameObject("$Content");
             ElementUtil.SetLayer(goContent, Layer); // Viewportと同じレイヤー
-            var contentRect = GetOrAddComponent<RectTransform>(goContent);
+            var contentRect = ElementUtil.GetOrAddComponent<RectTransform>(goContent);
             goContent.transform.SetParent(targetObject.transform);
 
             if (_contentJson != null)

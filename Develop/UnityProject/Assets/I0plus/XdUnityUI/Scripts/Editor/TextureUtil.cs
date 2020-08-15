@@ -10,12 +10,12 @@ using Object = UnityEngine.Object;
 namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
-    /// シリアライズできるDictionaryクラス
+    ///     シリアライズできるDictionaryクラス
     /// </summary>
     public class Dict : Dictionary<string, string>, ISerializationCallbackReceiver
     {
-        [SerializeField] private List<string> keys = new List<string>();
-        [SerializeField] private List<string> vals = new List<string>();
+        [SerializeField] private readonly List<string> keys = new List<string>();
+        [SerializeField] private readonly List<string> vals = new List<string>();
 
         public void OnBeforeSerialize()
         {
@@ -33,9 +33,9 @@ namespace I0plus.XdUnityUI.Editor
 
         public void OnAfterDeserialize()
         {
-            this.Clear();
+            Clear();
 
-            var cnt = (keys.Count <= vals.Count) ? keys.Count : vals.Count;
+            var cnt = keys.Count <= vals.Count ? keys.Count : vals.Count;
             for (var i = 0; i < cnt; ++i)
                 this[keys[i]] = vals[i];
         }
@@ -43,15 +43,18 @@ namespace I0plus.XdUnityUI.Editor
 
     public class TextureUtil
     {
+        public const string ImageHashMapCacheFileName = "ImageHashMap.xdunityui-cache";
+        public const string ImagePathMapCacheFileName = "ImagePathMap.xdunityui-cache";
+
         /// <summary>
-        /// Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）
-        /// <Hash, path> テクスチャハッシュHashは、pathテクスチャファイルがある、という情報
+        ///     Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）
+        ///     <Hash, path> テクスチャハッシュHashは、pathテクスチャファイルがある、という情報
         /// </summary>
         private static Dictionary<string, string> imageHashMap = new Dict();
 
         /// <summary>
-        /// Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）
-        /// <path1, path2> path1のテクスチャは、path2を利用する、という情報
+        ///     Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）
+        ///     <path1, path2> path1のテクスチャは、path2を利用する、という情報
         /// </summary>
         private static Dictionary<string, string> imagePathMap = new Dict();
 
@@ -138,18 +141,12 @@ namespace I0plus.XdUnityUI.Editor
         public static string GetSameImagePath(string path)
         {
             path = path.Replace("\\", "/");
-            if (imagePathMap.ContainsKey(path))
-            {
-                return imagePathMap[path];
-            }
+            if (imagePathMap.ContainsKey(path)) return imagePathMap[path];
 
             return path;
         }
 
-        public const string ImageHashMapCacheFileName = "ImageHashMap.xdunityui-cache";
-        public const string ImagePathMapCacheFileName = "ImagePathMap.xdunityui-cache";
-
-        static void Save(string folderAssetPath)
+        private static void Save(string folderAssetPath)
         {
             var jsonImageHashMap = JsonUtility.ToJson(imageHashMap);
             File.WriteAllText(folderAssetPath + "/" + ImageHashMapCacheFileName, jsonImageHashMap);
@@ -157,7 +154,7 @@ namespace I0plus.XdUnityUI.Editor
             File.WriteAllText(folderAssetPath + "/" + ImagePathMapCacheFileName, jsonImagePathMap);
         }
 
-        static void Load(string folderAssetPath)
+        private static void Load(string folderAssetPath)
         {
             try
             {
