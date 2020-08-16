@@ -17,13 +17,13 @@ namespace I0plus.XdUnityUI.Editor
             _sliderJson = json.GetDic("slider");
         }
 
-        public override void Render(ref GameObject go, RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            GetOrCreateSelfObject(renderContext, ref go, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var slider = ElementUtil.GetOrAddComponent<Slider>(go);
+            var slider = ElementUtil.GetOrAddComponent<Slider>(targetObject);
 
-            var children = RenderChildren(renderContext, go);
+            var children = RenderChildren(renderContext, targetObject);
 
             var direction = _sliderJson.Get("direction");
             if (direction != null)
@@ -71,7 +71,7 @@ namespace I0plus.XdUnityUI.Editor
                 slider.interactable = true;
             }
 
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
 }

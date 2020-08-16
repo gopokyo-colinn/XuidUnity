@@ -117,7 +117,7 @@ namespace I0plus.XdUnityUI.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError("[XdUnityUI] ReadPixels failed.");
+                Debug.LogError($"[XdUnityUI] ReadPixels failed.:{ex.Message}");
             }
 
             // レンダーテクスチャをもとに戻す

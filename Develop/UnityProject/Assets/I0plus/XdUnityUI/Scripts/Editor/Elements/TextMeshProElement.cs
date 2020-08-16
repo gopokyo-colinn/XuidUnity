@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
-
 #endif
 
 namespace I0plus.XdUnityUI.Editor
@@ -22,13 +21,16 @@ namespace I0plus.XdUnityUI.Editor
         }
 
 
-        public override GameObject Render(RenderContext renderer, GameObject parentObject)
+        //public override GameObject Render(RenderContext renderer, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext,
+            GameObject parentObject)
         {
-            bool isPrefabChild;
-            var go = CreateUiGameObject(renderer, parentObject, out isPrefabChild);
+            // var go = CreateUiGameObject(renderContext, parentObject, out isPrefabChild);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var rect = go.GetComponent<RectTransform>();
-            if (parentObject && !isPrefabChild)
+
+            var rect = targetObject.GetComponent<RectTransform>();
+            if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
 
@@ -39,13 +41,13 @@ namespace I0plus.XdUnityUI.Editor
             var align = _textJson.Get("align");
             var type = _textJson.Get("textType");
 
-            var text = go.GetComponent<TextMeshProUGUI>();
+            var text = targetObject.GetComponent<TextMeshProUGUI>();
 
             //if a text component is already present this means this go is part of a prefab and we skip the font generation
             if (text == null)
             {
-                text = GetOrAddComponent<TextMeshProUGUI>(go);
-                text.font = renderer.GetTMPFontAsset(fontName, fontStyle);
+                text = ElementUtil.GetOrAddComponent<TextMeshProUGUI>(targetObject);
+                text.font = renderContext.GetTMPFontAsset(fontName, fontStyle);
             }
 
             text.text = message;
@@ -97,14 +99,13 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var strokeSize = _textJson.GetInt("strokeSize");
                 var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
-                var outline = AddComponent<Outline>();
+                var outline = ElementUtil.GetOrAddComponent<Outline>(targetObject);
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);
                 outline.useGraphicAlpha = false;
             }
 
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
-            return go;
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
 #endif

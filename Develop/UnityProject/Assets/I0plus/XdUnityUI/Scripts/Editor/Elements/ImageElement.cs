@@ -19,23 +19,23 @@ namespace I0plus.XdUnityUI.Editor
             ImageJson = json.GetDic("image");
         }
 
-        public override void Render(ref GameObject selfObject, RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            GetOrCreateSelfObject(renderContext, ref selfObject, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var rect = selfObject.GetComponent<RectTransform>();
+            var rect = targetObject.GetComponent<RectTransform>();
 
             if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
 
-            var image = selfObject.GetComponent<Image>();
+            var image = targetObject.GetComponent<Image>();
 
             //if a image component is already present this means this go is part of a prefab and we skip the image setup since it has already been done
             //TODO: check if some parts still need to be done for prefabs that have local modifications
             if (image == null)
             {
-                image = ElementUtil.GetOrAddComponent<Image>(selfObject);
+                image = ElementUtil.GetOrAddComponent<Image>(targetObject);
                 var sourceImage = ImageJson.Get("source_image");
                 if (sourceImage != null)
                     image.sprite = renderContext.GetSprite(sourceImage);
@@ -77,8 +77,8 @@ namespace I0plus.XdUnityUI.Editor
             }
 
 
-            ElementUtil.SetupLayoutElement(selfObject, LayoutElementJson);
-            ElementUtil.SetupRectTransform(selfObject, RectTransformJson);
+            ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
 }

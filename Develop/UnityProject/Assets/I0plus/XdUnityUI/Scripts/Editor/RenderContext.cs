@@ -249,7 +249,7 @@ namespace I0plus.XdUnityUI.Editor
 #if TMP_PRESENT
         public TMP_FontAsset GetTMPFontAsset(string fontName, string style)
         {
-            var fontFileName = Path.Combine(fontRootPath, fontName) + "-" + style + " SDF.asset";
+            var fontFileName = Path.Combine(fontFolderAssetPath, fontName) + "-" + style + " SDF.asset";
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(fontFileName);
             if (font == null)
             {

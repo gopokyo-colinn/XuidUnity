@@ -17,11 +17,11 @@ namespace I0plus.XdUnityUI.Editor
             _textJson = json.GetDic("text");
         }
 
-        public override void Render(ref GameObject selfObject, RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            GetOrCreateSelfObject(renderContext, ref selfObject, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var rect = selfObject.GetComponent<RectTransform>();
+            var rect = targetObject.GetComponent<RectTransform>();
             if (parentObject)
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
@@ -32,12 +32,12 @@ namespace I0plus.XdUnityUI.Editor
             var align = _textJson.Get("align");
             var type = _textJson.Get("textType");
 
-            var text = selfObject.GetComponent<Text>();
+            var text = targetObject.GetComponent<Text>();
 
             //if a text component is already present this means this go is part of a prefab and we skip the font generation
             if (text == null)
             {
-                text = ElementUtil.GetOrAddComponent<Text>(selfObject);
+                text = ElementUtil.GetOrAddComponent<Text>(targetObject);
 
                 // 検索するフォント名を決定する
                 var fontFilename = fontName;
@@ -129,13 +129,13 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var strokeSize = _textJson.GetInt("strokeSize");
                 var strokeColor = EditorUtil.HexToColor(_textJson.Get("strokeColor"));
-                var outline = ElementUtil.GetOrAddComponent<Outline>(selfObject);
+                var outline = ElementUtil.GetOrAddComponent<Outline>(targetObject);
                 outline.effectColor = strokeColor;
                 outline.effectDistance = new Vector2(strokeSize.Value / 2.0f, -strokeSize.Value / 2.0f);
                 outline.useGraphicAlpha = false;
             }
 
-            ElementUtil.SetupRectTransform(selfObject, RectTransformJson);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
 }
