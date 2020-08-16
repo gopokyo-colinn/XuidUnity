@@ -17,18 +17,18 @@ namespace I0plus.XdUnityUI.Editor
             _toggleJson = json.GetDic("toggle");
         }
 
-        public override void Render(ref GameObject go, RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            GetOrCreateSelfObject(renderContext, ref go, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            var children = RenderChildren(renderContext, go);
+            var children = RenderChildren(renderContext, targetObject);
 
-            var toggle = go.GetComponent<Toggle>();
+            var toggle = targetObject.GetComponent<Toggle>();
 
             //if a text toggle is already present this means this go is part of a prefab and we skip the toggle group assignment
             if (toggle == null)
             {
-                toggle = ElementUtil.GetOrAddComponent<Toggle>(go);
+                toggle = ElementUtil.GetOrAddComponent<Toggle>(targetObject);
                 // トグルグループ名
                 var group = _toggleJson.Get("group");
                 if (group != null)
@@ -61,7 +61,7 @@ namespace I0plus.XdUnityUI.Editor
 
             // ON/OFF が画像の入れ替えとして動作するコンポーネント
             var graphicSwap = _toggleJson.GetBool("graphic_swap");
-            if (graphicSwap != null && graphicSwap.Value) ElementUtil.GetOrAddComponent<ToggleGraphicSwap>(go);
+            if (graphicSwap != null && graphicSwap.Value) ElementUtil.GetOrAddComponent<ToggleGraphicSwap>(targetObject);
 
             var deleteObjects = new Dictionary<GameObject, bool>();
             var spriteStateJson = _toggleJson.GetDic("sprite_state");
@@ -77,8 +77,8 @@ namespace I0plus.XdUnityUI.Editor
                     Object.DestroyImmediate(keyValuePair.Key);
 
 
-            ElementUtil.SetupLayoutElement(go, LayoutElementJson);
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
+            ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
 }

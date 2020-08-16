@@ -64,44 +64,66 @@ namespace I0plus.XdUnityUI.Editor
         ///     https://qiita.com/Katumadeyaruhiko/items/c2b9b4ccdfe51df4ad4a
         /// </summary>
         /// <param name="sourceTexture"></param>
-        /// <param name="destY"></param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="destX"></param>
+        /// <param name="sourceMoveX">左上座標系</param>
+        /// <param name="sourceMoveY">左上座標系</param>
+        /// <param name="destWidth"></param>
+        /// <param name="destHeight"></param>
         /// <returns></returns>
         private static Texture2D CreateReadableTexture2D(
             Texture sourceTexture,
-            int? destX, int? destY, int? width, int? height)
+            int? sourceMoveX, int? sourceMoveY, int? destWidth, int? destHeight)
         {
             // オプションをRenderTextureReadWrite.sRGBに変更した
-            var renderTexture = RenderTexture.GetTemporary(
+            var sourceRenderTexture = RenderTexture.GetTemporary(
                 sourceTexture.width,
                 sourceTexture.height,
                 0,
                 RenderTextureFormat.ARGB32,
                 RenderTextureReadWrite.sRGB);
 
-            Graphics.Blit(sourceTexture, renderTexture);
+            // ソーステクスチャをRenderテクスチャにコピーする
+            Graphics.Blit(sourceTexture, sourceRenderTexture);
 
             // 現在アクティブなレンダーテクスチャを退避
             var previous = RenderTexture.active;
-            RenderTexture.active = renderTexture;
+            RenderTexture.active = sourceRenderTexture;
             // テクスチャを作成
-            var readableTexture = new Texture2D(width ?? sourceTexture.width, height ?? sourceTexture.height);
+            var destTexture = new Texture2D(destWidth ?? sourceTexture.width, destHeight ?? sourceTexture.height);
             // テクスチャをクリア
-            var pixels = readableTexture.GetPixels32();
+            var pixels = destTexture.GetPixels32();
             var clearColor = new Color32(0, 0, 0, 0);
             for (var i = 0; i < pixels.Length; i++) pixels[i] = clearColor;
-            readableTexture.SetPixels32(pixels);
+            destTexture.SetPixels32(pixels);
             // コピー
-            readableTexture.ReadPixels(new Rect(0, 0, sourceTexture.width, sourceTexture.height),
-                destX ?? 0,
-                destY ?? 0);
-            readableTexture.Apply();
+            try
+            {
+                var moveX = sourceMoveX ?? 0;
+                var moveY = sourceMoveY ?? 0;
+                // 左下座標系に変換する
+                // TODO:METALは変換しなくて良いらしい（未確認）
+                moveY = destTexture.height - sourceTexture.height - moveY;
+                var readHeight = sourceTexture.height;
+                var readY = 0;
+                if (moveY < 0)
+                {
+                    readY = -moveY;
+                    readHeight -= readY;
+                    moveY = 0;
+                }
+                destTexture.ReadPixels(new Rect(0, readY, sourceTexture.width, readHeight),
+                    moveX,
+                    moveY);
+                destTexture.Apply();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[XdUnityUI] ReadPixels failed.:{ex.Message}");
+            }
+
             // レンダーテクスチャをもとに戻す
             RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary(renderTexture);
-            return readableTexture;
+            RenderTexture.ReleaseTemporary(sourceRenderTexture);
+            return destTexture;
         }
 
         /// <summary>
@@ -158,8 +180,16 @@ namespace I0plus.XdUnityUI.Editor
         {
             try
             {
-                var jsonImageHashMap = File.ReadAllText(folderAssetPath + "/" + ImageHashMapCacheFileName);
-                imageHashMap = JsonUtility.FromJson<Dict>(jsonImageHashMap);
+                var imageHashMapCacheAssetPath = folderAssetPath + "/" + ImageHashMapCacheFileName;
+                if (File.Exists(imageHashMapCacheAssetPath))
+                {
+                    var jsonImageHashMap = File.ReadAllText(imageHashMapCacheAssetPath);
+                    imageHashMap = JsonUtility.FromJson<Dict>(jsonImageHashMap);
+                }
+                else
+                {
+                    imageHashMap = new Dict();
+                }
             }
             catch (Exception ex)
             {
@@ -169,8 +199,16 @@ namespace I0plus.XdUnityUI.Editor
 
             try
             {
-                var jsonImagePathMap = File.ReadAllText(folderAssetPath + "/" + ImagePathMapCacheFileName);
-                imagePathMap = JsonUtility.FromJson<Dict>(jsonImagePathMap);
+                var assetPath = folderAssetPath + "/" + ImagePathMapCacheFileName;
+                if (File.Exists(assetPath))
+                {
+                    var jsonImagePathMap = File.ReadAllText(assetPath);
+                    imagePathMap = JsonUtility.FromJson<Dict>(jsonImagePathMap);
+                }
+                else
+                {
+                    imagePathMap = new Dict();
+                }
             }
             catch (Exception ex)
             {

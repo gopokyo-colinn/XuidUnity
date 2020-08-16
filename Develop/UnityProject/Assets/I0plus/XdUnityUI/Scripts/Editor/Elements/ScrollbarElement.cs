@@ -17,31 +17,31 @@ namespace I0plus.XdUnityUI.Editor
             _scrollbarJson = json.GetDic("scrollbar");
         }
 
-        public override void Render(ref GameObject go, RenderContext renderContext, GameObject parentObject)
+        public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            GetOrCreateSelfObject(renderContext, ref go, parentObject);
+            GetOrCreateSelfObject(renderContext, ref targetObject, parentObject);
 
-            ElementUtil.SetupRectTransform(go, RectTransformJson);
+            ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
 
-            var children = RenderChildren(renderContext, go);
-            ElementUtil.SetupChildImageComponent(go, children);
+            var children = RenderChildren(renderContext, targetObject);
+            ElementUtil.SetupChildImageComponent(targetObject, children);
 
             // DotsScrollbarかどうかの判定に、Toggleがあるかどうかを確認する
             var toggleChild = children.Find(child => child.Item2 is ToggleElement);
             Scrollbar scrollbar;
             if (toggleChild == null)
             {
-                scrollbar = ElementUtil.GetOrAddComponent<Scrollbar>(go);
+                scrollbar = ElementUtil.GetOrAddComponent<Scrollbar>(targetObject);
             }
             else
             {
                 // DotScrollbarとなる
-                var dotScrollbar = go.AddComponent<DotsScrollbar>();
+                var dotScrollbar = targetObject.AddComponent<DotsScrollbar>();
                 dotScrollbar.isAutoLayoutEnableOnEditMode = false;
-                dotScrollbar.DotContainer = go.GetComponent<RectTransform>();
+                dotScrollbar.DotContainer = targetObject.GetComponent<RectTransform>();
                 dotScrollbar.DotPrefab = toggleChild.Item1.GetComponent<Toggle>();
                 // Toggleボタンの並びレイアウト
-                ElementUtil.SetupLayoutGroup(go, LayoutJson);
+                ElementUtil.SetupLayoutGroup(targetObject, LayoutJson);
                 dotScrollbar.size = 1; // sizeを1にすることで、Toggleが複数Cloneされることをふせぐ
                 scrollbar = dotScrollbar;
             }
@@ -77,7 +77,7 @@ namespace I0plus.XdUnityUI.Editor
                 if (found != null) scrollbar.handleRect = found.Item1.GetComponent<RectTransform>();
             }
 
-            ElementUtil.SetupContentSizeFitter(go, ContentSizeFitterJson);
+            ElementUtil.SetupContentSizeFitter(targetObject, ContentSizeFitterJson);
         }
     }
 }

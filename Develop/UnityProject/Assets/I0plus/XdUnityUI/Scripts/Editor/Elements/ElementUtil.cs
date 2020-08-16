@@ -736,7 +736,7 @@ namespace I0plus.XdUnityUI.Editor
             else
             {
                 // 再利用できなかった新規に作成
-                Debug.Log($"新規にGameObjectを生成しました:{name}");
+                // Debug.Log($"新規にGameObjectを生成しました:{name}");
                 selfObject = new GameObject(name);
             }
 
