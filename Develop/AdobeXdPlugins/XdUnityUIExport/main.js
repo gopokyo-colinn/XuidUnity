@@ -199,6 +199,9 @@ const STYLE_MASK = 'mask'
 const STYLE_UNITY_NAME = 'unity-name'
 const STYLE_CHECK_LOG = 'check-log'
 const STYLE_INSTANCE_IF_POSSIBLE = 'instance-if-possible'
+const STYLE_WRAP_VERTICAL_ITEM = 'wrap-vertical-item'
+const STYLE_WRAP_Y_ITEM = 'wrap-y-item'
+const STYLE_WRAP_LAYOUT_ELEMENT = 'wrap-layout-element'
 
 const appLanguage = application.appLanguage
 
@@ -446,11 +449,11 @@ function parseCssDeclarationBlock(declarationBlock) {
 /**
  * folder/name{css-declarations} でパースする
  * 例
- * MainMenu/vertex#scroller {fix:t v a}
- * folder:MainMenu id:scroller name:vertex#scroller
+ * MainMenu/vertex#scroller.image {fix:t v a}
+ * folder:MainMenu id:scroller name:vertex#scroller.image name_without_class:vertex#scroller
  * folderの最後の文字に"/"は付かないようにする
  * @param {string} nodeName
- * @return {{css_declarations: string|null, name: string|null, folder: string|null}}
+ * @return {{css_declarations: string|null, name: string|null, name_without_class: string|null, folder: string|null}}
  */
 function parseNodeName(nodeName) {
   // https://regex101.com/r/MdGDaC/3
@@ -460,11 +463,20 @@ function parseNodeName(nodeName) {
     return {}
   }
   let name = r.groups.name ? r.groups.name.trim() : null
+  let name_without_class = null
+  if (name) {
+    // name の中にはクラス名もはいっている
+    const firstDotIndex = name.indexOf('.')
+    if (firstDotIndex > 0) {
+      name_without_class = name.substring(0, firstDotIndex).trim()
+    }
+  }
   let folder = r.groups.folder ? r.groups.folder.trim() : null
   let css_declarations = r.groups.css_declarations
   return {
     folder,
     name,
+    name_without_class,
     css_declarations,
   }
 }
@@ -516,11 +528,9 @@ function isPrefabNode(node) {
  * NodeNameをCSSパースする　これによりローカルCSSも取得する
  * WARN: ※ここの戻り値を変更するとキャッシュも変更されてしまう
  * NodeNameとは node.nameのこと
+ * tagNameはCSSパースにより取得される名前 2バイト文字は"_"になる
  * // によるコメントアウト処理もここでする
  * folder/name{css-declarations} でパースする
- * 例
- * MainMenu/vertex#scroller {fix:t v a}
- * folder:MainMenu id:scroller name:vertex#scroller
  * @param {string} nodeName
  * @param nodeName
  * @return {{folder:string, classNames:string[], id:string, tagName:string, declarations:CssDeclarations}}
@@ -540,32 +550,37 @@ function cssParseNodeName(nodeName) {
     result = { declarations }
   } else {
     // folder/name{css-declarations} でパースする
-    let { name, folder } = parseNodeName(nodeName)
+    let { name, folder, css_declarations, name_without_class } = parseNodeName(
+      nodeName,
+    )
     if (!name) name = nodeName
+    if (!css_declarations) css_declarations = ''
     // console.log(`parseNodeName: folder:${folder} name:${name} css_decl:${r.groups.css_declarations}`)
 
     try {
       // name部分とcss-declarationsを結合、ascii文字以外(漢字など) _ に変換する
-      const asciiNodeName = name.replace(/[^\x01-\x7E]/g, function(s) {
+      const asciiName = name.replace(/[^\x01-\x7E]/g, function(s) {
         return '_'
       })
       // console.log(`parseCss(${asciiNodeName})`)
       // 名前だけのパース
-      let rules = parseCss(asciiNodeName, false) // 名前はエラーチェックしない
+      let rules = parseCss(asciiName + css_declarations, false) // 名前はエラーチェックしない
       if (!rules || rules.length === 0 || !rules[0].selector) {
         // パースできなかった場合はそのまま返す
-        result = { folder, name, tagName: nodeName }
+        result = { folder, name, name_without_class, tagName: nodeName }
       } else {
-        result = rules[0].selector.json['rule'] // 一番外側の｛｝をはずす
+        // 一番外側の｛｝をはずす ここで tagNameがくる tagNameはasciiNameをパースしてくるものなのでマルチバイト文字が_になる
+        result = rules[0].selector.json['rule']
         Object.assign(result, {
           folder,
           name,
+          name_without_class,
           declarations: rules[0].declarations,
         })
       }
     } catch (e) {
       console.log(`***exception: parseNodeName(${nodeName})`)
-      result = { folder, name, tagName: nodeName }
+      result = { folder, name, name_without_class, tagName: nodeName }
     }
   }
   cacheParseNodeName[nodeName] = result
@@ -1303,7 +1318,7 @@ function calcPadding(node) {
  * @param {SceneNode|SceneNodeClass} maskNode
  * @param {SceneNodeList} nodeChildren
  */
-function calcLayout(json, viewportNode, maskNode, nodeChildren) {
+function calcLayoutAlignmentSpace(json, viewportNode, maskNode, nodeChildren) {
   const padding = calcPadding(viewportNode)
   // console.log('padding:', padding)
   let jsonLayout = {
@@ -1434,7 +1449,12 @@ function calcLayout(json, viewportNode, maskNode, nodeChildren) {
 function calcVLayout(json, viewportNode, maskNode, children) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
   sortElementsByPositionAsc(json.elements)
-  let jsonVLayout = calcLayout(json, viewportNode, maskNode, children)
+  let jsonVLayout = calcLayoutAlignmentSpace(
+    json,
+    viewportNode,
+    maskNode,
+    children,
+  )
   jsonVLayout['method'] = STR_VERTICAL
   return jsonVLayout
 }
@@ -1448,7 +1468,12 @@ function calcVLayout(json, viewportNode, maskNode, children) {
  */
 function calcHLayout(json, viewportNode, maskNode, children) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
-  let jsonHLayout = calcLayout(json, viewportNode, maskNode, children)
+  let jsonHLayout = calcLayoutAlignmentSpace(
+    json,
+    viewportNode,
+    maskNode,
+    children,
+  )
   jsonHLayout['method'] = STR_HORIZONTAL
   return jsonHLayout
 }
@@ -1468,7 +1493,12 @@ function calcGridLayout(json, viewportNode, maskNode, children) {
     jsonLayout = getLayoutFromRepeatGrid(viewportNode, null)
   } else {
     // RepeatGridでなければ、VLayout情報から取得する
-    jsonLayout = calcLayout(json, viewportNode, maskNode, children)
+    jsonLayout = calcLayoutAlignmentSpace(
+      json,
+      viewportNode,
+      maskNode,
+      children,
+    )
     jsonLayout['method'] = 'grid'
   }
   return jsonLayout
@@ -1534,12 +1564,15 @@ function getUnityName(node) {
     return unityName
   }
 
-  const parsed = cssParseNodeName(getNodeName(node))
+  const parsed = cssParseNodeName(nodeName)
   if (parsed) {
+    // console.log(parsed)
     // idを最優先
     if (parsed.id) return parsed.id
-    // 名前があればそれを出す
-    if (parsed.tagName) return parsed.tagName
+    // tagNameは名前に適さない マルチバイトは_に置き換えられた状態での名前になる
+    // if (parsed.tagName) return parsed.tagName
+    //
+    if (parsed.name_without_class) return parsed.name_without_class
     // 全体の名前
     if (parsed.name) return parsed.name
     // クラスを名前とする　クラスは機能なので、名前にすることは優先順位として下位
@@ -2306,7 +2339,7 @@ class Style {
         }
         const contentChild = contents[0]
         const { style: contentStyle } = getNodeNameAndStyle(contentChild)
-        result = !hasLayoutProperties(contentStyle)
+        result = !hasLayoutPropertyPreferredSize(contentStyle)
         break
       }
       default:
@@ -2854,6 +2887,7 @@ async function addImage(
 ) {
   let { node_name, style } = getNodeNameAndStyle(node)
   const unityName = getUnityName(node)
+  // console.log('unity-name', unityName)
 
   // 今回出力するためのユニークな名前をつける
   let hashStringLength = 5
@@ -3080,6 +3114,42 @@ function addRectMask2d(json, style) {
 
 /**
  *
+ * @param {SceneNode|SceneNodeClass} viewportNode
+ * @param {SceneNode|SceneNodeClass} maskNode
+ * @param {SceneNodeList} children
+ * @return {number[]}
+ */
+function getVerticalSpaces(viewportNode, maskNode, children) {
+  let nodes = children.filter(child => {
+    if (child === viewportNode && child === maskNode) return false
+    const { style } = getNodeNameAndStyle(child)
+    return !style.firstAsBool(STYLE_COMPONENT)
+  })
+
+  if (nodes.length == 0 || nodes.length == 1) return []
+
+  nodes.sort((a, b) => {
+    const boundsA = getBeforeGlobalDrawBounds(a)
+    const boundsB = getBeforeGlobalDrawBounds(b)
+    return boundsA.y - boundsB.y
+  })
+
+  // Nodeを縦の順番に並べた状態で隙間を取得していく
+  const spaces = []
+  let bottomY = getBeforeGlobalDrawBounds(nodes[0]).ey
+  for (let i = 1; i < nodes.length; i++) {
+    const nextBounds = getBeforeGlobalDrawBounds(nodes[i])
+    const space = nextBounds.y - bottomY
+    spaces.push(space)
+    bottomY = nextBounds.ey
+  }
+
+  // console.log(spaces)
+  return spaces
+}
+
+/**
+ *
  * @param json
  * @param {SceneNode|SceneNodeClass} viewportNode
  * @param {SceneNode|SceneNodeClass} maskNode
@@ -3096,10 +3166,21 @@ function addLayout(json, viewportNode, maskNode, children, style) {
       spacing_x: parseInt(layoutSpacingX), //TODO: pxやenを無視している
     })
   }
-  const layoutSpacingY = style.first(STYLE_LAYOUT_GROUP_SPACING_Y)
-  if (asBool(layoutSpacingY)) {
+
+  let layoutSpacingY = style.first(STYLE_LAYOUT_GROUP_SPACING_Y)
+  if (layoutSpacingY !== null) {
+    if (layoutSpacingY === 'average') {
+      const spaces = getVerticalSpaces(viewportNode, maskNode, children)
+      if (spaces.length != 0) {
+        layoutSpacingY =
+          spaces.reduce((previous, current) => previous + current) /
+          spaces.length
+      } else {
+        layoutSpacingY = 0
+      }
+    }
     Object.assign(layoutJson, {
-      spacing_y: parseInt(layoutSpacingY), //TODO: pxやenを無視している
+      spacing_y: layoutSpacingY, //TODO: 単位がない状態で渡している　単位はPixel数
     })
   }
 
@@ -3109,6 +3190,8 @@ function addLayout(json, viewportNode, maskNode, children, style) {
   }
 
   // console.log('addLayout:', layoutJson)
+
+  getVerticalSpaces(viewportNode, maskNode, children)
 
   Object.assign(json, {
     layout: layoutJson,
@@ -3172,11 +3255,12 @@ function addLayoutParam(layoutJson, style) {
   }
 }
 
-function hasLayoutProperties(style) {
+function hasLayoutPropertyPreferredSize(style) {
   return (
     style.firstAsBool(STYLE_TEXT) ||
     style.firstAsBool(STYLE_TEXTMP) ||
-    style.firstAsBool(STYLE_IMAGE) ||
+    (style.firstAsBool(STYLE_IMAGE) &&
+      style.firstAsBool(STYLE_IMAGE_SLICE) === false) || // スライスイメージなら、Preferred Sizeを持たない
     style.firstAsBool(STYLE_LAYOUT_GROUP)
   )
 }
@@ -3204,7 +3288,7 @@ function isContentOnlyChild(node) {
 function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
   let first = style.first(STYLE_LAYOUT_ELEMENT)
   if (first === 'if-not-has-layout-properties') {
-    first = !hasLayoutProperties(style)
+    first = !hasLayoutPropertyPreferredSize(style)
   }
   if (!asBool(first)) return
 
@@ -3571,7 +3655,7 @@ async function createInput(json, node, root, funcForEachChild) {
  * ノードに親を挿入する
  * pivotは子供のものをそのまま使用している要検討
  * @param json
- * @param style
+ * @param style {Style}
  * @param node
  */
 function addWrap(json, node, style) {
@@ -3635,66 +3719,70 @@ function addWrap(json, node, style) {
     return
   }
 
-  const styleWrap = style.first('wrap')
+  const styleWrap = style.firstAsBool('wrap')
   if (styleWrap) {
-    let child = {}
+    let wrappedChild = {}
     // プロパティの移動
-    Object.assign(child, json)
+    Object.assign(wrappedChild, json)
     for (let member in json) delete json[member]
     Object.assign(json, {
       type: 'Group',
       name: 'wrap',
-      layer: child.layer,
+      layer: wrappedChild.layer,
       rect_transform: {
         pivot: {
-          x: child.rect_transform.pivot.x,
-          y: child.rect_transform.pivot.y,
+          x: wrappedChild.rect_transform.pivot.x,
+          y: wrappedChild.rect_transform.pivot.y,
         },
         anchor_min: {
-          x: child.rect_transform.anchor_min.x,
-          y: child.rect_transform.anchor_min.y,
+          x: wrappedChild.rect_transform.anchor_min.x,
+          y: wrappedChild.rect_transform.anchor_min.y,
         },
         anchor_max: {
-          x: child.rect_transform.anchor_max.x,
-          y: child.rect_transform.anchor_max.y,
+          x: wrappedChild.rect_transform.anchor_max.x,
+          y: wrappedChild.rect_transform.anchor_max.y,
         },
         offset_min: {
-          x: child.rect_transform.offset_min.x,
-          y: child.rect_transform.offset_min.y,
+          x: wrappedChild.rect_transform.offset_min.x,
+          y: wrappedChild.rect_transform.offset_min.y,
         },
         offset_max: {
-          x: child.rect_transform.offset_max.x,
-          y: child.rect_transform.offset_max.y,
+          x: wrappedChild.rect_transform.offset_max.x,
+          y: wrappedChild.rect_transform.offset_max.y,
         },
       },
-      elements: [child],
+      elements: [wrappedChild],
     })
 
     // 子供は縦横ともにピッタリさせる
     // pivotはそのまま
-    child.rect_transform.anchor_min.x = 0
-    child.rect_transform.anchor_max.x = 1
-    child.rect_transform.anchor_min.y = 0
-    child.rect_transform.anchor_max.y = 1
-    child.rect_transform.offset_min.x = 0
-    child.rect_transform.offset_max.x = 0
-    child.rect_transform.offset_min.y = 0
-    child.rect_transform.offset_max.y = 0
+    wrappedChild.rect_transform.anchor_min.x = 0
+    wrappedChild.rect_transform.anchor_max.x = 1
+    wrappedChild.rect_transform.anchor_min.y = 0
+    wrappedChild.rect_transform.anchor_max.y = 1
+    wrappedChild.rect_transform.offset_min.x = 0
+    wrappedChild.rect_transform.offset_max.x = 0
+    wrappedChild.rect_transform.offset_min.y = 0
+    wrappedChild.rect_transform.offset_max.y = 0
+
     return
   }
 
+  // 縦に整列するアイテム用
+  // - 縦のサイズがアイテムによってきまっている
+  // - 横のサイズが親によって決められる
   const styleWrapY =
-    style.first('wrap-y-item') || style.first('wrap-vertical-item')
+    style.first(STYLE_WRAP_Y_ITEM) || style.first(STYLE_WRAP_VERTICAL_ITEM)
   if (styleWrapY) {
-    let child = {}
+    let wrappedChild = {}
     // プロパティの移動
-    Object.assign(child, json)
+    Object.assign(wrappedChild, json)
     for (let member in json) delete json[member]
     // ラップするオブジェクトの作成
     Object.assign(json, {
       type: 'Group',
-      name: 'wrap-vertical-item',
-      layer: child.layer,
+      name: `wrap-vertical-item(${node.guid})`,
+      layer: wrappedChild.layer,
       rect_transform: {
         pivot: {
           x: 1,
@@ -3702,27 +3790,37 @@ function addWrap(json, node, style) {
         },
         anchor_min: {
           x: 0,
-          y: child.rect_transform.anchor_min.y,
+          y: wrappedChild.rect_transform.anchor_min.y,
         },
         anchor_max: {
           x: 1,
-          y: child.rect_transform.anchor_max.y,
+          y: wrappedChild.rect_transform.anchor_max.y,
         },
         offset_min: {
           x: 0,
-          y: child.rect_transform.offset_min.y,
+          y: wrappedChild.rect_transform.offset_min.y,
         },
         offset_max: {
           x: 0,
-          y: child.rect_transform.offset_max.y,
+          y: wrappedChild.rect_transform.offset_max.y,
         },
       },
-      elements: [child],
+      elements: [wrappedChild],
     })
-    child.rect_transform.anchor_min.y = 0
-    child.rect_transform.anchor_max.y = 1
-    child.rect_transform.offset_min.y = 0
-    child.rect_transform.offset_max.y = 0
+    wrappedChild.rect_transform.anchor_min.y = 0
+    wrappedChild.rect_transform.anchor_max.y = 1
+    wrappedChild.rect_transform.offset_min.y = 0
+    wrappedChild.rect_transform.offset_max.y = 0
+
+    if (style.firstAsBool(STYLE_WRAP_LAYOUT_ELEMENT)) {
+      if (wrappedChild.layout_element) {
+        Object.assign(json, {
+          layout_element: wrappedChild.layout_element,
+        })
+        delete wrappedChild.layout_element
+      }
+    }
+    return
   }
 }
 
