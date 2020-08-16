@@ -74,19 +74,19 @@ padding background
 .vertical-stack {
   layout-group: vertical;
   layout-group-child-control-size: width height;
+  layout-group-child-force-expand: width;
   layout-group-child-alignment: upper-center;
-  layout-group-spacing: average;
+  layout-group-spacing-y: average;
   layout-group-children-order: reverse;
   content-size-fitter: true;
-  content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
 }
 
 .vertical-stack > * {
-  layout-element: if-not-has-layout-properties preferred;
-  layout-element-preferred-width: draw-bounds-width;
+  layout-element: if-not-has-layout-properties;
   layout-element-preferred-height: draw-bounds-height;
 }
+
 
 /*
 .vertical-stack直下の一番下のレイヤーは画像化、コンポーネント化する
@@ -99,6 +99,18 @@ first-childになる
   component: true;
   image: true;
 }
+
+/*
+縦に並べるアイテム用
+- 縦のサイズがアイテムによってきまっている
+- 横のサイズが親によって決められる
+ */
+.vertical-item {
+  wrap-vertical-item: true;
+  wrap-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
+  layout-element: true; /* 必ず layout-elementを作成する */
+}
+
 
 /*
  グリッド状にならべる 横に伸びる
@@ -122,13 +134,6 @@ first-childになる
   content-size-fitter-vertical-fit: preferred-size;
 }
 
-/*
- 親が自動レイアウトをもっている場合に
- これ以下のグループが必要なPREFERREDサイズを設定する
- */
-.layout-rect {
-  layout-element: preferred;
-}
 
 /*
  リピードグリッドはマスクを持つ
@@ -141,7 +146,7 @@ first-childになる
  リピードグリッドの子は、Layout-elementを持つ
  */
 [typeof='RepeatGrid'] > * {
-  unity-name: 'rg-child(${childIndex})';
+  unity-name: 'rg${childIndex}(${guid})';
 }
 
 .guid-name {
@@ -394,3 +399,5 @@ first-childになる
   image-fit-parent-bounds: true;
   image-slice: false;
 }
+
+
