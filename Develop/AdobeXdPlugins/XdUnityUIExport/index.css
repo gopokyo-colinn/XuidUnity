@@ -16,7 +16,6 @@
   layer: UI;
 }
 
-
 /*
  ArtboardはUnityで配置時親ににぴったりはまるようにする
  */
@@ -24,8 +23,6 @@
   rect-transform-anchor-offset-x: 0 1 0 0;
   rect-transform-anchor-offset-y: 0 1 0 0;
 }
-
-
 
 /*
  横にならべる
@@ -151,7 +148,6 @@ first-childになる
   unity-name: '${guid}';
 }
 
-
 [typeof='ScrollableGroup'] {
   create-content: true;
   create-content-name: '.content';
@@ -159,7 +155,6 @@ first-childになる
   scroll-rect: true;
   scroll-rect-content-target: '.content';
 }
-
 
 .viewport-xy {
   create-content: true;
@@ -356,7 +351,6 @@ first-childになる
   image-slice: false;
 }
 
-
 .input,
 [tag-name$='input'],
 [tag-name$='-input'],
@@ -380,16 +374,16 @@ first-childになる
 }
 
 .no-instance {
-  instance-if-possible: false
+  instance-if-possible: false;
 }
 
 .graphic-swap {
   toggle-graphic-swap: true;
-  toggle-transition: "sprite-swap";
+  toggle-transition: 'sprite-swap';
 }
 
 .sprite-swap {
-  button-transition: "sprite-swap";
+  button-transition: 'sprite-swap';
 }
 
 /*
@@ -398,4 +392,5 @@ first-childになる
 */
 .sprite-swap > * {
   image-fit-parent-bounds: true;
+  image-slice: false;
 }
