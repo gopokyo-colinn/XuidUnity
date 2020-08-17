@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &189203216961863000
+--- !u!1 &2366175408669325746
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,8 +8,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 492601595016809963}
-  - component: {fileID: 7898722066866303112}
+  - component: {fileID: 5416748174823146015}
+  - component: {fileID: 2049003198374993371}
   m_Layer: 5
   m_Name: blue-button
   m_TagString: Untagged
@@ -17,18 +17,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &492601595016809963
+--- !u!224 &5416748174823146015
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 189203216961863000}
+  m_GameObject: {fileID: 2366175408669325746}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 2395415869278126101}
+  - {fileID: 6986452533986585936}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -37,13 +37,13 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 92, y: 91.4541}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7898722066866303112
+--- !u!114 &2049003198374993371
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 189203216961863000}
+  m_GameObject: {fileID: 2366175408669325746}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
@@ -76,11 +76,11 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 4084351764855234530}
+  m_TargetGraphic: {fileID: 8620802481168532199}
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!1 &7597268709476894896
+--- !u!1 &3206519781018002410
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -88,9 +88,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2395415869278126101}
-  - component: {fileID: 3964809727876010280}
-  - component: {fileID: 4084351764855234530}
+  - component: {fileID: 6986452533986585936}
+  - component: {fileID: 724665319166930396}
+  - component: {fileID: 8620802481168532199}
   m_Layer: 5
   m_Name: image
   m_TagString: Untagged
@@ -98,18 +98,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &2395415869278126101
+--- !u!224 &6986452533986585936
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7597268709476894896}
+  m_GameObject: {fileID: 3206519781018002410}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 492601595016809963}
+  m_Father: {fileID: 5416748174823146015}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -117,21 +117,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &3964809727876010280
+--- !u!222 &724665319166930396
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7597268709476894896}
+  m_GameObject: {fileID: 3206519781018002410}
   m_CullTransparentMesh: 0
---- !u!114 &4084351764855234530
+--- !u!114 &8620802481168532199
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7597268709476894896}
+  m_GameObject: {fileID: 3206519781018002410}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b5d815e669de8c34680f4daff4698064, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 96b6ea55166bb4745b7e9bf204b029ca, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
