@@ -14,8 +14,9 @@ namespace I0plus.XdUnityUI.Editor
     /// </summary>
     public class Dict : Dictionary<string, string>, ISerializationCallbackReceiver
     {
-        [SerializeField] private readonly List<string> keys = new List<string>();
-        [SerializeField] private readonly List<string> vals = new List<string>();
+        // ReadOnlyをつけるとシリアライズできなくなる
+        [SerializeField] private List<string> keys = new List<string>();
+        [SerializeField] private List<string> vals = new List<string>();
 
         public void OnBeforeSerialize()
         {
@@ -172,7 +173,8 @@ namespace I0plus.XdUnityUI.Editor
         private static void Save(string folderAssetPath)
         {
             var jsonImageHashMap = JsonUtility.ToJson(imageHashMap);
-            File.WriteAllText(folderAssetPath + "/" + ImageHashMapCacheFileName, jsonImageHashMap);
+            var hashMapAssetPath = folderAssetPath + "/" + ImageHashMapCacheFileName;
+            File.WriteAllText(hashMapAssetPath, jsonImageHashMap);
             var jsonImagePathMap = JsonUtility.ToJson(imagePathMap);
             File.WriteAllText(folderAssetPath + "/" + ImagePathMapCacheFileName, jsonImagePathMap);
         }
