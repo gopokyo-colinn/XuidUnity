@@ -3,14 +3,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
-#endif
 
 namespace I0plus.XdUnityUI.Editor
 {
     /// <summary>
     ///     TextMeshProElement class.
     /// </summary>
-#if TMP_PRESENT
     public sealed class TextMeshProElement : Element
     {
         private readonly Dictionary<string, object> _textJson;
@@ -108,5 +106,5 @@ namespace I0plus.XdUnityUI.Editor
             ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
         }
     }
-#endif
 }
+#endif
