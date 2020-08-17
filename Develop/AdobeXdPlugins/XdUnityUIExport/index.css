@@ -113,6 +113,52 @@ first-childになる
 
 
 /*
+ 縦にならべる
+ APIでvertical-stack状態であるかどうかが取得できると
+ クラスで指定する必要がなくなる
+ */
+.horizontal-stack {
+  layout-group: horizontal;
+  layout-group-child-control-size: width height;
+  layout-group-child-force-expand: height;
+  layout-group-child-alignment: upper-center;
+  layout-group-spacing-x: average;
+  layout-group-children-order: reverse;
+  content-size-fitter: true;
+  content-size-fitter-horizontal-fit: preferred-size;
+}
+
+.horizontal-stack > * {
+  layout-element: if-not-has-layout-properties;
+  layout-element-preferred-width: draw-bounds-width;
+}
+
+
+/*
+.horizontal-stack直下の一番下のレイヤーは画像化、コンポーネント化する
+最下のレイヤー
+first-childになる
+それが、親Boundsと同じであった場合、Paddingフレームとなっている
+イメージ化し、コンポーネント化する
+ */
+.horizontal-stack > :first-child:same-parent-bounds {
+  component: true;
+  image: true;
+}
+
+/*
+横に並べるアイテム用
+- 横のサイズがアイテムによってきまっている
+- 縦のサイズが親によって決められる
+ */
+.horizontal-item {
+  wrap-horizontal-item: true;
+  wrap-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
+  layout-element: true; /* 必ず layout-elementを作成する */
+}
+
+
+/*
  グリッド状にならべる 横に伸びる
  */
 .layout-grid-x {

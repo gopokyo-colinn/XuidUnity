@@ -200,7 +200,7 @@ const STYLE_UNITY_NAME = 'unity-name'
 const STYLE_CHECK_LOG = 'check-log'
 const STYLE_INSTANCE_IF_POSSIBLE = 'instance-if-possible'
 const STYLE_WRAP_VERTICAL_ITEM = 'wrap-vertical-item'
-const STYLE_WRAP_Y_ITEM = 'wrap-y-item'
+const STYLE_WRAP_HORIZONTAL_ITEM = 'wrap-horizontal-item'
 const STYLE_WRAP_LAYOUT_ELEMENT = 'wrap-layout-element'
 
 const appLanguage = application.appLanguage
@@ -3765,8 +3765,7 @@ function addWrap(json, node, style) {
   // 縦に整列するアイテム用
   // - 縦のサイズがアイテムによってきまっている
   // - 横のサイズが親によって決められる
-  const styleWrapY =
-    style.first(STYLE_WRAP_Y_ITEM) || style.first(STYLE_WRAP_VERTICAL_ITEM)
+  const styleWrapY = style.first(STYLE_WRAP_VERTICAL_ITEM)
   if (styleWrapY) {
     let wrappedChild = {}
     // プロパティの移動
@@ -3805,6 +3804,61 @@ function addWrap(json, node, style) {
     wrappedChild.rect_transform.anchor_max.y = 1
     wrappedChild.rect_transform.offset_min.y = 0
     wrappedChild.rect_transform.offset_max.y = 0
+
+    if (style.firstAsBool(STYLE_WRAP_LAYOUT_ELEMENT)) {
+      if (wrappedChild.layout_element) {
+        Object.assign(json, {
+          layout_element: wrappedChild.layout_element,
+        })
+        delete wrappedChild.layout_element
+      }
+    }
+    return
+  }
+
+
+  // 縦に整列するアイテム用
+  // - 縦のサイズがアイテムによってきまっている
+  // - 横のサイズが親によって決められる
+  const styleWrapX = style.first(STYLE_WRAP_HORIZONTAL_ITEM)
+  if (styleWrapX) {
+    let wrappedChild = {}
+    // プロパティの移動
+    Object.assign(wrappedChild, json)
+    for (let member in json) delete json[member]
+    // ラップするオブジェクトの作成
+    Object.assign(json, {
+      type: 'Group',
+      name: `wrap-horizontal-item(${node.guid})`,
+      layer: wrappedChild.layer,
+      rect_transform: {
+        pivot: {
+          x: 1,
+          y: 0,
+        },
+        anchor_min: {
+          x: wrappedChild.rect_transform.anchor_min.x,
+          y: 0,
+        },
+        anchor_max: {
+          x: wrappedChild.rect_transform.anchor_max.x,
+          y: 1,
+        },
+        offset_min: {
+          x: wrappedChild.rect_transform.offset_min.x,
+          y: 0,
+        },
+        offset_max: {
+          x: wrappedChild.rect_transform.offset_max.x,
+          y: 0,
+        },
+      },
+      elements: [wrappedChild],
+    })
+    wrappedChild.rect_transform.anchor_min.x = 0
+    wrappedChild.rect_transform.anchor_max.x = 1
+    wrappedChild.rect_transform.offset_min.x = 0
+    wrappedChild.rect_transform.offset_max.x = 0
 
     if (style.firstAsBool(STYLE_WRAP_LAYOUT_ELEMENT)) {
       if (wrappedChild.layout_element) {
