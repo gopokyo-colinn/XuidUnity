@@ -17,12 +17,14 @@ namespace I0plus.XdUnityUI
 
         private void OnEnable()
         {
-            Toggle.targetGraphic.enabled = !toggle.isOn;
+            var target = Toggle.targetGraphic;
+            if( target != null) target.enabled = !Toggle.isOn;
         }
 
         private void OnValueChanged(bool on)
         {
-            Toggle.targetGraphic.enabled = !on;
+            var target = Toggle.targetGraphic;
+            if( target != null) target.enabled = !on;
         }
     }
 }
