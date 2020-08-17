@@ -463,7 +463,7 @@ function parseNodeName(nodeName) {
     return {}
   }
   let name = r.groups.name ? r.groups.name.trim() : null
-  let name_without_class = null
+  let name_without_class = name
   if (name) {
     // name の中にはクラス名もはいっている
     const firstDotIndex = name.indexOf('.')
@@ -2405,15 +2405,9 @@ function getStyleFromNode(node) {
   for (const rule of globalCssRules) {
     /** @type {CssSelector} */
     const selector = rule.selector
-    if (
-      selector &&
-      selector.matchRule(
-        node,
-        null,
-        rule.declarations.firstAsBool(STYLE_CHECK_LOG),
-      )
-    ) {
-      // console.log('マッチした宣言をスタイルに追加', rule)
+    const checkLog = rule.declarations.firstAsBool(STYLE_CHECK_LOG)
+    if (selector && selector.matchRule(node, null, checkLog)) {
+      if (checkLog) console.log('マッチした宣言をスタイルに追加', rule)
       style.addDeclarations(rule.declarations)
     }
   }
@@ -5409,12 +5403,20 @@ class CssSelector {
       return null
     }
     if (verboseLog) console.log('check成功')
-    if (rule.nestingOperator === '>' || rule.nestingOperator == null) {
+    if (
+      rule.nestingOperator === '>' ||
+      (rule.nestingOperator == null && rule.nestingOperator !== undefined)
+    ) {
       if (verboseLog)
         console.log(
           `nestingオペレータ${rule.nestingOperator} 確認のため、checkNodeを親にすすめる`,
         )
       checkNode = checkNode.parent
+      if( verboseLog && !checkNode) {
+        console.log(
+          `checkNodeを親にすすめたがNullだった->失敗になる可能性`,
+        )
+      }
     }
     return checkNode
   }
@@ -5429,7 +5431,7 @@ class CssSelector {
     const nodeName = node.name.trim()
     const parsedNodeName = cssParseNodeName(nodeName)
     if (verboseLog) {
-      console.log('# rule check')
+      console.log('# CssSelector.check')
       console.log('- name:', node.name)
       console.log(parsedNodeName)
       console.log('## 以下のruleと照らし合わせる')
