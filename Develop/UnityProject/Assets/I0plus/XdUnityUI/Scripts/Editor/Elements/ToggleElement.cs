@@ -47,6 +47,8 @@ namespace I0plus.XdUnityUI.Editor
             {
                 toggle.targetGraphic = targetImage;
                 targetImageObject = targetImage.gameObject;
+                //TODO: 強制的にActiveにする
+                targetImageObject.SetActive(true);
             }
 
             // ON graphic
@@ -55,8 +57,15 @@ namespace I0plus.XdUnityUI.Editor
             if (graphicImage != null)
             {
                 toggle.graphic = graphicImage;
-                //TODO: 強制的にActiveにする
-                graphicImage.gameObject.SetActive(true);
+                if (graphicImage.gameObject.activeSelf)
+                {
+                    toggle.isOn = true;
+                }
+                else
+                {
+                    //TODO: 強制的にActiveにする
+                    graphicImage.gameObject.SetActive(true);
+                }
             }
 
             // ON/OFF が画像の入れ替えとして動作するコンポーネント
