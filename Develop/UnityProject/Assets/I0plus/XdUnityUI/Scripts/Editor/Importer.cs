@@ -35,6 +35,9 @@ namespace I0plus.XdUnityUI.Editor
             string[] movedFromAssetPaths)
         {
             var importFolderAssetPath = EditorUtil.GetImportFolderAssetPath();
+            
+            // 自動インポート用フォルダが無い場合は終了
+            if (importFolderAssetPath == null) return;
 
             var forImportAssetPaths = new List<string>();
             foreach (var importedAsset in importedAssets)
