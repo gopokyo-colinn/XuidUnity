@@ -3,6 +3,9 @@ using UnityEngine.UI;
 
 namespace I0plus.XdUnityUI
 {
+    /// <summary>
+    /// トグルのON/OFFで画像の入れ替えをする
+    /// </summary>
     [ExecuteAlways]
     public class ToggleGraphicSwap : MonoBehaviour
     {
