@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -730,15 +731,11 @@ namespace I0plus.XdUnityUI.Editor
         {
             var selfObject = renderContext.OccupyObject(Guid, name, parentObject);
             if (selfObject != null)
-            {
                 selfObject.name = name;
-            }
             else
-            {
                 // 再利用できなかった新規に作成
                 // Debug.Log($"新規にGameObjectを生成しました:{name}");
                 selfObject = new GameObject(name);
-            }
 
             return selfObject;
         }

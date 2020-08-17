@@ -61,7 +61,8 @@ namespace I0plus.XdUnityUI.Editor
 
             // ON/OFF が画像の入れ替えとして動作するコンポーネント
             var graphicSwap = _toggleJson.GetBool("graphic_swap");
-            if (graphicSwap != null && graphicSwap.Value) ElementUtil.GetOrAddComponent<ToggleGraphicSwap>(targetObject);
+            if (graphicSwap != null && graphicSwap.Value)
+                ElementUtil.GetOrAddComponent<ToggleGraphicSwap>(targetObject);
 
             var deleteObjects = new Dictionary<GameObject, bool>();
             var spriteStateJson = _toggleJson.GetDic("sprite_state");

@@ -1,9 +1,9 @@
 {
     "name": "XdUnityUI.Editor",
     "references": [
-        "Baum2",
-        "XdUnityUI",
-        "Unity.TextMeshPro"
+        "XdUnityUI.Runtime",
+        "Unity.TextMeshPro",
+        "Sirenix.OdinInspector.CompatibilityLayer.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

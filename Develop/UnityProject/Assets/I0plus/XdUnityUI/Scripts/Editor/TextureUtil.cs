@@ -110,6 +110,7 @@ namespace I0plus.XdUnityUI.Editor
                     readHeight -= readY;
                     moveY = 0;
                 }
+
                 destTexture.ReadPixels(new Rect(0, readY, sourceTexture.width, readHeight),
                     moveX,
                     moveY);
