@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -25,6 +26,7 @@ namespace I0plus.XdUnityUI.Editor
                     continue;
                 //child.gameobject contains the current child you can do whatever you want like add it to an array
                 listOfChildren.Add(child.gameObject);
+                if (PrefabUtility.IsAnyPrefabInstanceRoot(child.gameObject)) continue;
                 GetChildRecursive(child.gameObject, ref listOfChildren);
             }
         }

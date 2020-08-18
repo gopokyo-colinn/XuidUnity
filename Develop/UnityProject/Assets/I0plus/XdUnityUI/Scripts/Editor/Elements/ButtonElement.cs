@@ -41,6 +41,7 @@ namespace I0plus.XdUnityUI.Editor
                 {
                     button.targetGraphic = targetImage;
                     targetImageObject = targetImage.gameObject;
+                    targetImageObject.SetActive(true);
                 }
 
                 // すげ替え画像を探し、設定する
@@ -85,9 +86,16 @@ namespace I0plus.XdUnityUI.Editor
                 // 子供からImage持ちを探す
 
                 var image = targetObject.GetComponentInChildren<Image>();
-                if (image == null)
+                if (image != null)
+                {
+                    // アクティブにする
+                    image.gameObject.SetActive(true);
+                }
+                else
+                {
                     // componentでないか探す
                     image = targetObject.GetComponent<Image>();
+                }
 
                 button.targetGraphic = image;
             }

@@ -291,10 +291,13 @@ namespace I0plus.XdUnityUI.Editor
                         // 削除する
                         foreach (var fileInfo in deleteEntries)
                         {
+                            /*
                             if (File.Exists(fileInfo.FullName)) File.Delete(fileInfo.FullName);
 
                             var metaFileName = fileInfo.FullName + ".meta";
                             if (File.Exists(metaFileName)) File.Delete(metaFileName);
+                            */
+                            AssetDatabase.DeleteAsset(EditorUtil.ToAssetPath(fileInfo.FullName));
 
                             changed = true;
                         }

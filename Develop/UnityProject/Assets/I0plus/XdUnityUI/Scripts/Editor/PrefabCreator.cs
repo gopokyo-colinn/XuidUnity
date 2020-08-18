@@ -78,6 +78,7 @@ namespace I0plus.XdUnityUI.Editor
                 {
                     var go = keyValuePair.Key;
                     var goRect = ElementUtil.GetOrAddComponent<RectTransform>(go);
+                    // NestedPrefabの子供を転送しようとするとエラーになる
                     goRect.SetParent(groupRect);
                 }
             }
