@@ -65,12 +65,15 @@ let globalCssRules = null
 
 let globalCssVars = {}
 
+let globalErrorLog = []
+
 let cacheParseNodeName = {}
 
 let cacheNodeNameAndStyle = {}
 
 /**
  * グローバル変数をリセットする 再コンバートに必要なものだけのリセット
+ * Rootをコンバートする前にリセットする
  */
 function resetGlobalVariables() {
   globalResponsiveBounds = {}
@@ -80,6 +83,7 @@ function resetGlobalVariables() {
   cacheNodeNameAndStyle = {}
   // こちらの値はRootをまたいで必要になる情報のためとっておく
   // globalSymbolIdToPrefabGuid = {}
+  // globalErrorLog = []
 }
 
 const STR_CONTENT = 'content'
@@ -4771,6 +4775,8 @@ async function exportXdUnityUI(roots, outputFolder) {
     console.log(`### ${root.name}`)
     console.log('- reset global variables')
     resetGlobalVariables()
+
+    console.log('- load CSS')
     globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
 
     const rootName = getUnityName(root)
@@ -4789,6 +4795,38 @@ async function exportXdUnityUI(roots, outputFolder) {
     }
     globalCssVars = createCssVars(globalCssRules)
 
+    // createRenditionsの前にすべて可視にする
+    // 正常なBoundsを得るために、makeBoundsの前にやる
+    console.log('- change visible')
+    for (let root of roots) {
+      traverseNode(root, node => {
+        const { node_name: nodeName, style } = getNodeNameAndStyle(node)
+        if (style.firstAsBool(STYLE_COMMENT_OUT)) {
+          return false // 子供には行かないようにする
+        }
+        if (!node.visible) {
+          if (!selection.isInEditContext(node)) {
+            const message = `warning: ${root.name}/${node.parent.name}/${node.name}<br>> May not output need image. Could not change visible parameter out edit context.`
+            globalErrorLog.push(message)
+            console.log(message)
+          } else {
+            node.visible = true
+          }
+        }
+        // IMAGEであった場合、そのグループの不可視情報はそのまま活かすため
+        // 自身は可視にし、子供の不可視情報は生かす
+        // 本来は sourceImageをNaturalWidth,Heightで出力する
+        // TODO: Pathなど、レンダリングされるものもノータッチであるべきではないか
+        if (
+          style.firstAsBool(STYLE_IMAGE) ||
+          style.firstAsBool(STYLE_IMAGE_SLICE)
+        ) {
+          return false
+        }
+      })
+    }
+
+    console.log('- make GlobalBounds')
     await makeGlobalBoundsRectTransform(root)
 
     /** @type {Folder} */
@@ -4822,36 +4860,6 @@ async function exportXdUnityUI(roots, outputFolder) {
 
   if (renditions.length !== 0 && !optionImageNoExport) {
     console.log('## image export')
-
-    // createRenditionsの前にすべて可視にする
-    console.log('- change visible')
-    for (let root of roots) {
-      traverseNode(root, node => {
-        const { node_name: nodeName, style } = getNodeNameAndStyle(node)
-        if (style.firstAsBool(STYLE_COMMENT_OUT)) {
-          return false // 子供には行かないようにする
-        }
-        if (!node.visible) {
-          if (!selection.isInEditContext(node)) {
-            console.log(
-              `**error** could not change visible parameter. not in edit context ${node.name}`,
-            )
-          } else {
-            node.visible = true
-          }
-        }
-        // IMAGEであった場合、そのグループの不可視情報はそのまま活かすため
-        // 自身は可視にし、子供の不可視情報は生かす
-        // 本来は sourceImageをNaturalWidth,Heightで出力する
-        // TODO: Pathなど、レンダリングされるものもノータッチであるべきではないか
-        if (
-          style.firstAsBool(STYLE_IMAGE) ||
-          style.firstAsBool(STYLE_IMAGE_SLICE)
-        ) {
-          return false
-        }
-      })
-    }
 
     // 一括画像ファイル出力
     await application
@@ -4973,7 +4981,7 @@ async function alert(message, title) {
       {
         method: 'dialog',
         style: {
-          width: 400,
+          width: 500,
         },
       },
       h('h1', title),
@@ -5249,7 +5257,8 @@ async function pluginExportXdUnityUI(selection, root) {
      * @type {SceneNode[]}
      */
     await exportXdUnityUI(exportRoots, outputFolder)
-    await alert('done')
+    const log = [...new Set(globalErrorLog)].slice(0,10).join('<br><br>')
+    await alert(log? log : 'Done.')
   } catch (e) {
     console.log(e)
     console.log(e.stack)
@@ -5629,7 +5638,7 @@ class CssSelector {
         break
       case 'top-node':
         // Artboardであったり、Artboardに入っていないNodeにマッチする
-        result = node.parent == scenegraph.root // 親がscenegraph.rootならTopNode
+        result = node.parent === scenegraph.root // 親がscenegraph.rootならTopNode
         break
       case 'not':
         // console.log('----------------- not')

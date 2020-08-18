@@ -36,9 +36,16 @@ namespace I0plus.XdUnityUI.Editor
             if (image == null)
             {
                 image = ElementUtil.GetOrAddComponent<Image>(targetObject);
-                var sourceImage = ImageJson.Get("source_image");
-                if (sourceImage != null)
-                    image.sprite = renderContext.GetSprite(sourceImage);
+                var sourceImageName = ImageJson.Get("source_image");
+                if (sourceImageName != null)
+                {
+                     var sprite= renderContext.GetSprite(sourceImageName);
+                     if (sprite == null)
+                     {
+                         Debug.LogError($"[XdUnityUI] sprite not found. {sourceImageName}");
+                     }
+                     image.sprite = sprite;
+                }
 
                 image.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
                 var raycastTarget = ImageJson.GetBool("raycast_target");
