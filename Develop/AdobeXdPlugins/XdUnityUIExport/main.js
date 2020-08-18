@@ -137,8 +137,10 @@ const STYLE_PRESERVE_ASPECT = 'preserve-aspect'
 const STYLE_LOCK_ASPECT = 'lock-aspect' // preserve-aspectと同じ動作にする　アスペクト比を維持する
 const STYLE_RAYCAST_TARGET = 'raycast-target' // 削除予定
 const STYLE_RECT_MASK_2D = 'rect-mask-twod'
-const STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X = 'rect-transform-anchor-offset-x' // offset-min offset-max anchors-min anchors-maxの順
-const STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y = 'rect-transform-anchor-offset-y' // offset-min offset-max anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_X =
+  'rect-transform-anchors-offsets-x' // offset-min offset-max anchors-min anchors-maxの順
+const STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_Y =
+  'rect-transform-anchors-offsets-y' // offset-min offset-max anchors-min anchors-maxの順
 const STYLE_RECT_TRANSFORM_ANCHORS_X = 'rect-transform-anchors-x' // anchors-min anchors-maxの順
 const STYLE_RECT_TRANSFORM_ANCHORS_Y = 'rect-transform-anchors-y' // anchors-min anchors-maxの順
 const STYLE_REPEATGRID_ATTACH_TEXT_DATA_SERIES =
@@ -2656,7 +2658,20 @@ function addRectTransformAnchorOffset(json, style) {
   if (!('offset_min' in rectTransformJson)) rectTransformJson['offset_min'] = {}
   if (!('offset_max' in rectTransformJson)) rectTransformJson['offset_max'] = {}
   // Styleで指定があった場合、上書きする
-  const anchorOffsetX = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_X)
+  const anchorX = style.values(STYLE_RECT_TRANSFORM_ANCHORS_X)
+  if (anchorX) {
+    // console.log(`anchorsX:${anchorOffsetX}`)
+    rectTransformJson['anchor_min']['x'] = parseFloat(anchorX[0])
+    rectTransformJson['anchor_max']['x'] = parseFloat(anchorX[1])
+  }
+  const anchorY = style.values(STYLE_RECT_TRANSFORM_ANCHORS_Y)
+  if (anchorY) {
+    // console.log(`anchorsY:${anchorOffsetY}`)
+    rectTransformJson['anchor_min']['y'] = parseFloat(anchorY[0])
+    rectTransformJson['anchor_max']['y'] = parseFloat(anchorY[1])
+  }
+
+  const anchorOffsetX = style.values(STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_X)
   if (anchorOffsetX) {
     // console.log(`anchorsX:${anchorOffsetX}`)
     rectTransformJson['anchor_min']['x'] = parseFloat(anchorOffsetX[0])
@@ -2664,7 +2679,7 @@ function addRectTransformAnchorOffset(json, style) {
     rectTransformJson['offset_min']['x'] = parseFloat(anchorOffsetX[2])
     rectTransformJson['offset_max']['x'] = parseFloat(anchorOffsetX[3])
   }
-  const anchorOffsetY = style.values(STYLE_RECT_TRANSFORM_ANCHOR_OFFSET_Y)
+  const anchorOffsetY = style.values(STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_Y)
   if (anchorOffsetY) {
     // console.log(`anchorsY:${anchorOffsetY}`)
     rectTransformJson['anchor_min']['y'] = parseFloat(anchorOffsetY[0])
@@ -3815,7 +3830,6 @@ function addWrap(json, node, style) {
     }
     return
   }
-
 
   // 縦に整列するアイテム用
   // - 縦のサイズがアイテムによってきまっている
@@ -5440,7 +5454,7 @@ class CssSelector {
     if (ruleRule && ruleRule.nestingOperator === null) {
       if (verboseLog) console.log('nullオペレータ確認をする')
       while (checkNode) {
-        let result = CssSelector.check(checkNode, rule, verboseLog)
+        let result = this.check(checkNode, rule, verboseLog)
         if (result) {
           if (verboseLog) console.log('nullオペレータで整合したものをみつけた')
           return checkNode
@@ -5451,7 +5465,7 @@ class CssSelector {
         console.log('nullオペレータで整合するものはみつからなかった')
       return null
     }
-    let result = CssSelector.check(checkNode, rule, verboseLog)
+    let result = this.check(checkNode, rule, verboseLog)
     if (!result) {
       if (verboseLog) console.log('このruleは適合しなかった')
       return null
@@ -5466,10 +5480,8 @@ class CssSelector {
           `nestingオペレータ${rule.nestingOperator} 確認のため、checkNodeを親にすすめる`,
         )
       checkNode = checkNode.parent
-      if( verboseLog && !checkNode) {
-        console.log(
-          `checkNodeを親にすすめたがNullだった->失敗になる可能性`,
-        )
+      if (verboseLog && !checkNode) {
+        console.log(`checkNodeを親にすすめたがNullだった->失敗になる可能性`)
       }
     }
     return checkNode
@@ -5480,7 +5492,7 @@ class CssSelector {
    * @param {{type:string, classNames:string[], id:string, tagName:string, attrs:*[], pseudos:*[], nestingOperator:string, rule:*, selectors:*[] }|null} rule
    * @return {boolean}
    */
-  static check(node, rule, verboseLog = false) {
+  check(node, rule, verboseLog = false) {
     if (!node) return false
     const nodeName = node.name.trim()
     const parsedNodeName = cssParseNodeName(nodeName)
@@ -5540,7 +5552,7 @@ class CssSelector {
     return true
   }
 
-  static checkAttr(node, parsedNodeName, attr) {
+  checkAttr(node, parsedNodeName, attr) {
     switch (attr.name) {
       case 'class': {
         if (
@@ -5590,7 +5602,7 @@ class CssSelector {
     return true
   }
 
-  static checkPseudo(node, pseudo) {
+  checkPseudo(node, pseudo) {
     let result = false
     switch (pseudo.name) {
       case 'nth-child':
@@ -5610,8 +5622,19 @@ class CssSelector {
       case 'same-parent-bounds':
         result = sameParentBounds(node)
         break
-      case 'root':
-        result = !node.parent // 親があるのならマッチしない
+      case 'dynamic-layout':
+        // console.log('------------ dynamic-layout')
+        console.log('dynamic-layout', node.dynamicLayout)
+        result = node.dynamicLayout
+        break
+      case 'top-node':
+        // Artboardであったり、Artboardに入っていないNodeにマッチする
+        result = node.parent == scenegraph.root // 親がscenegraph.rootならTopNode
+        break
+      case 'not':
+        // console.log('----------------- not')
+        result = !this.matchRule(node, pseudo.value, false)
+        console.log(result)
         break
       default:
         console.log('**error** 未対応の疑似要素です', pseudo.name)
@@ -5663,9 +5686,7 @@ const CssSelectorParser = require('./node_modules/css-selector-parser/lib/css-se
 let cssSelectorParser = new CssSelectorParser()
 //cssSelectorParser.registerSelectorPseudos('has')
 cssSelectorParser.registerNumericPseudos('nth-child')
-cssSelectorParser.registerSelectorPseudos('first-child')
-cssSelectorParser.registerSelectorPseudos('last-child')
-cssSelectorParser.registerSelectorPseudos('same-parent-bounds')
+cssSelectorParser.registerSelectorPseudos('not')
 cssSelectorParser.registerNestingOperators('>', '+', '~', ' ')
 cssSelectorParser.registerAttrEqualityMods('^', '$', '*', '~')
 cssSelectorParser.enableSubstitutes()
