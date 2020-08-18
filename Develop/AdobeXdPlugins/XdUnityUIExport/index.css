@@ -19,9 +19,16 @@
 /*
  ArtboardはUnityで配置時親ににぴったりはまるようにする
  */
-[typeof='Artboard'] {
-  rect-transform-anchor-offset-x: 0 1 0 0;
-  rect-transform-anchor-offset-y: 0 1 0 0;
+:top-node:dynamic-layout {
+  match-log: 'artboard responsive resize';
+  rect-transform-anchors-offsets-x: 0 1 0 0;
+  rect-transform-anchors-offsets-y: 0 1 0 0;
+}
+
+:top-node:not(:dynamic-layout) {
+  match-log: 'artboard not responsive resize';
+  rect-transform-anchors-x: 0.5 0.5;
+  rect-transform-anchors-y: 0.5 0.5;
 }
 
 /*
@@ -87,7 +94,6 @@ padding background
   layout-element-preferred-height: draw-bounds-height;
 }
 
-
 /*
 .vertical-stack直下の一番下のレイヤーは画像化、コンポーネント化する
 最下のレイヤー
@@ -111,7 +117,6 @@ first-childになる
   layout-element: true; /* 必ず layout-elementを作成する */
 }
 
-
 /*
  縦にならべる
  APIでvertical-stack状態であるかどうかが取得できると
@@ -132,7 +137,6 @@ first-childになる
   layout-element: if-not-has-layout-properties;
   layout-element-preferred-width: draw-bounds-width;
 }
-
 
 /*
 .horizontal-stack直下の一番下のレイヤーは画像化、コンポーネント化する
@@ -157,7 +161,6 @@ first-childになる
   layout-element: true; /* 必ず layout-elementを作成する */
 }
 
-
 /*
  グリッド状にならべる 横に伸びる
  */
@@ -179,7 +182,6 @@ first-childになる
   layout-group-start-axis: x;
   content-size-fitter-vertical-fit: preferred-size;
 }
-
 
 /*
  リピードグリッドはマスクを持つ
@@ -252,7 +254,7 @@ first-childになる
 
 .viewport-layout-x > .content {
   conent-size-fitter: x;
-  rect-transform-anchor-offset-y: 0 1 0 0;
+  rect-transform-anchors-offsets-y: 0 1 0 0;
 }
 
 .viewport-layout-y > .content {
@@ -263,15 +265,15 @@ first-childになる
    offset.min.x: 0
    offset.max.x: 0
    */
-  rect-transform-anchor-offset-x: 0 1 0 0;
+  rect-transform-anchors-offsets-x: 0 1 0 0;
 }
 
 .viewport-grid-x > .content {
-  rect-transform-anchor-offset-x: 0 1 0 0;
+  rect-transform-anchors-offsets-x: 0 1 0 0;
 }
 
 .viewport-grid-y > .content {
-  rect-transform-anchor-offset-y: 0 1 0 0;
+  rect-transform-anchors-offsets-y: 0 1 0 0;
 }
 
 .scrollbar-x {
@@ -445,5 +447,3 @@ first-childになる
   image-fit-parent-bounds: true;
   image-slice: false;
 }
-
-
