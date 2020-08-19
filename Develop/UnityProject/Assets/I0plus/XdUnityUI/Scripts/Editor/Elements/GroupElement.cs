@@ -117,22 +117,7 @@ namespace I0plus.XdUnityUI.Editor
             {
                 GameObject go = null;
                 element.Render(ref go, renderContext, parent);
-                if (go.transform.parent != parent.transform) Debug.Log("No parent set" + go.name);
-
-                //if (element.IsPrefab)
-                //{
-                //    //TODO: Check if prefab names are truly unique or if the components in Adobe XD can have the same name
-                //    if(!renderContext.Prefabs.ContainsKey(go.name))
-                //        renderContext.Prefabs.Add(go.name,go);
-                //    else
-                //    {
-                //        var oldGo = go;
-                //        go = (GameObject)PrefabUtility.InstantiatePrefab(renderContext.Prefabs[oldGo.name],oldGo.transform.parent);
-
-                //        GameObject.DestroyImmediate(oldGo);
-                //    }
-                //}
-
+                // if (go.transform.parent != parent.transform) Debug.Log("生成されたObjectの親は設定した親になっていない:" + go.name);
                 list.Add(new Tuple<GameObject, Element>(go, element));
                 if (callback != null) callback.Invoke(go, element);
             }
