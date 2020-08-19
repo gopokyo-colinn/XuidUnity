@@ -230,7 +230,12 @@ namespace I0plus.XdUnityUI.Editor
             // var fileInfo = new FileInfo(path); なぜフルパスにしたか忘れた
             spriteAssetPath = TextureUtil.GetSameImagePath(spriteAssetPath);
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spriteAssetPath);
-            if (sprite == null) Debug.LogError($"[XdUnityUI] sprite \"{spriteAssetPath}\" is not found.");
+            if (sprite == null)
+            {
+                var folderPath = Path.GetDirectoryName(spriteAssetPath);
+                var obj = AssetDatabase.LoadAssetAtPath<Object>(folderPath);
+                Debug.LogError($"[XdUnityUI] sprite \"{spriteAssetPath}\" is not found.",obj);
+            }
 
             return sprite;
         }

@@ -162,8 +162,14 @@ namespace I0plus.XdUnityUI.Editor
             return texture;
         }
 
+        /// <summary>
+        /// ハッシュをつかって
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string GetSameImagePath(string path)
         {
+            Load(Path.GetDirectoryName(path));
             path = path.Replace("\\", "/");
             if (imagePathMap.ContainsKey(path)) return imagePathMap[path];
 

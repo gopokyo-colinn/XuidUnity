@@ -40,10 +40,6 @@ namespace I0plus.XdUnityUI.Editor
                 if (sourceImageName != null)
                 {
                      var sprite= renderContext.GetSprite(sourceImageName);
-                     if (sprite == null)
-                     {
-                         Debug.LogError($"[XdUnityUI] sprite not found. {sourceImageName}");
-                     }
                      image.sprite = sprite;
                 }
 

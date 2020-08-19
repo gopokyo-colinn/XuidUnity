@@ -40,10 +40,18 @@ namespace I0plus.XdUnityUI.Editor
                     prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 }
                 // 仮のプレハブをセットする
-                targetObject = prefabObject;
+                targetObject = PrefabUtility.InstantiatePrefab(prefabObject) as GameObject;
             }
 
             var rect = ElementUtil.GetOrAddComponent<RectTransform>(targetObject);
+            if (PrefabUtility.IsPartOfPrefabInstance(targetObject))
+            {
+                Debug.Log($"part of prefab:{targetObject.name}");
+            }
+            if (PrefabUtility.IsPartOfPrefabInstance(parentObject))
+            {
+                Debug.Log($"parent part of prefab:{parentObject.name}");
+            }
             rect.SetParent(parentObject.transform);
 
             if (renderContext.OptionAddXdGuidComponent)
