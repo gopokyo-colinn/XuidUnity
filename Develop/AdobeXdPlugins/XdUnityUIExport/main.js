@@ -3926,7 +3926,6 @@ async function createGroup(json, node, root, funcForEachChild) {
   addGuid(json, node)
   addActive(json, node, style)
   addRectTransformDraw(json, node, style)
-  //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
   addParsedNames(json, node)
   //
