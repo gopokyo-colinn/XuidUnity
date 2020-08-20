@@ -20,13 +20,11 @@
  ArtboardはUnityで配置時親ににぴったりはまるようにする
  */
 :top-node:dynamic-layout {
-  match-log: 'artboard responsive resize';
   rect-transform-anchors-offsets-x: 0 1 0 0;
   rect-transform-anchors-offsets-y: 0 1 0 0;
 }
 
 :top-node:not(:dynamic-layout) {
-  match-log: 'artboard not responsive resize';
   rect-transform-anchors-x: 0.5 0.5;
   rect-transform-anchors-y: 0.5 0.5;
 }

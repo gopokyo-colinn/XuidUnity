@@ -1677,7 +1677,7 @@ function calcRect(
   if (styleFix != null) {
     // オプションが設定されたら、全ての設定が決まる(NULLではなくなる)
     const fix = getStyleFix(styleFix)
-    console.log('fix styleが設定されました-------------', fix)
+    // console.log('fix styleが設定されました-------------', fix)
     styleFixWidth = fix.width
     styleFixHeight = fix.height
     styleFixTop = fix.top
@@ -4815,7 +4815,7 @@ async function exportXdUnityUI(roots, outputFolder) {
 
     // createRenditionsの前にすべて可視にする
     // 正常なBoundsを得るために、makeBoundsの前にやる
-    console.log('- change visible')
+    // console.log('- change visible')
     for (let root of roots) {
       traverseNode(root, node => {
         const { node_name: nodeName, style } = getNodeNameAndStyle(node)
@@ -5661,8 +5661,7 @@ class CssSelector {
         result = sameParentBounds(node)
         break
       case 'dynamic-layout':
-        // console.log('------------ dynamic-layout')
-        console.log('dynamic-layout', node.dynamicLayout)
+        // console.log('dynamic-layout', node.dynamicLayout)
         result = node.dynamicLayout
         break
       case 'top-node':
@@ -5672,7 +5671,6 @@ class CssSelector {
       case 'not':
         // console.log('----------------- not')
         result = !this.matchRule(node, pseudo.value, false)
-        console.log(result)
         break
       default:
         console.log('**error** 未対応の疑似要素です', pseudo.name)
