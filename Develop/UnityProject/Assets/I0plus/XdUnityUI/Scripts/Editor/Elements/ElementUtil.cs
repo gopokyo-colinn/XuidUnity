@@ -684,6 +684,9 @@ namespace I0plus.XdUnityUI.Editor
             if ((b = scrollRect.GetBool("horizontal")) != null) scrollRectComponent.horizontal = b.Value;
 
             if ((b = scrollRect.GetBool("vertical")) != null) scrollRectComponent.vertical = b.Value;
+            
+            //この時点ではScrollbarを探すことができないため、Pass2で探している
+            //TODO:さがしているところではクラス名をつかってさがしていない
         }
 
         public static void SetupRectTransform(GameObject root, Dictionary<string, object> rectTransformJson)

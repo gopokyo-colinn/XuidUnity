@@ -155,11 +155,12 @@ const STYLE_SCROLLBAR = 'scrollbar'
 const STYLE_SCROLLBAR_DIRECTION = 'scrollbar-direction'
 const STYLE_SCROLLBAR_HANDLE_TARGET = 'scrollbar-handle-target'
 const STYLE_SCROLL_RECT = 'scroll-rect'
-const STYLE_SCROLL_RECT_CONTENT_NAME = 'scroll-rect-content-target'
-const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_TARGET =
-  'scroll-rect-horizontal-scrollbar-target'
-const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_TARGET =
-  'scroll-rect-vertical-scrollbar-target'
+const STYLE_SCROLL_RECT_CONTENT = 'scroll-rect-content'
+const STYLE_SCROLL_RECT_HORIZONTAL = 'scroll-rect-horizontal'
+const STYLE_SCROLL_RECT_VERTICAL = 'scroll-rect-vertical'
+const STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR =
+  'scroll-rect-horizontal-scrollbar'
+const STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR = 'scroll-rect-vertical-scrollbar'
 const STYLE_SLIDER = 'slider'
 const STYLE_SLIDER_DIRECTION = 'slider-direction'
 const STYLE_SLIDER_FILL_RECT_TARGET = 'slider-fill-rect-target'
@@ -1666,7 +1667,7 @@ function calcRect(
   if (styleFix != null) {
     // オプションが設定されたら、全ての設定が決まる(NULLではなくなる)
     const fix = getStyleFix(styleFix)
-    // console.log(node.name, 'のfixが設定されました', fix)
+    console.log('fix styleが設定されました-------------', fix)
     styleFixWidth = fix.width
     styleFixHeight = fix.height
     styleFixTop = fix.top
@@ -1684,40 +1685,40 @@ function calcRect(
   //console.log(horizontalConstraints)
   //console.log(verticalConstraints)
 
-  if (styleFixLeft == null && horizontalConstraints != null) {
+  if (styleFixLeft === null && horizontalConstraints != null) {
     //styleFixLeft = approxEqual(beforeLeft, afterLeft)
     styleFixLeft =
       horizontalConstraints.position === SceneNode.FIXED_LEFT ||
       horizontalConstraints.position === SceneNode.FIXED_BOTH
   }
 
-  if (styleFixRight == null && horizontalConstraints != null) {
+  if (styleFixRight === null && horizontalConstraints != null) {
     //styleFixRight = approxEqual(beforeRight, afterRight)
     styleFixRight =
       horizontalConstraints.position === SceneNode.FIXED_RIGHT ||
       horizontalConstraints.position === SceneNode.FIXED_BOTH
   }
 
-  if (styleFixTop == null && verticalConstraints != null) {
+  if (styleFixTop === null && verticalConstraints != null) {
     // styleFixTop = approxEqual(beforeTop, afterTop)
     styleFixTop =
       verticalConstraints.position === SceneNode.FIXED_TOP ||
       verticalConstraints.position === SceneNode.FIXED_BOTH
   }
 
-  if (styleFixBottom == null && verticalConstraints != null) {
+  if (styleFixBottom === null && verticalConstraints != null) {
     // styleFixBottom = approxEqual(beforeBottom, afterBottom)
     styleFixBottom =
       verticalConstraints.position === SceneNode.FIXED_BOTTOM ||
       verticalConstraints.position === SceneNode.FIXED_BOTH
   }
 
-  if (styleFixWidth == null && horizontalConstraints != null) {
+  if (styleFixWidth === null && horizontalConstraints != null) {
     //styleFixWidth = approxEqual(beforeBounds.width, afterBounds.width)
     styleFixWidth = horizontalConstraints.size === SceneNode.SIZE_FIXED
   }
 
-  if (styleFixHeight == null && verticalConstraints != null) {
+  if (styleFixHeight === null && verticalConstraints != null) {
     // styleFixHeight = approxEqual(beforeBounds.height, afterBounds.height)
     styleFixHeight = verticalConstraints.size === SceneNode.SIZE_FIXED
   }
@@ -1757,9 +1758,9 @@ function calcRect(
   // number: 親に対しての割合 anchorに割合をいれ､offsetを0
   // true: 固定されている anchorを0か1にし､offsetをピクセルで指定
 
-  // console.log("left:" + fixOptionLeft, "right:" + fixOptionRight)
-  // console.log("top:" + fixOptionTop, "bottom:" + fixOptionBottom)
-  // console.log("width:" + fixOptionWidth, "height:" + fixOptionHeight)
+  console.log('left:' + styleFixLeft, 'right:' + styleFixRight)
+  console.log('top:' + styleFixTop, 'bottom:' + styleFixBottom)
+  console.log('width:' + styleFixWidth, 'height:' + styleFixHeight)
 
   let pivot_x = 0.5
   let pivot_y = 0.5
@@ -2789,8 +2790,7 @@ function addParsedNames(json, node) {
  */
 function checkPreserveAspect(json, style) {
   const stylePreserveAspect = style.first(STYLE_PRESERVE_ASPECT)
-  const styleLockAspect = style.first(STYLE_LOCK_ASPECT)
-  return stylePreserveAspect || styleLockAspect
+  return stylePreserveAspect
 }
 
 function getImageSliceOptionJson(styleImageSliceValues, node) {
@@ -2930,7 +2930,7 @@ async function addImage(
   })
   let imageJson = json['image']
 
-  if (checkPreserveAspect(imageJson, style)) {
+  if (style.firstAsBool(STYLE_PRESERVE_ASPECT)) {
     Object.assign(imageJson, {
       preserve_aspect: true,
     })
@@ -3063,8 +3063,15 @@ function addContentSizeFitter(json, style) {
 function addScrollRect(json, node, style) {
   const styleScrollRect = style.first(STYLE_SCROLL_RECT)
   if (!styleScrollRect) return
+
+  Object.assign(json, {
+    scroll_rect: {},
+  })
+  const scrollRectJson = json['scroll_rect']
+
   let horizontal = null
   let vertical = null
+  /*
   switch (node.scrollingType) {
     case ScrollableGroup.VERTICAL:
       horizontal = null
@@ -3081,38 +3088,37 @@ function addScrollRect(json, node, style) {
     default:
       break
   }
-  if (style.hasValue(STYLE_SCROLL_RECT, 'x', STR_HORIZONTAL)) horizontal = true
-  if (style.hasValue(STYLE_SCROLL_RECT, 'y', STR_VERTICAL)) vertical = true
-  Object.assign(json, {
-    scroll_rect: {
-      horizontal,
-      vertical,
-    },
-  })
-
-  const scrollRectJson = json['scroll_rect']
-  const content_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_CONTENT_NAME),
-  )
+   */
+  if (style.firstAsBool(STYLE_SCROLL_RECT_HORIZONTAL)) {
+    Object.assign(scrollRectJson, {
+      horizontal: true,
+    })
+  }
+  if (style.firstAsBool(STYLE_SCROLL_RECT_VERTICAL)) {
+    Object.assign(scrollRectJson, {
+      vertical: true,
+    })
+  }
+  const content_class = removeStartDot(style.first(STYLE_SCROLL_RECT_CONTENT))
   if (content_class) {
     Object.assign(scrollRectJson, {
       content_class,
     })
   }
-  const vertical_scrollbar_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR_TARGET),
+  const vertical_scrollbar = style.first(
+    STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR,
   )
-  if (vertical_scrollbar_class) {
+  if (vertical_scrollbar) {
     Object.assign(scrollRectJson, {
-      vertical_scrollbar_class,
+      vertical_scrollbar,
     })
   }
-  const horizontal_scrollbar_class = removeStartDot(
-    style.first(STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR_TARGET),
+  const horizontal_scrollbar = style.first(
+    STYLE_SCROLL_RECT_HORIZONTAL_SCROLLBAR,
   )
-  if (horizontal_scrollbar_class) {
+  if (horizontal_scrollbar) {
     Object.assign(scrollRectJson, {
-      horizontal_scrollbar_class,
+      horizontal_scrollbar,
     })
   }
 }
@@ -5256,8 +5262,8 @@ async function pluginExportXdUnityUI(selection, root) {
      * @type {SceneNode[]}
      */
     await exportXdUnityUI(exportRoots, outputFolder)
-    const log = [...new Set(globalErrorLog)].slice(0,10).join('<br><br>')
-    await alert(log? log : 'Done.')
+    const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
+    await alert(log ? log : 'Done.')
   } catch (e) {
     console.log(e)
     console.log(e.stack)
