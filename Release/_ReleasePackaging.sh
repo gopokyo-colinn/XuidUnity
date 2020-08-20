@@ -11,7 +11,7 @@ echo "# Packaging"
 # リポジトリ内から AdobeXDプラグインファイルを作成する
 echo "## make AdobeXD plugin .xdx file."
 echo "- XdUnityUIExport.xdx"
-(cd ../Develop/AdobeXdPlugins && zip -q -r ../../Release/XdUnityUIExport.xdx ./XdUnityUIExport -x \*/types/*)
+(cd ../Develop/AdobeXdPlugins && zip -q -r ../../Release/Exporter.xdx ./XdUnityUIExport -x \*/types/*)
 echo "- 9SliceHelper.xdx"
 (cd ../Develop/AdobeXdPlugins && zip -q -r ../../Release/9SliceHelper.xdx ./9SliceHelper -x \*/types/*)
 echo "- RoundRects.xdx"
@@ -19,4 +19,6 @@ echo "- RoundRects.xdx"
 echo "## Sample"
 echo "- Samples.zip"
 (cd .. && zip -q -r ./Release/Samples.zip ./Samples)
+echo "- unitypackage"
+./create_unitypackage.py -r -o Importer.unitypackage ../Develop/UnityProject/Assets/I0plus
 echo "done.\n"
