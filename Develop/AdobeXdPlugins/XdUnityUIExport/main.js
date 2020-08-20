@@ -116,7 +116,7 @@ const STYLE_CONTENT_SIZE_FITTER_HORIZONTAL_FIT =
   'content-size-fitter-horizontal-fit'
 const STYLE_CONTENT_SIZE_FITTER_VERTICAL_FIT =
   'content-size-fitter-vertical-fit'
-const STYLE_MARGIN_FIX = 'fix'
+const STYLE_FIX = 'fix'
 const STYLE_IMAGE = 'image'
 const STYLE_IMAGE_SCALE = 'image-scale'
 const STYLE_IMAGE_SLICE = 'image-slice' // 9スライス ドット数を指定する
@@ -565,13 +565,24 @@ function cssParseNodeName(nodeName) {
     // console.log(`parseNodeName: folder:${folder} name:${name} css_decl:${r.groups.css_declarations}`)
 
     try {
-      // name部分とcss-declarationsを結合、ascii文字以外(漢字など) _ に変換する
-      const asciiName = name.replace(/[^\x01-\x7E]/g, function(s) {
-        return '_'
-      })
+      // 名前をできるだけパースできる文字列に変換する
+      // そうしないと名前の後ろにつけたローカルCSSの変換ができない
+      // - ascii文字以外(2バイト文字、漢字など) _ に変換
+      // - スペースはつめる '.class1 .class2' を '.class1.class2' として、クラスのパースができるようにする
+      const asciiName = name
+        .replace(/[^\x01-\x7E]/g, function(s) {
+          return '_'
+        })
+        .replace(/[ ]/g, '')
       // console.log(`parseCss(${asciiNodeName})`)
-      // 名前だけのパース
-      let rules = parseCss(asciiName + css_declarations, false) // 名前はエラーチェックしない
+
+      // name部分とcss-declarationsを結合パースする
+      const cssString = (asciiName + css_declarations).trim()
+      let rules = parseCss(cssString, false)
+      if (cssString.length !== 0 && (!rules || rules.length === 0)) {
+        // parse 失敗
+        globalErrorLog.push(`waring: css parse error.(${cssString})`)
+      }
       if (!rules || rules.length === 0 || !rules[0].selector) {
         // パースできなかった場合はそのまま返す
         result = { folder, name, name_without_class, tagName: nodeName }
@@ -1652,7 +1663,6 @@ function calcRect(
   verticalConstraints,
   style,
 ) {
-  // console.log(`----------------------${node.name}----------------------`)
   // null：わからない
   // true:フィックスで確定
   // false:フィックスされていないで確定 いずれ数字に変わる
@@ -1663,7 +1673,7 @@ function calcRect(
   let styleFixLeft = null
   let styleFixRight = null
 
-  const styleFix = style.values(STYLE_MARGIN_FIX)
+  const styleFix = style.values(STYLE_FIX)
   if (styleFix != null) {
     // オプションが設定されたら、全ての設定が決まる(NULLではなくなる)
     const fix = getStyleFix(styleFix)
@@ -1758,9 +1768,9 @@ function calcRect(
   // number: 親に対しての割合 anchorに割合をいれ､offsetを0
   // true: 固定されている anchorを0か1にし､offsetをピクセルで指定
 
-  console.log('left:' + styleFixLeft, 'right:' + styleFixRight)
-  console.log('top:' + styleFixTop, 'bottom:' + styleFixBottom)
-  console.log('width:' + styleFixWidth, 'height:' + styleFixHeight)
+  // console.log('left:' + styleFixLeft, 'right:' + styleFixRight)
+  // console.log('top:' + styleFixTop, 'bottom:' + styleFixBottom)
+  // console.log('width:' + styleFixWidth, 'height:' + styleFixHeight)
 
   let pivot_x = 0.5
   let pivot_y = 0.5
@@ -1932,7 +1942,7 @@ function calcRect(
     }
   }
 
-  if (style.hasValue(STYLE_MARGIN_FIX, 'c', 'center')) {
+  if (style.hasValue(STYLE_FIX, 'c', 'center')) {
     const beforeCenter = beforeBounds.x + beforeBounds.width / 2
     const parentBeforeCenter =
       parentBeforeBounds.x + parentBeforeBounds.width / 2
@@ -1943,7 +1953,7 @@ function calcRect(
     offsetMax.x = +beforeBounds.width / 2
   }
 
-  if (style.hasValue(STYLE_MARGIN_FIX, 'm', 'middle')) {
+  if (style.hasValue(STYLE_FIX, 'm', 'middle')) {
     const beforeMiddle = beforeBounds.y + beforeBounds.height / 2
     const parentBeforeMiddle =
       parentBeforeBounds.y + parentBeforeBounds.height / 2
@@ -2006,6 +2016,7 @@ function calcRect(
  * @return {null}
  */
 function calcRectTransform(node, calcDrawBounds = true) {
+  // console.log(`- calcRectTransform ${node.name}`)
   if (!node || !node.parent) return null
 
   const bounds = globalResponsiveBounds[node.guid]
@@ -2048,6 +2059,7 @@ function calcRectTransform(node, calcDrawBounds = true) {
   // fix を取得するため
   // TODO: anchor スタイルのパラメータはとるべきでは
   const style = getNodeNameAndStyle(node).style
+  // console.log(`  - style:`, style.style)
 
   const horizontalConstraints = node.horizontalConstraints
   const verticalConstraints = node.verticalConstraints
@@ -3105,9 +3117,7 @@ function addScrollRect(json, node, style) {
       content_class,
     })
   }
-  const vertical_scrollbar = style.first(
-    STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR,
-  )
+  const vertical_scrollbar = style.first(STYLE_SCROLL_RECT_VERTICAL_SCROLLBAR)
   if (vertical_scrollbar) {
     Object.assign(scrollRectJson, {
       vertical_scrollbar,
@@ -3481,7 +3491,11 @@ function addContent(style, json, node) {
     parent: node,
   }
   let contentJson = json[STR_CONTENT]
+
   const contentStyle = getStyleFromNode(contentNode)
+
+  const contentFix = style.style['content-fix']
+  contentStyle.style['fix'] = contentFix
 
   // contentのBounds　RepeatGridか、Group・ScrollableGroupかで、作成方法がかわる
   if (
@@ -3530,7 +3544,6 @@ function addContent(style, json, node) {
   const contentY = contentDrawBounds.y
   const contentWidth = contentDrawBounds.width
   const contentHeight = contentDrawBounds.height
-  const contentStyleFix = getStyleFix(contentStyle.values(STYLE_MARGIN_FIX))
 
   const rect_transform = calcRect(
     nodeBounds,
@@ -3584,7 +3597,7 @@ async function createViewport(json, node, root, funcForEachChild) {
   // ScrollRect
   addScrollRect(json, node, style)
 
-  await addContent(style, json, node, funcForEachChild, root)
+  addContent(style, json, node, funcForEachChild, root)
 
   // 基本
   addGuid(json, node)
@@ -5581,14 +5594,14 @@ class CssSelector {
       }
       case 'id': {
         if (
-          !CssSelector.nameCheck(attr.operator, parsedNodeName.id, attr.value)
+          !CssSelector.checkString(attr.operator, parsedNodeName.id, attr.value)
         )
           return false
         break
       }
       case 'tag-name': {
         if (
-          !CssSelector.nameCheck(
+          !CssSelector.checkString(
             attr.operator,
             parsedNodeName.tagName,
             attr.value,
@@ -5600,7 +5613,7 @@ class CssSelector {
       case 'type-of':
       case 'typeof': {
         if (
-          !CssSelector.nameCheck(
+          !CssSelector.checkString(
             attr.operator,
             node.constructor.name,
             attr.value,
@@ -5609,6 +5622,17 @@ class CssSelector {
           return false
         break
       }
+      case 'scrolling-type':
+      case 'scrollingtype':
+        if (
+          !CssSelector.checkString(
+            attr.operator,
+            node.scrollingType,
+            attr.value,
+          )
+        )
+          return false
+        break
       default:
         console.log('**error** 未対応の要素名です:', attr.name)
         return false
@@ -5666,7 +5690,7 @@ class CssSelector {
   static namesCheck(op, names, value) {
     if (!op || names == null) return false
     for (let name of names) {
-      if (this.nameCheck(op, name, value)) return true
+      if (this.checkString(op, name, value)) return true
     }
     return false
   }
@@ -5676,7 +5700,7 @@ class CssSelector {
    * @param {string} name
    * @param value
    */
-  static nameCheck(op, name, value) {
+  static checkString(op, name, value) {
     if (!op || name == null || value == null) return false
     switch (op) {
       case '=':
