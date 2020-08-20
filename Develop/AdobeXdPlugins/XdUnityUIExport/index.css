@@ -20,13 +20,11 @@
  ArtboardはUnityで配置時親ににぴったりはまるようにする
  */
 :top-node:dynamic-layout {
-  match-log: 'artboard responsive resize';
   rect-transform-anchors-offsets-x: 0 1 0 0;
   rect-transform-anchors-offsets-y: 0 1 0 0;
 }
 
 :top-node:not(:dynamic-layout) {
-  match-log: 'artboard not responsive resize';
   rect-transform-anchors-x: 0.5 0.5;
   rect-transform-anchors-y: 0.5 0.5;
 }
@@ -201,55 +199,79 @@ first-childになる
   unity-name: '${guid}';
 }
 
+
+/*
+ScrollableGroup
+ */
 [typeof='ScrollableGroup'] {
   create-content: true;
   create-content-name: '.content';
   rect-mask-twod: true;
   scroll-rect: true;
-  scroll-rect-content-target: '.content';
+  scroll-rect-content: '.content';
 }
+
+[scrollingtype='vertical'] {
+  scroll-rect-vertical: true;
+}
+
+[scrollingtype='horizontal'] {
+  scroll-rect-horizontal: true;
+}
+
+[scrollingtype='panning'] {
+  scroll-rect-vertical: true;
+  scroll-rect-horizontal: true;
+}
+
 
 .viewport-xy {
   create-content: true;
   create-content-name: '.content';
   create-content-bounds: viewport-content-global-draw-bounds;
   rect-mask-twod: true;
-  scroll-rect: x y;
-  scroll-rect-content-target: '.content';
+  scroll-rect: true;
+  scroll-rect-horizontal: true;
+  scroll-rect-vertical: true;
+  scroll-rect-content: '.content';
 }
 
 .viewport-layout-x {
   create-content: true;
   create-content-name: '.content.layout-x';
   rect-mask-twod: true;
-  scroll-rect: x;
-  scroll-rect-content-target: '.content';
+  scroll-rect: true;
+  scroll-rect-horizontal: true;
+  scroll-rect-content: '.content';
 }
 
 .viewport-layout-y {
   create-content: true;
   create-content-name: '.content.layout-y';
   rect-mask-twod: true;
-  scroll-rect: y;
-  scroll-rect-content-target: '.content';
+  scroll-rect: true;
+  scroll-rect-vertical: true;
+  scroll-rect-content: '.content';
 }
 
 .viewport-grid-x {
   create-content: true;
   create-content-name: '.content.layout-grid-x';
   rect-mask-twod: true;
-  scroll-rect: x;
-  scroll-rect-content-target: '.content';
-  scroll-rect-horizontal-scrollbar-target: '.scrollbar-x';
+  scroll-rect: true;
+  scroll-rect-horizontal: true;
+  scroll-rect-content: '.content';
+  scroll-rect-horizontal-scrollbar: '.scrollbar-x';
 }
 
 .viewport-grid-y {
   create-content: true;
   create-content-name: '.content.layout-grid-y';
   rect-mask-twod: true;
-  scroll-rect: y;
-  scroll-rect-content-target: '.content';
-  scroll-rect-vertical-scrollbar-target: '.scrollbar-y';
+  scroll-rect: true;
+  scroll-rect-vertical: true;
+  scroll-rect-content: '.content';
+  scroll-rect-vertical-scrollbar: '.scrollbar-y';
 }
 
 .viewport-layout-x > .content {
@@ -446,4 +468,10 @@ first-childになる
 .sprite-swap > * {
   image-fit-parent-bounds: true;
   image-slice: false;
+}
+
+.lock-aspect {
+  image-slice: false;
+  image-type: simple;
+  preserve-aspect: true;
 }
