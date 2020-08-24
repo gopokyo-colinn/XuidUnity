@@ -133,6 +133,8 @@ const STYLE_LAYOUT_GROUP_CHILD_FORCE_EXPAND = 'layout-group-child-force-expand'
 const STYLE_LAYOUT_GROUP_CHILD_CONTROL_SIZE = 'layout-group-child-control-size'
 const STYLE_LAYOUT_GROUP_SPACING_X = 'layout-group-spacing-x'
 const STYLE_LAYOUT_GROUP_SPACING_Y = 'layout-group-spacing-y'
+const STYLE_LAYOUT_GROUP_CELL_SIZE_X = 'layout-group-cell-size-x'
+const STYLE_LAYOUT_GROUP_CELL_SIZE_Y = 'layout-group-cell-size-y'
 const STYLE_LAYOUT_GROUP_START_AXIS = 'layout-group-start-axis'
 const STYLE_LAYOUT_GROUP_USE_CHILD_SCALE = 'layout-group-use-child-scale'
 const STYLE_LAYOUT_GROUP_CHILDREN_ORDER = 'layout-group-children-order'
@@ -203,6 +205,7 @@ const STYLE_CREATE_CONTENT_NAME = 'create-content-name'
 const STYLE_V_ALIGN = 'v-align' //テキストの縦方向のアライメント XDの設定に追記される
 const STYLE_ADD_COMPONENT = 'add-component'
 const STYLE_MASK = 'mask'
+const STYLE_SHOW_MASK_GRAPHIC = 'mask-show-mask-graphic'
 const STYLE_UNITY_NAME = 'unity-name'
 const STYLE_CHECK_LOG = 'check-log'
 const STYLE_INSTANCE_IF_POSSIBLE = 'instance-if-possible'
@@ -414,7 +417,7 @@ class CssDeclarations {
    */
   firstAsNullOrBool(property) {
     const first = this.first(property)
-    if (first == null) return null
+    if (first === null) return null
     return asBool(first)
   }
 }
@@ -1528,13 +1531,14 @@ function calcGridLayout(json, viewportNode, maskNode, children) {
  * @param maskNode
  * @param children
  * @param {Style} style
- * @return {null}
+ * @return {spacing_x:string, spacing_y:string, child_alignment:string}
  */
 function getLayoutJson(json, viewportNode, maskNode, children, style) {
   if (style == null) return null
   let styleLayout = style.values(STYLE_LAYOUT_GROUP)
   if (!styleLayout) return null
   let layoutJson = null
+  // spacing_x spacing_y child_alignmentを取得する
   if (hasAnyValue(styleLayout, 'y', STR_VERTICAL)) {
     layoutJson = calcVLayout(json, viewportNode, maskNode, children)
   } else if (hasAnyValue(styleLayout, 'x', STR_HORIZONTAL)) {
@@ -2347,6 +2351,7 @@ class Style {
     let first = this.first(property)
     let result = null
     switch (first) {
+      // 削除予定
       case 'if-not-content-only-child-has-layout-properties': {
         // console.log('if-not-content-only-child-has-layout-properties')
         const contents = node.children.filter(child => {
@@ -2482,10 +2487,15 @@ function isLastChild(node) {
 }
 
 function isOnlyChild(node) {
+  //TODO:　コンポーネントになるかどうかチェックが必要？　コンポーネントになるやつを省くかどうか明記するべきか
   const parent = node.parent
   if (!parent) return false
-  const lastIndex = parent.children.length - 1
-  return parent.children.at(lastIndex) === node
+  return parent.children.length == 1
+}
+
+function hasOnlyChild(node) {
+  //TODO:　コンポーネントになるかどうかチェックが必要？　コンポーネントになるやつを省くかどうか明記するべきか
+  return node.children.length == 1
 }
 
 /**
@@ -2638,20 +2648,6 @@ function addCanvasGroup(json, node, style) {
   if (canvasGroup != null) {
     Object.assign(json, {
       canvas_group: { alpha: 0 },
-    })
-  }
-}
-
-/**
- * add Mask component info
- * @param json
- * @param style
- */
-function addMask(json, style) {
-  let mask = style ? style.first(STYLE_MASK) : null
-  if (!style || mask) {
-    Object.assign(json, {
-      mask: { show_mask_graphic: false },
     })
   }
 }
@@ -2969,12 +2965,9 @@ async function addImage(
   let renditionNode = node
   let renditionScale = globalScale
 
+  // console.log('9スライス以下の画像を出力するのに、ソース画像と同サイズが渡すことができるか調べる')
   if (!optionImageNoExport && node.isContainer && node.rotation === 0) {
     // 回転している場合はできない
-    // console.log('9スライス以下の画像を出力するのに、ソース画像と同サイズが渡すことができるか調べる')
-    /**
-     * @type {Group}
-     */
     node.children.some(child => {
       // source という名前で且つ、ImageFillを持ったノードを探す
       if (
@@ -3015,10 +3008,16 @@ async function addImage(
         },
       )
 
-      // mask イメージを出力する場合、maskをそのままRenditionできないため
-      // Maskグループそのものイメージを出力している
+      // mask イメージを出力する場合、maskをそのままRenditionできない
       if (renditionNode.parent && renditionNode.parent.mask === renditionNode) {
-        renditionNode = renditionNode.parent
+        // マスクグループをコピーし、ungroupし、マスクを選択してRendition
+        // マスクそのものの選択は EditContext外であった（例外発生）
+        selection.items = [renditionNode.parent]
+        commands.duplicate()
+        const duplicatedMaskNode = selection.items[0].mask
+        commands.ungroup()
+        selection.items[0] = '// duplicated mask node'
+        renditionNode = duplicatedMaskNode
       }
 
       renditions.push({
@@ -3133,6 +3132,10 @@ function addScrollRect(json, node, style) {
   }
 }
 
+/**
+ * @param json
+ * @param style
+ */
 function addRectMask2d(json, style) {
   const styleRectMask2D = style.first(STYLE_RECT_MASK_2D)
   if (!styleRectMask2D) return
@@ -3143,19 +3146,39 @@ function addRectMask2d(json, style) {
 
 /**
  *
- * @param {SceneNode|SceneNodeClass} viewportNode
- * @param {SceneNode|SceneNodeClass} maskNode
- * @param {SceneNodeList} children
+ * @param {SceneNode[]|SceneNodeClass[]} nodes
  * @return {number[]}
  */
-function getVerticalSpaces(viewportNode, maskNode, children) {
-  let nodes = children.filter(child => {
-    if (child === viewportNode && child === maskNode) return false
-    const { style } = getNodeNameAndStyle(child)
-    return !style.firstAsBool(STYLE_COMPONENT)
+function getHorizontalSpaces(nodes) {
+  if (nodes.length <= 1) return []
+
+  nodes.sort((a, b) => {
+    const boundsA = getBeforeGlobalDrawBounds(a)
+    const boundsB = getBeforeGlobalDrawBounds(b)
+    return boundsA.x - boundsB.x
   })
 
-  if (nodes.length == 0 || nodes.length == 1) return []
+  // Nodeを縦の順番に並べた状態で隙間を取得していく
+  const spaces = []
+  let bottomX = getBeforeGlobalDrawBounds(nodes[0]).ex
+  for (let i = 1; i < nodes.length; i++) {
+    const nextBounds = getBeforeGlobalDrawBounds(nodes[i])
+    const space = nextBounds.x - bottomX
+    spaces.push(space)
+    bottomX = nextBounds.ex
+  }
+
+  // console.log(spaces)
+  return spaces
+}
+
+/**
+ *
+ * @param {SceneNode[]|SceneNodeClass[]} nodes
+ * @return {number[]}
+ */
+function getVerticalSpaces(nodes) {
+  if (nodes.length <= 1) return []
 
   nodes.sort((a, b) => {
     const boundsA = getBeforeGlobalDrawBounds(a)
@@ -3177,6 +3200,30 @@ function getVerticalSpaces(viewportNode, maskNode, children) {
   return spaces
 }
 
+function getCellWidth(nodes) {
+  if (nodes.length <= 1) return []
+
+  const widths = []
+  for (let node of nodes) {
+    const bounds = getBeforeGlobalDrawBounds(node)
+    widths.push(bounds.width)
+  }
+
+  return widths
+}
+
+function getCellHeight(nodes) {
+  if (nodes.length <= 1) return []
+
+  const heights = []
+  for (let node of nodes) {
+    const bounds = getBeforeGlobalDrawBounds(node)
+    heights.push(bounds.height)
+  }
+
+  return heights
+}
+
 /**
  *
  * @param json
@@ -3185,22 +3232,75 @@ function getVerticalSpaces(viewportNode, maskNode, children) {
  * @param {SceneNodeList} children
  * @param {Style} style
  */
-function addLayout(json, viewportNode, maskNode, children, style) {
-  let layoutJson = getLayoutJson(json, viewportNode, maskNode, children, style)
-  if (!layoutJson) return
+function addLayoutGroup(json, viewportNode, maskNode, children, style) {
+  // let layoutJson = getLayoutJson(json, viewportNode, maskNode, children, style)
+  //if (!layoutJson) return
+  let styleLayout = style.values(STYLE_LAYOUT_GROUP)
+  if (styleLayout == null) return
 
-  const layoutSpacingX = style.first(STYLE_LAYOUT_GROUP_SPACING_X)
-  if (asBool(layoutSpacingX)) {
+  const layoutJson = {}
+
+  let method = null
+  if (hasAnyValue(styleLayout, 'x', STR_HORIZONTAL)) {
+    method = 'horizontal'
+  }
+  if (hasAnyValue(styleLayout, 'y', STR_VERTICAL)) {
+    method = 'vertical'
+  }
+  if (hasAnyValue(styleLayout, 'xy', STR_GRID)) {
+    method = 'grid'
+  }
+  if (method != null) {
     Object.assign(layoutJson, {
-      spacing_x: parseInt(layoutSpacingX), //TODO: pxやenを無視している
+      method,
+    })
+  }
+
+  // spacing を計算するノードだけ取り出す
+  let childNodes = children.filter(child => {
+    if (child === viewportNode && child === maskNode) return false
+    const { style } = getNodeNameAndStyle(child)
+    return !style.firstAsBool(STYLE_COMPONENT)
+  })
+
+  let rowNodes = childNodes
+  let columnNodes = childNodes
+  if (viewportNode.constructor.name === 'RepeatGrid') {
+    /**
+     * @type {RepeatGrid}
+     */
+    const repeatGrid = viewportNode
+    const numRows = repeatGrid.numRows
+    const numColumns = repeatGrid.numColumns
+    rowNodes = childNodes.slice(0, numRows)
+    columnNodes = []
+    for (let i = 0; i < numRows; i += numColumns) {
+      columnNodes.push(childNodes[i])
+    }
+  }
+
+  let layoutSpacingX = style.first(STYLE_LAYOUT_GROUP_SPACING_X)
+  if (layoutSpacingX !== null) {
+    if (layoutSpacingX === 'average') {
+      const spaces = getHorizontalSpaces(rowNodes)
+      if (spaces.length !== 0) {
+        layoutSpacingX =
+          spaces.reduce((previous, current) => previous + current) /
+          spaces.length
+      } else {
+        layoutSpacingX = 0
+      }
+    }
+    Object.assign(layoutJson, {
+      spacing_x: layoutSpacingX, //TODO: pxやenを無視している
     })
   }
 
   let layoutSpacingY = style.first(STYLE_LAYOUT_GROUP_SPACING_Y)
   if (layoutSpacingY !== null) {
     if (layoutSpacingY === 'average') {
-      const spaces = getVerticalSpaces(viewportNode, maskNode, children)
-      if (spaces.length != 0) {
+      const spaces = getVerticalSpaces(columnNodes)
+      if (spaces.length !== 0) {
         layoutSpacingY =
           spaces.reduce((previous, current) => previous + current) /
           spaces.length
@@ -3213,17 +3313,47 @@ function addLayout(json, viewportNode, maskNode, children, style) {
     })
   }
 
+  let cell_size_x = style.first(STYLE_LAYOUT_GROUP_CELL_SIZE_X)
+  if (cell_size_x !== null) {
+    if (cell_size_x === 'average') {
+      const widths = getCellWidth(childNodes)
+      if (widths.length !== 0) {
+        cell_size_x =
+          widths.reduce((previous, current) => previous + current) /
+          widths.length
+      } else {
+        cell_size_x = 100
+      }
+    }
+    Object.assign(layoutJson, {
+      cell_size_x: cell_size_x, //TODO: 単位がない状態で渡している　単位はPixel数
+    })
+  }
+
+  let cell_size_y = style.first(STYLE_LAYOUT_GROUP_CELL_SIZE_Y)
+  if (cell_size_y !== null) {
+    if (cell_size_y === 'average') {
+      const widths = getCellHeight(childNodes)
+      if (widths.length !== 0) {
+        cell_size_y =
+          widths.reduce((previous, current) => previous + current) /
+          widths.length
+      } else {
+        cell_size_y = 100
+      }
+    }
+    Object.assign(layoutJson, {
+      cell_size_y, //TODO: 単位がない状態で渡している　単位はPixel数
+    })
+  }
+
   // 子供が位置でソートされているそれの順序を反転させる
   if (style.first(STYLE_LAYOUT_GROUP_CHILDREN_ORDER) === 'reverse') {
     json['elements'].reverse()
   }
 
-  // console.log('addLayout:', layoutJson)
-
-  getVerticalSpaces(viewportNode, maskNode, children)
-
   Object.assign(json, {
-    layout: layoutJson,
+    layout_group: layoutJson,
   })
 }
 
@@ -3437,7 +3567,10 @@ function hasContentBounds(node) {
 }
 
 /**
- *
+ * Contentになるかどうかチェック
+ * - 親がコンテントを作成するか
+ * - マスクは外れる
+ * - コンポーネントになるものは外れる
  * @param {SceneNode|SceneNodeClass} node
  * @return {boolean}
  */
@@ -3512,14 +3645,28 @@ function addContent(style, json, node) {
     sortElementsByPositionAsc(json.elements)
 
     // これはコンテントのレイアウトオプションで実行すべき
-    addLayout(contentJson, node, node.mask || node, node.children, contentStyle)
+    addLayoutGroup(
+      contentJson,
+      node,
+      node.mask || node,
+      node.children,
+      contentStyle,
+    )
   } else if (node.constructor.name === 'RepeatGrid') {
     // リピートグリッドでContentの作成
     // ContentのRectTransformは　場合によって異なるが、リピートグリッドの場合は確定できない
     // 縦スクロールを意図しているか　→ Content.RectTransformは横サイズぴったり　縦に伸びる
     // 横スクロールを意図しているか　→ Content.RectTransformは縦サイズぴったり　横に伸びる
     // こちらが確定できないため
-    addLayoutFromRepeatGrid(contentJson, node, contentStyle)
+    // addLayoutFromRepeatGrid(contentJson, node, contentStyle)
+    sortElementsByPositionAsc(json.elements)
+    addLayoutGroup(
+      contentJson,
+      node,
+      node.mask || node,
+      node.children,
+      contentStyle,
+    )
   } else {
     console.log('**error** createContentで対応していない型です')
   }
@@ -3936,9 +4083,9 @@ async function createGroup(json, node, root, funcForEachChild) {
 
   let maskNode = node.mask || node
   await funcForEachChild(null, child => {
-    // TODO:AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある
-    // そういったものを省くかどうか検討
-    return child !== maskNode // maskNodeはFalse 処理をしない
+    // TODO:AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある そういったものを省くかどうか検討
+    //return child !== maskNode // maskNodeはFalse 処理をしない 2020/8/24 なぜ処理をしなかったかわからなくなった・・・
+    return true
   })
 
   // 基本
@@ -3951,9 +4098,11 @@ async function createGroup(json, node, root, funcForEachChild) {
   addComponents(json, style)
   addCanvasGroup(json, node, style)
   addLayoutElement(json, node, style)
-  addLayout(json, node, node, node.children, style)
+  addLayoutGroup(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
   addScrollRect(json, node, style)
+
+  addMask(json, style)
   addRectMask2d(json, style)
 
   // Artboard特有
@@ -3961,16 +4110,17 @@ async function createGroup(json, node, root, funcForEachChild) {
 
   addWrap(json, node, style) // エレメント操作のため、処理は最後にする
 
-  //contentが作成されていた場合、入れ替える
+  // contentが作成されている時
   if (json['content']) {
-    /*
-    // contentのタイプはGroup
-    json['content']['type'] = 'Group'
-    // 子供を全て移動
-    json['content']['elements'] = json['elements']
-    //
-    json['elements'] = [json['content']]
-     */
+    // layout-groupが付与されている場合、contentに移す
+    if (
+      json['layout_group'] &&
+      style.firstAsBool('move-layout-group-to-content')
+    ) {
+      json['content']['layout_group'] = json['layout_group']
+      delete json['layout_group']
+    }
+    //contentが作成されていた場合、elementsにいれる
     json.elements.push(json['content'])
     delete json['content']
   }
@@ -4039,7 +4189,7 @@ async function createScrollbar(json, node, funcForEachChild) {
   //
   addCanvasGroup(json, node, style)
   addLayoutElement(json, node, style)
-  addLayout(json, node, node, node.children, style)
+  addLayoutGroup(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
 }
 
@@ -4103,7 +4253,7 @@ async function createSlider(json, node, funcForEachChild) {
   //
   addCanvasGroup(json, node, style)
   addLayoutElement(json, node, style)
-  addLayout(json, node, node, node.children, style)
+  addLayoutGroup(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
 }
 
@@ -4433,6 +4583,21 @@ function addFillColor(layoutJson, node) {
     Object.assign(layoutJson, {
       fill_color: node.fill.toHex(true),
     })
+  }
+}
+
+/**
+ * マスクの追加
+ * @param json
+ * @param style
+ */
+function addMask(json, style) {
+  if (!style.firstAsBool(STYLE_MASK)) return
+  json['mask'] = {}
+  const jsonMask = json['mask']
+  const show = style.firstAsNullOrBool(STYLE_SHOW_MASK_GRAPHIC)
+  if (show !== null) {
+    Object.assign(jsonMask, { show_mask_graphic: show })
   }
 }
 
@@ -5657,8 +5822,16 @@ class CssSelector {
       case 'only-child':
         result = isOnlyChild(node)
         break
+      case 'has-only-child':
+        result = hasOnlyChild(node)
+        break
       case 'same-parent-bounds':
         result = sameParentBounds(node)
+        break
+      case 'has-some-child':
+        result = node.children.some(childNode => {
+          return this.matchRule(childNode, pseudo.value, false)
+        })
         break
       case 'dynamic-layout':
         // console.log('dynamic-layout', node.dynamicLayout)
@@ -5667,6 +5840,36 @@ class CssSelector {
       case 'top-node':
         // Artboardであったり、Artboardに入っていないNodeにマッチする
         result = node.parent === scenegraph.root // 親がscenegraph.rootならTopNode
+        break
+      case 'has-mask':
+        result = node.mask != null
+        break
+      case 'is-mask':
+        result = node.parent && node.parent.mask === node
+        break
+      case 'horizontal-layout':
+        result = false
+        if (node.constructor.name === 'RepeatGrid') {
+          if (node.numRows === 1 && node.numColumns > 1) {
+            result = true
+          }
+        }
+        break
+      case 'vertical-layout':
+        result = false
+        if (node.constructor.name === 'RepeatGrid') {
+          if (node.numRows > 1 && node.numColumns === 1) {
+            result = true
+          }
+        }
+        break
+      case 'grid-layout':
+        result = false
+        if (node.constructor.name === 'RepeatGrid') {
+          if (node.numRows > 1 && node.numColumns > 1) {
+            result = true
+          }
+        }
         break
       case 'not':
         // console.log('----------------- not')
@@ -5722,6 +5925,7 @@ const CssSelectorParser = require('./node_modules/css-selector-parser/lib/css-se
 let cssSelectorParser = new CssSelectorParser()
 //cssSelectorParser.registerSelectorPseudos('has')
 cssSelectorParser.registerNumericPseudos('nth-child')
+cssSelectorParser.registerSelectorPseudos('has-some-child')
 cssSelectorParser.registerSelectorPseudos('not')
 cssSelectorParser.registerNestingOperators('>', '+', '~', ' ')
 cssSelectorParser.registerAttrEqualityMods('^', '$', '*', '~')
