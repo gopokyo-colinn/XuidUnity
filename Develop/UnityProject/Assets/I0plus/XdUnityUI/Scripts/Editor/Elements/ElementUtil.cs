@@ -555,11 +555,23 @@ namespace I0plus.XdUnityUI.Editor
             var spacingX = layoutJson.GetFloat("spacing_x");
             var spacingY = layoutJson.GetFloat("spacing_y");
 
-            layoutGroup.spacing = new Vector2(spacingX.Value, spacingY.Value);
+            if (spacingX != null || spacingY != null)
+            {
+                var spacing = layoutGroup.spacing;
+                if (spacingX != null) spacing.x = spacingX.Value;
+                if (spacingY != null) spacing.y = spacingY.Value;
+                layoutGroup.spacing = spacing;
+            }
 
-            var cellWidth = layoutJson.GetFloat("cell_max_width");
-            var cellHeight = layoutJson.GetFloat("cell_max_height");
-            layoutGroup.cellSize = new Vector2(cellWidth.Value, cellHeight.Value);
+            var cellWidth = layoutJson.GetFloat("cell_size_x");
+            var cellHeight = layoutJson.GetFloat("cell_size_y");
+            if (cellWidth != null || cellHeight != null)
+            {
+                var size = layoutGroup.cellSize;
+                if (cellWidth != null) size.x = cellWidth.Value;
+                if (cellHeight != null) size.y = cellHeight.Value;
+                layoutGroup.cellSize = size;
+            }
 
             var fixedRowCount = layoutJson.GetInt("fixed_row_count");
             if (fixedRowCount != null)

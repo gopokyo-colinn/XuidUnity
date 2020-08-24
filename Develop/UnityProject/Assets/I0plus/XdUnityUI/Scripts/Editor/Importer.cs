@@ -412,7 +412,7 @@ namespace I0plus.XdUnityUI.Editor
                 GameObject go = null;
                 try
                 {
-                    Debug.Log($"[XdUnityUI] in process...{Path.GetFileName(layoutFilePath)}");
+                    // Debug.Log($"[XdUnityUI] in process...{Path.GetFileName(layoutFilePath)}");
                     // 
                     var subFolderName = EditorUtil.GetSubFolderName(layoutFilePath);
                     var saveAssetPath = GetPrefabPath(layoutFilePath);
@@ -442,7 +442,7 @@ namespace I0plus.XdUnityUI.Editor
                     var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
                     prefabCreator.Create(ref go, renderContext);
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
-                    Debug.Log($"[XdUnityUI] Created. {Path.GetFileName(saveAssetPath)}", savedAsset);
+                    Debug.Log($"[XdUnityUI] {Path.GetFileName(saveAssetPath)} is created.", savedAsset);
                 }
                 catch (Exception ex)
                 {

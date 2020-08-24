@@ -88,21 +88,7 @@ namespace I0plus.XdUnityUI.Editor
                         // 自分自身はスキップする
                         continue;
 
-                    // 後の名前検索で正確にできるように/を前にいれる
-                    var name = "/" + obj.name;
-                    var parent = obj.transform.parent;
-                    while (parent)
-                    {
-                        name = "/" + parent.name + name;
-                        parent = parent.parent;
-                    }
-
-                    // XdGuidコンポーネントがある場合、Guidも情報にいれる
-                    string xdGuid = null;
-                    var xdGuidComponent = obj.GetComponent<XdGuid>();
-                    if (xdGuidComponent != null) xdGuid = xdGuidComponent.guid;
-
-                    FreeChildObjects.Add(obj, new GameObjectIdentifier(name, xdGuid));
+                    AddFreeObject(obj);
                 }
             }
         }
@@ -221,6 +207,25 @@ namespace I0plus.XdUnityUI.Editor
             if (found != null) FreeChildObjects.Remove(found);
 
             return found;
+        }
+
+        public void AddFreeObject(GameObject obj)
+        {
+            // 後の名前検索で正確にできるように/を前にいれる
+            var name = "/" + obj.name;
+            var parent = obj.transform.parent;
+            while (parent)
+            {
+                name = "/" + parent.name + name;
+                parent = parent.parent;
+            }
+
+            // XdGuidコンポーネントがある場合、Guidも情報にいれる
+            string xdGuid = null;
+            var xdGuidComponent = obj.GetComponent<XdGuid>();
+            if (xdGuidComponent != null) xdGuid = xdGuidComponent.guid;
+
+            FreeChildObjects.Add(obj, new GameObjectIdentifier(name, xdGuid));
         }
 
         public Sprite GetSprite(string spriteName)

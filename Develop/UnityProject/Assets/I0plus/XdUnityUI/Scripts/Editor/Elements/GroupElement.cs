@@ -19,10 +19,9 @@ namespace I0plus.XdUnityUI.Editor
 
         protected readonly List<Element> Elements;
         protected readonly string FillColorJson;
-        protected readonly Dictionary<string, object> LayoutJson;
-        protected readonly Dictionary<string, object> MaskJson;
+        protected readonly Dictionary<string, object> LayoutGroupJson;
         protected readonly Dictionary<string, object> ScrollRectJson;
-        protected Dictionary<string, object> AddComponentJson;
+        protected readonly Dictionary<string, object> MaskJson;
         protected bool? RectMask2D;
 
         public GroupElement(Dictionary<string, object> json, Element parent, bool resetStretch = false) : base(json,
@@ -40,13 +39,12 @@ namespace I0plus.XdUnityUI.Editor
 
             Elements.Reverse();
             CanvasGroup = json.GetDic("canvas_group");
-            LayoutJson = json.GetDic("layout");
+            LayoutGroupJson = json.GetDic("layout_group");
             ContentSizeFitterJson = json.GetDic("content_size_fitter");
             MaskJson = json.GetDic("mask");
             RectMask2D = json.GetBool("rect_mask_2d");
             ScrollRectJson = json.GetDic("scroll_rect");
             FillColorJson = json.Get("fill_color");
-            AddComponentJson = json.GetDic("add_component");
             ComponentsJson = json.Get<List<object>>("components");
         }
 
@@ -63,7 +61,7 @@ namespace I0plus.XdUnityUI.Editor
             ElementUtil.SetupChildImageComponent(targetObject, RenderedChildren);
             ElementUtil.SetupFillColor(targetObject, FillColorJson);
             ElementUtil.SetupContentSizeFitter(targetObject, ContentSizeFitterJson);
-            ElementUtil.SetupLayoutGroup(targetObject, LayoutJson);
+            ElementUtil.SetupLayoutGroup(targetObject, LayoutGroupJson);
             ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
             ElementUtil.SetupComponents(targetObject, ComponentsJson);
             ElementUtil.SetupMask(targetObject, MaskJson);

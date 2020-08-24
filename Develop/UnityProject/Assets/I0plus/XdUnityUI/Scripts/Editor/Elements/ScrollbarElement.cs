@@ -41,7 +41,7 @@ namespace I0plus.XdUnityUI.Editor
                 dotScrollbar.DotContainer = targetObject.GetComponent<RectTransform>();
                 dotScrollbar.DotPrefab = toggleChild.Item1.GetComponent<Toggle>();
                 // Toggleボタンの並びレイアウト
-                ElementUtil.SetupLayoutGroup(targetObject, LayoutJson);
+                ElementUtil.SetupLayoutGroup(targetObject, LayoutGroupJson);
                 dotScrollbar.size = 1; // sizeを1にすることで、Toggleが複数Cloneされることをふせぐ
                 scrollbar = dotScrollbar;
             }
