@@ -3137,19 +3137,19 @@ function addScrollRect(json, node, style) {
  * @param style
  */
 function addRectMask2d(json, style) {
-  const styleRectMask2D = style.first(STYLE_RECT_MASK_2D)
-  if (!styleRectMask2D) return
+  const rect_mask_2d = style.first(STYLE_RECT_MASK_2D)
+  if (rect_mask_2d === null) return
   Object.assign(json, {
-    rect_mask_2d: true, // 受け取り側、boolで判定しているためbool値でいれる　それ以外は弾かれる
+    rect_mask_2d, // 受け取り側、boolで判定しているためbool値でいれる　それ以外は弾かれる
   })
 }
 
 /**
- *
+ * 描画スペースを取得する
  * @param {SceneNode[]|SceneNodeClass[]} nodes
  * @return {number[]}
  */
-function getHorizontalSpaces(nodes) {
+function getHorizontalDrawSpaces(nodes) {
   if (nodes.length <= 1) return []
 
   nodes.sort((a, b) => {
@@ -3160,12 +3160,12 @@ function getHorizontalSpaces(nodes) {
 
   // Nodeを縦の順番に並べた状態で隙間を取得していく
   const spaces = []
-  let bottomX = getBeforeGlobalDrawBounds(nodes[0]).ex
+  let rightX = getBeforeGlobalDrawBounds(nodes[0]).ex
   for (let i = 1; i < nodes.length; i++) {
     const nextBounds = getBeforeGlobalDrawBounds(nodes[i])
-    const space = nextBounds.x - bottomX
+    const space = nextBounds.x - rightX
     spaces.push(space)
-    bottomX = nextBounds.ex
+    rightX = nextBounds.ex
   }
 
   // console.log(spaces)
@@ -3177,7 +3177,7 @@ function getHorizontalSpaces(nodes) {
  * @param {SceneNode[]|SceneNodeClass[]} nodes
  * @return {number[]}
  */
-function getVerticalSpaces(nodes) {
+function getVerticalDrawSpaces(nodes) {
   if (nodes.length <= 1) return []
 
   nodes.sort((a, b) => {
@@ -3200,7 +3200,7 @@ function getVerticalSpaces(nodes) {
   return spaces
 }
 
-function getCellWidth(nodes) {
+function getCellDrawWidth(nodes) {
   if (nodes.length <= 1) return []
 
   const widths = []
@@ -3212,7 +3212,7 @@ function getCellWidth(nodes) {
   return widths
 }
 
-function getCellHeight(nodes) {
+function getCellDrawHeight(nodes) {
   if (nodes.length <= 1) return []
 
   const heights = []
@@ -3265,6 +3265,8 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
 
   let rowNodes = childNodes
   let columnNodes = childNodes
+
+  // RepeatGridの場合、縦・横Node配列を作成する
   if (viewportNode.constructor.name === 'RepeatGrid') {
     /**
      * @type {RepeatGrid}
@@ -3272,9 +3274,14 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
     const repeatGrid = viewportNode
     const numRows = repeatGrid.numRows
     const numColumns = repeatGrid.numColumns
-    rowNodes = childNodes.slice(0, numRows)
+    //console.log(`numRow:${numRows} numColumns:${numColumns}`)
+    rowNodes = childNodes.slice(0, numColumns)
+    // for (let rowNode of rowNodes) {
+    //   console.log(rowNode.globalDrawBounds.x)
+    // }
     columnNodes = []
-    for (let i = 0; i < numRows; i += numColumns) {
+    for (let i = 0; i < childNodes.length; i += numColumns) {
+      //console.log(childNodes[i].globalDrawBounds.y)
       columnNodes.push(childNodes[i])
     }
   }
@@ -3282,7 +3289,8 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
   let layoutSpacingX = style.first(STYLE_LAYOUT_GROUP_SPACING_X)
   if (layoutSpacingX !== null) {
     if (layoutSpacingX === 'average') {
-      const spaces = getHorizontalSpaces(rowNodes)
+      const spaces = getHorizontalDrawSpaces(rowNodes)
+      console.log(`spaces:`, spaces)
       if (spaces.length !== 0) {
         layoutSpacingX =
           spaces.reduce((previous, current) => previous + current) /
@@ -3299,7 +3307,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
   let layoutSpacingY = style.first(STYLE_LAYOUT_GROUP_SPACING_Y)
   if (layoutSpacingY !== null) {
     if (layoutSpacingY === 'average') {
-      const spaces = getVerticalSpaces(columnNodes)
+      const spaces = getVerticalDrawSpaces(columnNodes)
       if (spaces.length !== 0) {
         layoutSpacingY =
           spaces.reduce((previous, current) => previous + current) /
@@ -3316,7 +3324,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
   let cell_size_x = style.first(STYLE_LAYOUT_GROUP_CELL_SIZE_X)
   if (cell_size_x !== null) {
     if (cell_size_x === 'average') {
-      const widths = getCellWidth(childNodes)
+      const widths = getCellDrawWidth(childNodes)
       if (widths.length !== 0) {
         cell_size_x =
           widths.reduce((previous, current) => previous + current) /
@@ -3333,7 +3341,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
   let cell_size_y = style.first(STYLE_LAYOUT_GROUP_CELL_SIZE_Y)
   if (cell_size_y !== null) {
     if (cell_size_y === 'average') {
-      const widths = getCellHeight(childNodes)
+      const widths = getCellDrawHeight(childNodes)
       if (widths.length !== 0) {
         cell_size_y =
           widths.reduce((previous, current) => previous + current) /
@@ -4112,13 +4120,16 @@ async function createGroup(json, node, root, funcForEachChild) {
 
   // contentが作成されている時
   if (json['content']) {
+    // 子供のレイアウトにまつわるStyleはContentに移動する
     // layout-groupが付与されている場合、contentに移す
-    if (
-      json['layout_group'] &&
-      style.firstAsBool('move-layout-group-to-content')
-    ) {
+    if (json['layout_group']) {
       json['content']['layout_group'] = json['layout_group']
       delete json['layout_group']
+    }
+    // layout-groupが付与されている場合、contentに移す
+    if (json['content_size_fitter']) {
+      json['content']['content_size_fitter'] = json['content_size_fitter']
+      delete json['content_size_fitter']
     }
     //contentが作成されていた場合、elementsにいれる
     json.elements.push(json['content'])

@@ -90,7 +90,7 @@ padding background
   layout-group-child-force-expand: width;
   layout-group-child-alignment: upper-center;
   layout-group-spacing-y: average;
-  layout-group-children-order: reverse;
+  /* layout-group-children-order: reverse; */
   content-size-fitter: true;
   content-size-fitter-vertical-fit: preferred-size;
 }
@@ -189,51 +189,64 @@ first-childになる
   content-size-fitter-vertical-fit: preferred-size;
 }
 
-/*
- リピードグリッドはマスクを持つ
- */
-[typeof='RepeatGrid'] {
+[typeof='RepeatGrid']:not(.no-mask) {
   rect-mask-twod: true;
+  create-content: true;
+  create-content-name: '.content';
 }
 
-/*
-RepeatGridをもとにレイアウト情報をもったcontentを作成する
- */
-[typeof='RepeatGrid']:horizontal-layout.layout {
+[typeof='RepeatGrid'].no-mask {
+  rect-mask-twod: false;
+}
+
+[typeof='RepeatGrid']:horizontal-layout {
   match-log: 'horizontal-layout!!!';
   layout-group: x;
   layout-group-spacing-x: average;
-  create-content: true;
-  create-content-name: '.content';
-  create-content-layout: true;
+  content-size-fitter: true;
+  content-size-fitter-horizontal-fit: preferred-size;
 }
 
-/*
-RepeatGridをもとにレイアウト情報をもったcontentを作成する
- */
-[typeof='RepeatGrid']:vertical-layout.layout {
+[typeof='RepeatGrid']:vertical-layout {
   match-log: 'vertical-layout!!!';
   layout-group: y;
   layout-group-spacing-y: average;
-  create-content: true;
-  create-content-name: '.content';
-  create-content-layout: true;
+  content-size-fitter: true;
+  content-size-fitter-vertical-fit: preferred-size;
 }
 
-/*
-RepeatGridをもとにレイアウト情報をもったcontentを作成する
- */
-[typeof='RepeatGrid']:grid-layout.layout {
+[typeof='RepeatGrid']:grid-layout {
   match-log: 'grid-layout!!!';
   layout-group: grid;
   layout-group-cell-size-x: average;
   layout-group-cell-size-y: average;
   layout-group-spacing-x: average;
   layout-group-spacing-y: average;
-  create-content: true;
-  create-content-name: '.content';
-  move-layout-group-to-content: true; /* layout-group情報をcontentに移す*/
 }
+
+[typeof='RepeatGrid']:not(.no-mask).horizontal-scroll {
+  scroll-rect: true;
+  scroll-rect-content: '.content';
+  scroll-rect-horizontal: true;
+  scroll-rect-vertical: false;
+  scroll-rect-horizontal-scrollbar: '.horizontal-scrollbar' '.scrollbar-x';
+  content-size-fitter-horizontal-fit: preferred-size;
+  content-size-fitter-vertical-fit: unconstrained;
+  layout-group-start-axis: vertical;
+}
+
+[typeof='RepeatGrid']:not(.no-mask).vertical-scroll {
+  scroll-rect: true;
+  scroll-rect-content: '.content';
+  scroll-rect-horizontal: false;
+  scroll-rect-vertical: true;
+  scroll-rect-vertical-scrollbar: '.vertical-scrollbar' '.scrollbar-y';
+  content-size-fitter: true;
+  content-size-fitter-horizontal-fit: unconstrained;
+  content-size-fitter-vertical-fit: preferred-size;
+  layout-group-start-axis: horizontal;
+}
+
 
 [typeof='RepeatGrid'] > * {
   unity-name: 'rg${childIndex}(${guid})';
