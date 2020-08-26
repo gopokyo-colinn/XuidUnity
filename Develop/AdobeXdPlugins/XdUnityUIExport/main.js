@@ -6,6 +6,7 @@
  * https://www.w3schools.com/css/tryit.asp?filename=trycss_sel_attribute_end
  * https://codepen.io/pen/
  */
+import {hasLayoutProperties} from "../ExportUXML/style"
 
 // XD拡張APIのクラスをインポート
 const {
@@ -48,13 +49,14 @@ let optionChangeContentOnly = false
 // SymbolInstanceをPrefabにするかどうか
 let optionSymbolInstanceAsPrefab = false
 
+// 初期状態の可視情報
+// globalVisibleInfo[node.guid]
+let globalVisibleInfo = null
+
 /**
  * レスポンシブパラメータを保存する
  * @type {BoundsToRectTransform[]}
  */
-
-let globalVisibleInfo = null
-
 let globalResponsiveBounds = null
 
 /**
@@ -2347,32 +2349,6 @@ class Style {
     return asBool(first)
   }
 
-  firstCheck(property, node) {
-    let first = this.first(property)
-    let result = null
-    switch (first) {
-      // 削除予定
-      case 'if-not-content-only-child-has-layout-properties': {
-        // console.log('if-not-content-only-child-has-layout-properties')
-        const contents = node.children.filter(child => {
-          return isContentChild(child)
-        })
-        if (contents.length !== 1) {
-          result = true
-          break
-        }
-        const contentChild = contents[0]
-        const { style: contentStyle } = getNodeNameAndStyle(contentChild)
-        result = !hasLayoutPropertyPreferredSize(contentStyle)
-        break
-      }
-      default:
-        result = asBool(first)
-        break
-    }
-    return result
-  }
-
   /**
    * Valuesの値を連結した文字列を返す
    * @param {string} property
@@ -3388,26 +3364,14 @@ function addLayoutGroupParam(layoutGroupJson, style) {
   }
 }
 
-function hasLayoutPropertyPreferredSize(style) {
+function hasLayoutPropertiesPreferredSize(style) {
   return (
     style.firstAsBool(STYLE_TEXT) ||
     style.firstAsBool(STYLE_TEXTMP) ||
-    style.firstAsBool(STYLE_IMAGE) ||
-    style.firstAsBool(STYLE_LAYOUT_GROUP)
+    (style.firstAsBool(STYLE_IMAGE) && style.firstAsNullOrBool(STYLE_IMAGE_SLICE) === false ) || // Imageはスライス可とするとサイズが0になる
+    style.firstAsBool(STYLE_LAYOUT_GROUP) ||
+    style.firstAsBool(STYLE_LAYOUT_ELEMENT) //TODO:LAYOUT_ELEMET PREFERREDサイズをもっているか確認せねばならない
   )
-}
-
-/**
- * @param {SceneNode|SceneNodeClass} node
- */
-function isContentOnlyChild(node) {
-  console.log(`isContentOnlyChild(${node.name})`)
-  const contents = node.children.filter(child => {
-    const result = isContentChild(child)
-    console.log(`${child.name}:${result}`)
-    return result
-  })
-  return contents.length === 1
 }
 
 /**
@@ -3418,11 +3382,7 @@ function isContentOnlyChild(node) {
  * @param overwriteGlobalDrawBounds 上書きするGlobalDrawBounds値
  */
 function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
-  let first = style.first(STYLE_LAYOUT_ELEMENT)
-  if (first === 'if-not-has-layout-properties') {
-    first = !hasLayoutPropertyPreferredSize(style)
-  }
-  if (!asBool(first)) return
+  if (!style.firstAsBool(STYLE_LAYOUT_ELEMENT)) return
 
   const layoutElementJson = {}
 
@@ -3549,8 +3509,11 @@ function hasContentBounds(node) {
  */
 function isContentChild(node) {
   const { style } = getNodeNameAndStyle(node)
+  // コンポーネントになるものは外れる
   if (style.firstAsBool(STYLE_COMPONENT)) return false
+  // マスクになるものは外れる
   if (node.parent.mask === node) return false
+  // 親がContentをまとめているか
   return hasContentBounds(node.parent)
 }
 
@@ -3580,7 +3543,7 @@ function getViewport(node) {
  * @param node
  */
 function addContent(style, json, node) {
-  if (!style.firstCheck(STYLE_CREATE_CONTENT, node)) return
+  if (!style.firstAsBool(STYLE_CREATE_CONTENT)) return
   const createContentName = style.first(STYLE_CREATE_CONTENT_NAME) || 'content'
 
   // contentのアサインと名前設定
@@ -5864,6 +5827,11 @@ class CssSelector {
           }
         }
         break
+        //if-not-content-only-child-has-layout-properties
+      case 'has-layout-properties-preferred-size':
+        result = hasLayoutPropertiesPreferredSize(node)
+        break;
+
       case 'not':
         // console.log('----------------- not')
         result = !this.matchRule(node, pseudo.value, false)
