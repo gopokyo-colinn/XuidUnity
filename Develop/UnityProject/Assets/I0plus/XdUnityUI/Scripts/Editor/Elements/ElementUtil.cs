@@ -6,9 +6,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
-
 #if ODIN_INSPECTOR
 using Sirenix.Utilities;
+
 #endif
 
 namespace I0plus.XdUnityUI.Editor
@@ -229,36 +229,43 @@ namespace I0plus.XdUnityUI.Editor
             }
         }
 
-        public static ContentSizeFitter SetupContentSizeFitter(GameObject go,
-            Dictionary<string, object> contentSizeFitter)
+        private static ContentSizeFitter.FitMode StrToFitMode(string str)
         {
-            var componentContentSizeFitter = go.GetComponent<ContentSizeFitter>();
-            if (contentSizeFitter == null) return componentContentSizeFitter; // 引数がNULLでも持っていたら返す
+            if (str == null) return ContentSizeFitter.FitMode.Unconstrained;
+            str = str.ToLower();
+            if (str.Contains("preferred"))
+                return ContentSizeFitter.FitMode.PreferredSize;
 
-            if (componentContentSizeFitter == null)
-                componentContentSizeFitter = GetOrAddComponent<ContentSizeFitter>(go);
+            if (str.Contains("min"))
+                return ContentSizeFitter.FitMode.MinSize;
 
-            if (contentSizeFitter.ContainsKey("vertical_fit"))
+            return ContentSizeFitter.FitMode.Unconstrained;
+        }
+
+        public static void SetupContentSizeFitter(GameObject go,
+            Dictionary<string, object> param)
+        {
+            if (param == null)
             {
-                var verticalFit = contentSizeFitter.Get("vertical_fit");
-                if (verticalFit.Contains("preferred"))
-                    componentContentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-                if (verticalFit.Contains("min"))
-                    componentContentSizeFitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
+                var component = go.GetComponent<ContentSizeFitter>();
+                if (component != null) component.enabled = false;
+                return;
             }
 
-            if (contentSizeFitter.ContainsKey("horizontal_fit"))
-            {
-                var verticalFit = contentSizeFitter.Get("horizontal_fit");
-                if (verticalFit.Contains("preferred"))
-                    componentContentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var componentContentSizeFitter = GetOrAddComponent<ContentSizeFitter>(go);
+            componentContentSizeFitter.enabled = true;
 
-                if (verticalFit.Contains("min"))
-                    componentContentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
+            if (param.ContainsKey("vertical_fit"))
+            {
+                var verticalFit = param.Get("vertical_fit").ToLower();
+                componentContentSizeFitter.verticalFit = StrToFitMode(verticalFit);
             }
 
-            return componentContentSizeFitter;
+            if (param.ContainsKey("horizontal_fit"))
+            {
+                var verticalFit = param.Get("horizontal_fit").ToLower();
+                componentContentSizeFitter.horizontalFit = StrToFitMode(verticalFit);
+            }
         }
 
 #if ODIN_INSPECTOR
@@ -448,8 +455,7 @@ namespace I0plus.XdUnityUI.Editor
 #endif
         }
 
-        public static HorizontalOrVerticalLayoutGroup SetupLayoutGroupParam(GameObject go,
-            Dictionary<string, object> layoutJson)
+        public static void SetupLayoutGroupParam(GameObject go, Dictionary<string, object> layoutJson)
         {
             var method = "";
             if (layoutJson.ContainsKey("method")) method = layoutJson.Get("method");
@@ -468,7 +474,9 @@ namespace I0plus.XdUnityUI.Editor
                 layoutGroup = horizontalLayoutGroup;
             }
 
-            if (layoutGroup == null) return null;
+            if (layoutGroup == null) return;
+
+            layoutGroup.enabled = true;
 
             // child control 子オブジェクトのサイズを変更する
             layoutGroup.childControlWidth = false;
@@ -530,16 +538,20 @@ namespace I0plus.XdUnityUI.Editor
                 if (childForceExpand.Contains("height"))
                     layoutGroup.childForceExpandHeight = true;
             }
-
-            return layoutGroup;
         }
 
-        public static GridLayoutGroup SetupGridLayoutGroupParam(GameObject go,
+        public static void SetupGridLayoutGroupParam(GameObject go,
             Dictionary<string, object> layoutJson)
         {
-            if (layoutJson == null) return null;
+            if (layoutJson == null)
+            {
+                var existComponent = go.GetComponent<GridLayoutGroup>();
+                if (existComponent != null) existComponent.enabled = false;
+                return;
+            }
 
             var layoutGroup = GetOrAddComponent<GridLayoutGroup>(go);
+            layoutGroup.enabled = true;
 
             if (layoutJson.ContainsKey("padding"))
             {
@@ -555,11 +567,23 @@ namespace I0plus.XdUnityUI.Editor
             var spacingX = layoutJson.GetFloat("spacing_x");
             var spacingY = layoutJson.GetFloat("spacing_y");
 
-            layoutGroup.spacing = new Vector2(spacingX.Value, spacingY.Value);
+            if (spacingX != null || spacingY != null)
+            {
+                var spacing = layoutGroup.spacing;
+                if (spacingX != null) spacing.x = spacingX.Value;
+                if (spacingY != null) spacing.y = spacingY.Value;
+                layoutGroup.spacing = spacing;
+            }
 
-            var cellWidth = layoutJson.GetFloat("cell_max_width");
-            var cellHeight = layoutJson.GetFloat("cell_max_height");
-            layoutGroup.cellSize = new Vector2(cellWidth.Value, cellHeight.Value);
+            var cellWidth = layoutJson.GetFloat("cell_size_x");
+            var cellHeight = layoutJson.GetFloat("cell_size_y");
+            if (cellWidth != null || cellHeight != null)
+            {
+                var size = layoutGroup.cellSize;
+                if (cellWidth != null) size.x = cellWidth.Value;
+                if (cellHeight != null) size.y = cellHeight.Value;
+                layoutGroup.cellSize = size;
+            }
 
             var fixedRowCount = layoutJson.GetInt("fixed_row_count");
             if (fixedRowCount != null)
@@ -591,8 +615,6 @@ namespace I0plus.XdUnityUI.Editor
 
             // 左上から配置スタート
             layoutGroup.startCorner = GridLayoutGroup.Corner.UpperLeft;
-
-            return layoutGroup;
         }
 
         public static void SetupLayoutElement(GameObject go, Dictionary<string, object> layoutElement)
@@ -618,22 +640,31 @@ namespace I0plus.XdUnityUI.Editor
 
         public static void SetupLayoutGroup(GameObject go, Dictionary<string, object> layout)
         {
-            if (layout == null) return;
+            if (layout == null)
+            {
+                var existGridComponent = go.GetComponent<GridLayoutGroup>();
+                if (existGridComponent != null) existGridComponent.enabled = false;
+                var existVerticalComponent = go.GetComponent<VerticalLayoutGroup>();
+                if (existVerticalComponent != null) existVerticalComponent.enabled = false;
+                var existHorizontalLayoutGroup = go.GetComponent<HorizontalLayoutGroup>();
+                if (existHorizontalLayoutGroup != null) existHorizontalLayoutGroup.enabled = false;
+                return;
+            }
 
             if (layout["method"] is string)
             {
-                var method = (layout["method"] as string).ToLower();
+                var method = (layout["method"] as string)?.ToLower();
                 switch (method)
                 {
                     case "vertical":
                     case "horizontal":
                     {
-                        var layoutGroup = SetupLayoutGroupParam(go, layout);
+                        SetupLayoutGroupParam(go, layout);
                         break;
                     }
                     case "grid":
                     {
-                        var gridLayoutGroup = SetupGridLayoutGroupParam(go, layout);
+                        SetupGridLayoutGroupParam(go, layout);
                         break;
                     }
                 }
@@ -647,7 +678,15 @@ namespace I0plus.XdUnityUI.Editor
 
         public static void SetupRectMask2D(GameObject go, bool? param)
         {
-            if (param != null && param.Value) GetOrAddComponent<RectMask2D>(go); // setupMask
+            if (param == null)
+            {
+                var existComponent = go.GetComponent<RectMask2D>();
+                if (existComponent != null) existComponent.enabled = false;
+                return;
+            }
+
+            var component = GetOrAddComponent<RectMask2D>(go); // setupMask
+            component.enabled = param.Value;
         }
 
         public static void SetupMask(GameObject go, Dictionary<string, object> param)
@@ -684,7 +723,7 @@ namespace I0plus.XdUnityUI.Editor
             if ((b = scrollRect.GetBool("horizontal")) != null) scrollRectComponent.horizontal = b.Value;
 
             if ((b = scrollRect.GetBool("vertical")) != null) scrollRectComponent.vertical = b.Value;
-            
+
             //この時点ではScrollbarを探すことができないため、Pass2で探している
             //TODO:さがしているところではクラス名をつかってさがしていない
         }

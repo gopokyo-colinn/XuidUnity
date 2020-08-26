@@ -29,18 +29,16 @@ namespace I0plus.XdUnityUI.Editor
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
 
-            var image = targetObject.GetComponent<Image>();
+            var image = ElementUtil.GetOrAddComponent<Image>(targetObject);
 
-            //if a image component is already present this means this go is part of a prefab and we skip the image setup since it has already been done
-            //TODO: check if some parts still need to be done for prefabs that have local modifications
-            if (image == null)
+            if (image != null)
             {
                 image = ElementUtil.GetOrAddComponent<Image>(targetObject);
                 var sourceImageName = ImageJson.Get("source_image");
                 if (sourceImageName != null)
                 {
-                     var sprite= renderContext.GetSprite(sourceImageName);
-                     image.sprite = sprite;
+                    var sprite = renderContext.GetSprite(sourceImageName);
+                    image.sprite = sprite;
                 }
 
                 image.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -71,11 +69,11 @@ namespace I0plus.XdUnityUI.Editor
                     }
 
                 var preserveAspect = ImageJson.GetBool("preserve_aspect");
-                if (preserveAspect != null && preserveAspect.Value)
+                if (preserveAspect != null)
                 {
                     // アスペクト比を保つ場合はSimpleにする
-                    image.type = Image.Type.Simple;
-                    image.preserveAspect = true;
+                    // image.type = Image.Type.Simple;
+                    image.preserveAspect = preserveAspect.Value;
                 }
             }
 

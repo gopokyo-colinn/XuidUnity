@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using JetBrains.Annotations;
 using MiniJSON;
 using UnityEditor;
 using UnityEngine;
@@ -36,7 +35,7 @@ namespace I0plus.XdUnityUI.Editor
             nestedPrefabs = prefabs;
         }
 
-        public void Create([NotNull] ref GameObject targetObject, RenderContext renderContext)
+        public void Create( ref GameObject targetObject, RenderContext renderContext)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
@@ -77,9 +76,16 @@ namespace I0plus.XdUnityUI.Editor
                 foreach (var keyValuePair in notUsedchilds)
                 {
                     var go = keyValuePair.Key;
-                    var goRect = ElementUtil.GetOrAddComponent<RectTransform>(go);
-                    // NestedPrefabの子供を転送しようとするとエラーになる
-                    goRect.SetParent(groupRect);
+                    if (go != null)
+                    {
+                        var goRect = ElementUtil.GetOrAddComponent<RectTransform>(go);
+                        // NestedPrefabの子供を転送しようとするとエラーになる
+                        goRect.SetParent(groupRect);
+                    }
+                    else
+                    {
+                        Debug.Log($"既に廃棄されています");
+                    }
                 }
             }
             else

@@ -1,27 +1,15 @@
 {
     "name": "XdUnityUI.Editor",
+    "rootNamespace": "",
     "references": [
         "XdUnityUI.Runtime",
         "Unity.TextMeshPro",
         "Sirenix.OdinInspector.CompatibilityLayer.Editor"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [
-        "Android",
-        "iOS",
-        "LinuxStandalone64",
-        "Lumin",
-        "macOSStandalone",
-        "PS4",
-        "Stadia",
-        "Switch",
-        "tvOS",
-        "WSA",
-        "WebGL",
-        "WindowsStandalone32",
-        "WindowsStandalone64",
-        "XboxOne"
+    "includePlatforms": [
+        "Editor"
     ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],

@@ -46,17 +46,11 @@ namespace I0plus.XdUnityUI.Editor
                 var rectJson = _contentJson.GetDic("rect_transform");
                 if (rectJson != null) ElementUtil.SetupRectTransform(goContent, rectJson);
 
-                if (_contentJson.ContainsKey("layout"))
-                {
-                    var contentLayout = _contentJson.GetDic("layout");
-                    ElementUtil.SetupLayoutGroup(goContent, contentLayout);
-                }
+                var contentLayout = _contentJson.GetDic("layout");
+                ElementUtil.SetupLayoutGroup(goContent, contentLayout);
 
-                if (_contentJson.ContainsKey("content_size_fitter"))
-                {
-                    var contentSizeFitter = _contentJson.GetDic("content_size_fitter");
-                    var compSizeFitter = ElementUtil.SetupContentSizeFitter(goContent, contentSizeFitter);
-                }
+                var contentSizeFitter = _contentJson.GetDic("content_size_fitter");
+                ElementUtil.SetupContentSizeFitter(goContent, contentSizeFitter);
             }
 
             //Viewportのチャイルドはもとより、content向けのAnchor・Offsetを持っている

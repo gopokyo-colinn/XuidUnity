@@ -146,6 +146,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public static Texture2D CreateTextureFromPng(string path)
         {
+            // Debug.Log($"CreateTextureFromPng {path}");
             var readBinary = ReadFileToBytes(path);
 
             var pos = 16; // 16バイトから開始
@@ -267,6 +268,8 @@ namespace I0plus.XdUnityUI.Editor
                 }
             }
 
+            // 本来はフォルダを作成しなくても良いはず
+            Importer.CreateFolderRecursively(Path.GetDirectoryName(writePngPath));
             File.WriteAllBytes(writePngPath, pngData);
             Save(Path.GetDirectoryName(writePngPath));
             return "Created new texture.";
@@ -280,7 +283,6 @@ namespace I0plus.XdUnityUI.Editor
         /// <returns></returns>
         public static string SliceSprite(string sourceImagePath)
         {
-            // Debug.Log($"[XdUnityUI] {sourceImagePath}");
             var directoryName = Path.GetFileName(Path.GetDirectoryName(sourceImagePath));
             var outputDirectoryPath = Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), directoryName);
             var sourceImageFileName = Path.GetFileName(sourceImagePath);

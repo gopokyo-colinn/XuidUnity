@@ -48,14 +48,23 @@ padding
 .padding {
   layout-group: vertical;
   layout-group-child-control-size: width height;
-  /* layout-group-child-force-expand: width height; */
+  layout-group-child-force-expand: width height;
   layout-group-child-alignment: upper-center;
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
-  create-content: if-not-content-only-child-has-layout-properties;
+  create-content: if-not-content-only-child-has-layout-properties; /* 削除予定 */
+  create-content-name: '.content';
+  /* create-content で成功したときのみ操作　レイアウトに関するものを移動する*/
+}
+
+/*
+ このように置き換え可能なはず
+.padding:not(:only-child:has-some-child(:has-layout-properties)) {
+  create-content: true;
   create-content-name: '.content';
 }
+ */
 
 .padding > .content {
   layout-element: true;
@@ -82,13 +91,12 @@ padding background
   layout-group-child-force-expand: width;
   layout-group-child-alignment: upper-center;
   layout-group-spacing-y: average;
-  layout-group-children-order: reverse;
   content-size-fitter: true;
   content-size-fitter-vertical-fit: preferred-size;
 }
 
 .vertical-stack > * {
-  layout-element: if-not-has-layout-properties;
+  layout-element: if-not-has-layout-properties; /* 削除予定 */
   layout-element-preferred-height: draw-bounds-height;
 }
 
@@ -111,7 +119,7 @@ first-childになる
  */
 .vertical-item {
   wrap-vertical-item: true;
-  wrap-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
+  wrap-move-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
   layout-element: true; /* 必ず layout-elementを作成する */
 }
 
@@ -126,7 +134,6 @@ first-childになる
   layout-group-child-force-expand: height;
   layout-group-child-alignment: upper-center;
   layout-group-spacing-x: average;
-  layout-group-children-order: reverse;
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
 }
@@ -155,7 +162,7 @@ first-childになる
  */
 .horizontal-item {
   wrap-horizontal-item: true;
-  wrap-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
+  wrap-move-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
   layout-element: true; /* 必ず layout-elementを作成する */
 }
 
@@ -181,16 +188,63 @@ first-childになる
   content-size-fitter-vertical-fit: preferred-size;
 }
 
-/*
- リピードグリッドはマスクを持つ
- */
-[typeof='RepeatGrid'] {
+[typeof='RepeatGrid']:not(.no-mask) {
   rect-mask-twod: true;
+  create-content: true;
+  create-content-name: '.content';
+  create-content-move-layout-group: true;
+  create-content-move-content-size-fitter: true;
 }
 
-/*
- リピードグリッドの子は、Layout-elementを持つ
- */
+[typeof='RepeatGrid'].no-mask {
+  rect-mask-twod: false;
+}
+
+[typeof='RepeatGrid']:horizontal-layout {
+  layout-group: x;
+  layout-group-spacing-x: average;
+  content-size-fitter: true;
+  content-size-fitter-horizontal-fit: preferred-size;
+}
+
+[typeof='RepeatGrid']:vertical-layout {
+  layout-group: y;
+  layout-group-spacing-y: average;
+  content-size-fitter: true;
+  content-size-fitter-vertical-fit: preferred-size;
+}
+
+[typeof='RepeatGrid']:grid-layout {
+  layout-group: grid;
+  layout-group-cell-size-x: average;
+  layout-group-cell-size-y: average;
+  layout-group-spacing-x: average;
+  layout-group-spacing-y: average;
+}
+
+[typeof='RepeatGrid']:not(.no-mask).horizontal-scroll {
+  scroll-rect: true;
+  scroll-rect-content: '.content';
+  scroll-rect-horizontal: true;
+  scroll-rect-vertical: false;
+  scroll-rect-horizontal-scrollbar: '.horizontal-scrollbar' '.scrollbar-x';
+  content-size-fitter-horizontal-fit: preferred-size;
+  content-size-fitter-vertical-fit: unconstrained;
+  layout-group-start-axis: vertical;
+}
+
+[typeof='RepeatGrid']:not(.no-mask).vertical-scroll {
+  scroll-rect: true;
+  scroll-rect-content: '.content';
+  scroll-rect-horizontal: false;
+  scroll-rect-vertical: true;
+  scroll-rect-vertical-scrollbar: '.vertical-scrollbar' '.scrollbar-y';
+  content-size-fitter: true;
+  content-size-fitter-horizontal-fit: unconstrained;
+  content-size-fitter-vertical-fit: preferred-size;
+  layout-group-start-axis: horizontal;
+}
+
 [typeof='RepeatGrid'] > * {
   unity-name: 'rg${childIndex}(${guid})';
 }
@@ -199,13 +253,22 @@ first-childになる
   unity-name: '${guid}';
 }
 
-
 /*
 ScrollableGroup
  */
-[typeof='ScrollableGroup'] {
+/* content を子供の中から探し無ければ作成 */
+[typeof='ScrollableGroup']:not(:has-only-child:has-some-child(.content)) {
   create-content: true;
   create-content-name: '.content';
+  create-content-move-layout-group: true;
+  create-content-move-content-size-fitter: true;
+  rect-mask-twod: true;
+  scroll-rect: true;
+  scroll-rect-content: '.content';
+}
+
+/* contentは すでにcontentをもっている */
+[typeof='ScrollableGroup']:has-only-child:has-some-child(.content) {
   rect-mask-twod: true;
   scroll-rect: true;
   scroll-rect-content: '.content';
@@ -223,7 +286,6 @@ ScrollableGroup
   scroll-rect-vertical: true;
   scroll-rect-horizontal: true;
 }
-
 
 .viewport-xy {
   create-content: true;
@@ -298,22 +360,28 @@ ScrollableGroup
   rect-transform-anchors-offsets-y: 0 1 0 0;
 }
 
+.horizontal-scrollbar,
 .scrollbar-x {
+  match-log: '-------------------horizontal-scrollbar---------------------';
   scrollbar: true;
   scrollbar-direction: ltr;
   scrollbar-handle-target: '.handle';
 }
 
+.horizontal-scrollbar > .handle,
 .scrollbar-x > .handle {
   fix: l r t b;
 }
 
+.vertical-scrollbar,
 .scrollbar-y {
+  match-log: '-------------------vertical-scrollbar---------------------';
   scrollbar: true;
   scrollbar-direction: btt;
   scrollbar-handle-target: '.handle';
 }
 
+.vertical-scrollbar > .handle,
 .scrollbar-y > .handle {
   fix: l r t b;
 }
@@ -443,11 +511,6 @@ ScrollableGroup
   input-placeholder-target: '.placeholder';
 }
 
-.mask-image {
-  image: true;
-  component: true;
-}
-
 .no-instance {
   instance-if-possible: false;
 }
@@ -474,4 +537,40 @@ ScrollableGroup
   image-slice: false;
   image-type: simple;
   preserve-aspect: true;
+}
+
+.stretch-cover {
+  stretch-cover: true;
+  image-slice: false;
+  image-type: simple;
+  preserve-aspect: true;
+}
+
+[typeof='Group']:has-mask {
+  create-content: true;
+  create-content-name: '.content';
+  mask: true;
+  mask-show-mask-graphic: false;
+}
+
+*:is-mask {
+  image: true;
+  component: true;
+}
+
+.scroll-x {
+  scroll-rect: true;
+  scroll-rect-horizontal: true;
+  scroll-rect-content: '.content';
+  create-content: true;
+  create-content-name: '.content';
+}
+
+.scroll-xy {
+  scroll-rect: true;
+  scroll-rect-horizontal: true;
+  scroll-rect-vertical: true;
+  scroll-rect-content: '.content';
+  create-content: true;
+  create-content-name: '.content';
 }
