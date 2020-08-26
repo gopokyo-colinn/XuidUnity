@@ -48,13 +48,14 @@ padding
 .padding {
   layout-group: vertical;
   layout-group-child-control-size: width height;
-  /* layout-group-child-force-expand: width height; */
+  layout-group-child-force-expand: width height;
   layout-group-child-alignment: upper-center;
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
   create-content: if-not-content-only-child-has-layout-properties; /* 削除予定 */
   create-content-name: '.content';
+  /* create-content で成功したときのみ操作　レイアウトに関するものを移動する*/
 }
 
 /*
@@ -90,13 +91,12 @@ padding background
   layout-group-child-force-expand: width;
   layout-group-child-alignment: upper-center;
   layout-group-spacing-y: average;
-  /* layout-group-children-order: reverse; */
   content-size-fitter: true;
   content-size-fitter-vertical-fit: preferred-size;
 }
 
 .vertical-stack > * {
-  layout-element: if-not-has-layout-properties;
+  layout-element: if-not-has-layout-properties; /* 削除予定 */
   layout-element-preferred-height: draw-bounds-height;
 }
 
@@ -119,7 +119,7 @@ first-childになる
  */
 .vertical-item {
   wrap-vertical-item: true;
-  wrap-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
+  wrap-move-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
   layout-element: true; /* 必ず layout-elementを作成する */
 }
 
@@ -134,7 +134,6 @@ first-childになる
   layout-group-child-force-expand: height;
   layout-group-child-alignment: upper-center;
   layout-group-spacing-x: average;
-  layout-group-children-order: reverse;
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
 }
@@ -163,7 +162,7 @@ first-childになる
  */
 .horizontal-item {
   wrap-horizontal-item: true;
-  wrap-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
+  wrap-move-layout-element: true; /* このアイテムのLayoutElementをWrapオブジェクトに移動する*/
   layout-element: true; /* 必ず layout-elementを作成する */
 }
 
@@ -193,6 +192,8 @@ first-childになる
   rect-mask-twod: true;
   create-content: true;
   create-content-name: '.content';
+  create-content-move-layout-group: true;
+  create-content-move-content-size-fitter: true;
 }
 
 [typeof='RepeatGrid'].no-mask {
@@ -200,7 +201,6 @@ first-childになる
 }
 
 [typeof='RepeatGrid']:horizontal-layout {
-  match-log: 'horizontal-layout!!!';
   layout-group: x;
   layout-group-spacing-x: average;
   content-size-fitter: true;
@@ -208,7 +208,6 @@ first-childになる
 }
 
 [typeof='RepeatGrid']:vertical-layout {
-  match-log: 'vertical-layout!!!';
   layout-group: y;
   layout-group-spacing-y: average;
   content-size-fitter: true;
@@ -216,7 +215,6 @@ first-childになる
 }
 
 [typeof='RepeatGrid']:grid-layout {
-  match-log: 'grid-layout!!!';
   layout-group: grid;
   layout-group-cell-size-x: average;
   layout-group-cell-size-y: average;
@@ -247,7 +245,6 @@ first-childになる
   layout-group-start-axis: horizontal;
 }
 
-
 [typeof='RepeatGrid'] > * {
   unity-name: 'rg${childIndex}(${guid})';
 }
@@ -261,9 +258,10 @@ ScrollableGroup
  */
 /* content を子供の中から探し無ければ作成 */
 [typeof='ScrollableGroup']:not(:has-only-child:has-some-child(.content)) {
-  match-log: 'no content!!!!';
   create-content: true;
   create-content-name: '.content';
+  create-content-move-layout-group: true;
+  create-content-move-content-size-fitter: true;
   rect-mask-twod: true;
   scroll-rect: true;
   scroll-rect-content: '.content';
@@ -271,7 +269,6 @@ ScrollableGroup
 
 /* contentは すでにcontentをもっている */
 [typeof='ScrollableGroup']:has-only-child:has-some-child(.content) {
-  match-log: 'has content!!!!';
   rect-mask-twod: true;
   scroll-rect: true;
   scroll-rect-content: '.content';
@@ -363,22 +360,28 @@ ScrollableGroup
   rect-transform-anchors-offsets-y: 0 1 0 0;
 }
 
+.horizontal-scrollbar,
 .scrollbar-x {
+  match-log: '-------------------horizontal-scrollbar---------------------';
   scrollbar: true;
   scrollbar-direction: ltr;
   scrollbar-handle-target: '.handle';
 }
 
+.horizontal-scrollbar > .handle,
 .scrollbar-x > .handle {
   fix: l r t b;
 }
 
+.vertical-scrollbar,
 .scrollbar-y {
+  match-log: '-------------------vertical-scrollbar---------------------';
   scrollbar: true;
   scrollbar-direction: btt;
   scrollbar-handle-target: '.handle';
 }
 
+.vertical-scrollbar > .handle,
 .scrollbar-y > .handle {
   fix: l r t b;
 }

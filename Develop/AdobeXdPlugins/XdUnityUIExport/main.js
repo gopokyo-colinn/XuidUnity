@@ -36,9 +36,6 @@ let globalScale = 1.0
  */
 let outputFolder = null
 
-// 全てのアートボードを出力対象にするか
-let optionCheckAllArtboard = false
-
 // エキスポートフラグを見るかどうか
 let optionCheckMarkedForExport = false
 
@@ -55,6 +52,8 @@ let optionSymbolInstanceAsPrefab = false
  * レスポンシブパラメータを保存する
  * @type {BoundsToRectTransform[]}
  */
+
+let globalVisibleInfo = null
 
 let globalResponsiveBounds = null
 
@@ -76,6 +75,7 @@ let cacheNodeNameAndStyle = {}
  * Rootをコンバートする前にリセットする
  */
 function resetGlobalVariables() {
+  globalVisibleInfo = {}
   globalResponsiveBounds = {}
   globalCssRules = null
   globalCssVars = {}
@@ -168,7 +168,7 @@ const STYLE_SLIDER_DIRECTION = 'slider-direction'
 const STYLE_SLIDER_FILL_RECT_TARGET = 'slider-fill-rect-target'
 const STYLE_SLIDER_HANDLE_RECT_TARGET = 'slider-handle-rect-target'
 const STYLE_TEXT = 'text'
-const STYLE_TEXTMP = 'textmp' // textmeshpro
+const STYLE_TEXTMP = 'textmp' // TextMeshPro
 const STYLE_TEXT_STRING = 'text-string'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
@@ -211,7 +211,7 @@ const STYLE_CHECK_LOG = 'check-log'
 const STYLE_INSTANCE_IF_POSSIBLE = 'instance-if-possible'
 const STYLE_WRAP_VERTICAL_ITEM = 'wrap-vertical-item'
 const STYLE_WRAP_HORIZONTAL_ITEM = 'wrap-horizontal-item'
-const STYLE_WRAP_LAYOUT_ELEMENT = 'wrap-layout-element'
+const STYLE_WRAP_MOVE_LAYOUT_ELEMENT = 'wrap-move-layout-element'
 
 const appLanguage = application.appLanguage
 
@@ -685,7 +685,7 @@ class GlobalBounds {
    */
   constructor(node) {
     if (node == null) return
-    this.visible = node.visible
+    this.visible = globalVisibleInfo[node.guid]
     this.global_bounds = getGlobalBounds(node)
     this.global_draw_bounds = getGlobalDrawBounds(node)
     if (hasContentBounds(node)) {
@@ -1186,11 +1186,11 @@ function sortElementsByPositionAsc(jsonElements) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
   if (jsonElements == null) return
   jsonElements.sort((elemA, elemB) => {
-    const a_y = elemA['component'] ? Number.MAX_VALUE : elemA['y']
-    const b_y = elemB['component'] ? Number.MAX_VALUE : elemB['y']
-    if (a_y === b_y) {
-      const a_x = elemA['component'] ? Number.MAX_VALUE : elemA['x']
-      const b_x = elemB['component'] ? Number.MAX_VALUE : elemB['x']
+    const a_y = (elemA['component'] || !elemA['global_draw_bounds']) ? Number.MAX_VALUE : elemA['global_draw_bounds']['y']
+    const b_y = (elemB['component'] || !elemB['global_draw_bounds']) ? Number.MAX_VALUE : elemB['global_draw_bounds']['y']
+    if (a_y === b_y) { //TODO: 誤差範囲の確認必要か
+      const a_x = (elemA['component'] || !elemA['global_draw_bounds']) ? Number.MAX_VALUE : elemA['global_draw_bounds']['x']
+      const b_x = (elemB['component'] || !elemB['global_draw_bounds']) ? Number.MAX_VALUE : elemB['global_draw_bounds']['x']
       return b_x - a_x
     }
     return b_y - a_y
@@ -1200,11 +1200,11 @@ function sortElementsByPositionAsc(jsonElements) {
 function sortElementsByPositionDesc(jsonElements) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
   jsonElements.sort((elemA, elemB) => {
-    const a_y = elemA['component'] ? Number.MAX_VALUE : elemA['y']
-    const b_y = elemB['component'] ? Number.MAX_VALUE : elemB['y']
+    const a_y = elemA['component'] ? Number.MAX_VALUE : elemA['global_draw_bounds']['y']
+    const b_y = elemB['component'] ? Number.MAX_VALUE : elemB['global_draw_bounds']['y']
     if (b_y === a_y) {
-      const a_x = elemA['component'] ? Number.MAX_VALUE : elemA['x']
-      const b_x = elemB['component'] ? Number.MAX_VALUE : elemB['x']
+      const a_x = elemA['component'] ? Number.MAX_VALUE : elemA['global_draw_bounds']['x']
+      const b_x = elemB['component'] ? Number.MAX_VALUE : elemB['global_draw_bounds']['x']
       return a_x - b_x
     }
     return a_y - b_y
@@ -1253,7 +1253,7 @@ function addLayoutFromRepeatGrid(json, repeatGrid, style) {
     cell_max_width: repeatGrid.cellSize.width * globalScale,
     cell_max_height: repeatGrid.cellSize.height * globalScale,
   })
-  addLayoutParam(layoutJson, style)
+  addLayoutGroupParam(layoutJson, style)
 
   json['layout'] = layoutJson
 }
@@ -1547,7 +1547,7 @@ function getLayoutJson(json, viewportNode, maskNode, children, style) {
     layoutJson = calcGridLayout(json, viewportNode, maskNode, children)
   }
   if (layoutJson != null) {
-    addLayoutParam(layoutJson, style)
+    addLayoutGroupParam(layoutJson, style)
   }
   return layoutJson
 }
@@ -2652,78 +2652,51 @@ function addCanvasGroup(json, node, style) {
   }
 }
 
-/**
- * RectTransformパラメータ指定による上書き
- * @param json
- * @param style
- */
-function addRectTransformAnchorOffset(json, style) {
-  if (!style) return
-  // RectTransformの値がない場合、作成する
-  if (!('rect_transform' in json)) {
-    json['rect_transform'] = {}
-  }
-  let rectTransformJson = json['rect_transform']
+function addGlobalDrawBounds(json, node)
+{
+  const global_draw_bounds = getBeforeGlobalDrawBounds(node)
+  Object.assign(json, {
+    global_draw_bounds
+  })
+}
 
+function overwriteRectTransform(rectTransformJson, style) {
   //TODO: 初期値はいらないだろうか
-  if (!('anchor_min' in rectTransformJson)) rectTransformJson['anchor_min'] = {}
-  if (!('anchor_max' in rectTransformJson)) rectTransformJson['anchor_max'] = {}
-  if (!('offset_min' in rectTransformJson)) rectTransformJson['offset_min'] = {}
-  if (!('offset_max' in rectTransformJson)) rectTransformJson['offset_max'] = {}
+  if (!("anchor_min" in rectTransformJson)) rectTransformJson["anchor_min"] = {}
+  if (!("anchor_max" in rectTransformJson)) rectTransformJson["anchor_max"] = {}
+  if (!("offset_min" in rectTransformJson)) rectTransformJson["offset_min"] = {}
+  if (!("offset_max" in rectTransformJson)) rectTransformJson["offset_max"] = {}
   // Styleで指定があった場合、上書きする
   const anchorX = style.values(STYLE_RECT_TRANSFORM_ANCHORS_X)
   if (anchorX) {
     // console.log(`anchorsX:${anchorOffsetX}`)
-    rectTransformJson['anchor_min']['x'] = parseFloat(anchorX[0])
-    rectTransformJson['anchor_max']['x'] = parseFloat(anchorX[1])
+    rectTransformJson["anchor_min"]["x"] = parseFloat(anchorX[0])
+    rectTransformJson["anchor_max"]["x"] = parseFloat(anchorX[1])
   }
   const anchorY = style.values(STYLE_RECT_TRANSFORM_ANCHORS_Y)
   if (anchorY) {
     // console.log(`anchorsY:${anchorOffsetY}`)
-    rectTransformJson['anchor_min']['y'] = parseFloat(anchorY[0])
-    rectTransformJson['anchor_max']['y'] = parseFloat(anchorY[1])
+    rectTransformJson["anchor_min"]["y"] = parseFloat(anchorY[0])
+    rectTransformJson["anchor_max"]["y"] = parseFloat(anchorY[1])
   }
 
   const anchorOffsetX = style.values(STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_X)
   if (anchorOffsetX) {
     // console.log(`anchorsX:${anchorOffsetX}`)
-    rectTransformJson['anchor_min']['x'] = parseFloat(anchorOffsetX[0])
-    rectTransformJson['anchor_max']['x'] = parseFloat(anchorOffsetX[1])
-    rectTransformJson['offset_min']['x'] = parseFloat(anchorOffsetX[2])
-    rectTransformJson['offset_max']['x'] = parseFloat(anchorOffsetX[3])
+    rectTransformJson["anchor_min"]["x"] = parseFloat(anchorOffsetX[0])
+    rectTransformJson["anchor_max"]["x"] = parseFloat(anchorOffsetX[1])
+    rectTransformJson["offset_min"]["x"] = parseFloat(anchorOffsetX[2])
+    rectTransformJson["offset_max"]["x"] = parseFloat(anchorOffsetX[3])
   }
   const anchorOffsetY = style.values(STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_Y)
   if (anchorOffsetY) {
     // console.log(`anchorsY:${anchorOffsetY}`)
-    rectTransformJson['anchor_min']['y'] = parseFloat(anchorOffsetY[0])
-    rectTransformJson['anchor_max']['y'] = parseFloat(anchorOffsetY[1])
-    rectTransformJson['offset_min']['y'] = parseFloat(anchorOffsetY[2])
-    rectTransformJson['offset_max']['y'] = parseFloat(anchorOffsetY[3])
+    rectTransformJson["anchor_min"]["y"] = parseFloat(anchorOffsetY[0])
+    rectTransformJson["anchor_max"]["y"] = parseFloat(anchorOffsetY[1])
+    rectTransformJson["offset_min"]["y"] = parseFloat(anchorOffsetY[2])
+    rectTransformJson["offset_max"]["y"] = parseFloat(anchorOffsetY[3])
   }
 }
-
-/*
-function anchorChange(json,style)
-{
-  if (style.hasValue(STYLE_MARGIN_FIX, 'c', 'center')) {
-    anchorMin.x = 0.5
-    anchorMax.x = 0.5
-    const center = beforeBounds.x + beforeBounds.width / 2
-    const parentCenter = parentBeforeBounds.x + parentBeforeBounds.width / 2
-    offsetMin.x = center - parentCenter - beforeBounds.width / 2
-    offsetMax.x = center - parentCenter + beforeBounds.width / 2
-  }
-
-  if (style.hasValue(STYLE_MARGIN_FIX, 'm', 'middle')) {
-    anchorMin.y = 0.5
-    anchorMax.y = 0.5
-    const middle = beforeBounds.y + beforeBounds.height / 2
-    const parentMiddle = parentBeforeBounds.y + parentBeforeBounds.height / 2
-    offsetMin.y = -(middle - parentMiddle) - beforeBounds.height / 2
-    offsetMax.y = -(middle - parentMiddle) + beforeBounds.height / 2
-  }
-}
-*/
 
 /**
  * オプションにpivot､stretchがあれば上書き
@@ -2731,31 +2704,16 @@ function anchorChange(json,style)
  * @param {SceneNodeClass} node
  * @param style
  */
-function addRectTransformDraw(json, node, style) {
+function addRectTransform(json, node, style) {
   let param = getRectTransformDraw(node)
   if (param) {
     Object.assign(json, {
       rect_transform: param,
     })
   }
-  addRectTransformAnchorOffset(json, style)
-}
 
-/**
- *
- * @param json
- * @param {SceneNode|SceneNodeClass} node
- * @param style
- * @returns {null}
- */
-function addRectTransform(json, node, style) {
-  let param = getRectTransform(node)
-  if (param) {
-    Object.assign(json, {
-      rect_transform: param,
-    })
-  }
-  addRectTransformAnchorOffset(json, style)
+  const rectTransformJson = json["rect_transform"]
+  overwriteRectTransform(rectTransformJson, style)
 }
 
 /**
@@ -2931,7 +2889,8 @@ async function addImage(
     opacity: 100,
   })
 
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
 
   Object.assign(json, {
     image: {},
@@ -3233,12 +3192,10 @@ function getCellDrawHeight(nodes) {
  * @param {Style} style
  */
 function addLayoutGroup(json, viewportNode, maskNode, children, style) {
-  // let layoutJson = getLayoutJson(json, viewportNode, maskNode, children, style)
-  //if (!layoutJson) return
   let styleLayout = style.values(STYLE_LAYOUT_GROUP)
   if (styleLayout == null) return
 
-  const layoutJson = {}
+  const layoutGroupJson = {}
 
   let method = null
   if (hasAnyValue(styleLayout, 'x', STR_HORIZONTAL)) {
@@ -3251,10 +3208,17 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
     method = 'grid'
   }
   if (method != null) {
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       method,
     })
+    //　methodが確定でソートする
+    sortElementsByPositionAsc(json.elements)
   }
+
+  const padding = calcPadding(viewportNode)
+  Object.assign(layoutGroupJson,{
+    padding
+  })
 
   // spacing を計算するノードだけ取り出す
   let childNodes = children.filter(child => {
@@ -3299,7 +3263,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
         layoutSpacingX = 0
       }
     }
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       spacing_x: layoutSpacingX, //TODO: pxやenを無視している
     })
   }
@@ -3316,7 +3280,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
         layoutSpacingY = 0
       }
     }
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       spacing_y: layoutSpacingY, //TODO: 単位がない状態で渡している　単位はPixel数
     })
   }
@@ -3333,7 +3297,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
         cell_size_x = 100
       }
     }
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       cell_size_x: cell_size_x, //TODO: 単位がない状態で渡している　単位はPixel数
     })
   }
@@ -3350,10 +3314,12 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
         cell_size_y = 100
       }
     }
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       cell_size_y, //TODO: 単位がない状態で渡している　単位はPixel数
     })
   }
+
+  addLayoutGroupParam(layoutGroupJson, style)
 
   // 子供が位置でソートされているそれの順序を反転させる
   if (style.first(STYLE_LAYOUT_GROUP_CHILDREN_ORDER) === 'reverse') {
@@ -3361,20 +3327,20 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
   }
 
   Object.assign(json, {
-    layout_group: layoutJson,
+    layout_group: layoutGroupJson,
   })
 }
 
 /**
  * レイアウトコンポーネント各種パラメータをStyleから設定する
- * @param layoutJson
+ * @param layoutGroupJson
  * @param {Style} style
  */
-function addLayoutParam(layoutJson, style) {
+function addLayoutGroupParam(layoutGroupJson, style) {
   if (style == null) return
   const styleChildAlignment = style.first(STYLE_LAYOUT_GROUP_CHILD_ALIGNMENT)
   if (styleChildAlignment) {
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       child_alignment: styleChildAlignment,
     })
   }
@@ -3383,14 +3349,14 @@ function addLayoutParam(layoutJson, style) {
     STYLE_LAYOUT_GROUP_CHILD_CONTROL_SIZE,
   )
   if (styleChildControlSize) {
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       child_control_size: styleChildControlSize,
     })
   }
 
   const styleUseChildScale = style.values(STYLE_LAYOUT_GROUP_USE_CHILD_SCALE)
   if (styleUseChildScale) {
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       use_child_scale: styleUseChildScale,
     })
   }
@@ -3399,7 +3365,7 @@ function addLayoutParam(layoutJson, style) {
     STYLE_LAYOUT_GROUP_CHILD_FORCE_EXPAND,
   )
   if (styleChildForceExpand) {
-    Object.assign(layoutJson, {
+    Object.assign(layoutGroupJson, {
       child_force_expand: styleChildForceExpand,
     })
   }
@@ -3409,13 +3375,13 @@ function addLayoutParam(layoutJson, style) {
   if (styleStartAxis) {
     // まず横方向へ並べる
     if (style.hasValue(STYLE_LAYOUT_GROUP_START_AXIS, 'x', STR_HORIZONTAL)) {
-      Object.assign(layoutJson, {
+      Object.assign(layoutGroupJson, {
         start_axis: STR_HORIZONTAL,
       })
     }
     // まず縦方向へ並べる
     if (style.hasValue(STYLE_LAYOUT_GROUP_START_AXIS, 'y', STR_VERTICAL)) {
-      Object.assign(layoutJson, {
+      Object.assign(layoutGroupJson, {
         start_axis: STR_VERTICAL,
       })
     }
@@ -3426,8 +3392,7 @@ function hasLayoutPropertyPreferredSize(style) {
   return (
     style.firstAsBool(STYLE_TEXT) ||
     style.firstAsBool(STYLE_TEXTMP) ||
-    (style.firstAsBool(STYLE_IMAGE) &&
-      style.firstAsBool(STYLE_IMAGE_SLICE) === false) || // スライスイメージなら、Preferred Sizeを持たない
+    style.firstAsBool(STYLE_IMAGE) ||
     style.firstAsBool(STYLE_LAYOUT_GROUP)
   )
 }
@@ -3650,7 +3615,7 @@ function addContent(style, json, node) {
     // Groupでもスクロールウィンドウはできるようにするが、RepeatGridではない場合レイアウト情報が取得しづらい
 
     // 縦の並び順を正常にするため､Yでソートする
-    sortElementsByPositionAsc(json.elements)
+    // sortElementsByPositionAsc(json.elements) LayoutGroupで必要に応じてするためにここではいらないはず
 
     // これはコンテントのレイアウトオプションで実行すべき
     addLayoutGroup(
@@ -3667,7 +3632,7 @@ function addContent(style, json, node) {
     // 横スクロールを意図しているか　→ Content.RectTransformは縦サイズぴったり　横に伸びる
     // こちらが確定できないため
     // addLayoutFromRepeatGrid(contentJson, node, contentStyle)
-    sortElementsByPositionAsc(json.elements)
+    // sortElementsByPositionAsc(json.elements)
     addLayoutGroup(
       contentJson,
       node,
@@ -3700,27 +3665,29 @@ function addContent(style, json, node) {
   const contentWidth = contentDrawBounds.width
   const contentHeight = contentDrawBounds.height
 
-  const rect_transform = calcRect(
+  const contentBounds = {
+    x: contentX,
+    y: contentY,
+    width: contentWidth,
+    height: contentHeight,
+    ex: contentX + contentWidth,
+    ey: contentX + contentWidth,
+  }
+  const contentRectTransform = calcRect(
     nodeBounds,
-    {
-      x: contentX,
-      y: contentY,
-      width: contentWidth,
-      height: contentHeight,
-      ex: contentX + contentWidth,
-      ey: contentX + contentWidth,
-    },
+    contentBounds,
     null,
     null,
     contentStyle,
   )
   Object.assign(contentJson, {
-    rect_transform,
+    global_draw_bounds: contentBounds,
+    rect_transform: contentRectTransform,
   })
 
   //TODO:GUIDを仮にでも生成できると良い
   addLayer(contentJson, contentStyle)
-  addRectTransformAnchorOffset(contentJson, contentStyle) // anchor設定を上書きする
+  overwriteRectTransform(contentRectTransform, contentStyle) // anchor設定を上書きする
   addContentSizeFitter(contentJson, contentStyle)
   addLayoutElement(contentJson, contentNode, contentStyle, contentDrawBounds) // DrawBoundsを渡す
 }
@@ -3757,7 +3724,8 @@ async function createViewport(json, node, root, funcForEachChild) {
   // 基本
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, style)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
 
@@ -3832,7 +3800,8 @@ async function createInput(json, node, root, funcForEachChild) {
   // 基本
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, style)
+  addRectTransform(json, node, style)
   //addStyleRectTransform(json, style) // anchor設定を上書きする
   addLayer(json, style)
   addParsedNames(json, node)
@@ -3969,6 +3938,7 @@ function addWrap(json, node, style) {
       type: 'Group',
       name: `wrap-vertical-item(${node.guid})`,
       layer: wrappedChild.layer,
+      global_draw_bounds: wrappedChild.global_draw_bounds, // 子供のBoundsをそのまま利用　Bounds.y でのソートに使われる
       rect_transform: {
         pivot: {
           x: 1,
@@ -3998,7 +3968,7 @@ function addWrap(json, node, style) {
     wrappedChild.rect_transform.offset_min.y = 0
     wrappedChild.rect_transform.offset_max.y = 0
 
-    if (style.firstAsBool(STYLE_WRAP_LAYOUT_ELEMENT)) {
+    if (style.firstAsBool(STYLE_WRAP_MOVE_LAYOUT_ELEMENT)) {
       if (wrappedChild.layout_element) {
         Object.assign(json, {
           layout_element: wrappedChild.layout_element,
@@ -4052,7 +4022,7 @@ function addWrap(json, node, style) {
     wrappedChild.rect_transform.offset_min.x = 0
     wrappedChild.rect_transform.offset_max.x = 0
 
-    if (style.firstAsBool(STYLE_WRAP_LAYOUT_ELEMENT)) {
+    if (style.firstAsBool(STYLE_WRAP_MOVE_LAYOUT_ELEMENT)) {
       if (wrappedChild.layout_element) {
         Object.assign(json, {
           layout_element: wrappedChild.layout_element,
@@ -4099,13 +4069,15 @@ async function createGroup(json, node, root, funcForEachChild) {
   // 基本
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
   //
   addComponents(json, style)
   addCanvasGroup(json, node, style)
   addLayoutElement(json, node, style)
+
   addLayoutGroup(json, node, node, node.children, style)
   addContentSizeFitter(json, style)
   addScrollRect(json, node, style)
@@ -4120,21 +4092,26 @@ async function createGroup(json, node, root, funcForEachChild) {
 
   // contentが作成されている時
   if (json['content']) {
-    // 子供のレイアウトにまつわるStyleはContentに移動する
-    // layout-groupが付与されている場合、contentに移す
-    if (json['layout_group']) {
-      json['content']['layout_group'] = json['layout_group']
-      delete json['layout_group']
+    // 子供のレイアウトにまつわるStyleをContentに移動する
+    // layout-groupが付与されている場合、contentに移動する
+    if(style.firstAsBool("create-content-move-layout-group")) {
+      if (json['layout_group']) {
+        json['content']['layout_group'] = json['layout_group']
+        delete json['layout_group']
+      }
     }
-    // layout-groupが付与されている場合、contentに移す
-    if (json['content_size_fitter']) {
-      json['content']['content_size_fitter'] = json['content_size_fitter']
-      delete json['content_size_fitter']
+    // content_size_fitter が付与されている場合、contentに移動する
+    if(style.firstAsBool("create-content-move-content-size-fitter")) {
+      if (json['content_size_fitter']) {
+        json['content']['content_size_fitter'] = json['content_size_fitter']
+        delete json['content_size_fitter']
+      }
     }
     //contentが作成されていた場合、elementsにいれる
     json.elements.push(json['content'])
     delete json['content']
   }
+
 }
 
 /**
@@ -4194,7 +4171,8 @@ async function createScrollbar(json, node, funcForEachChild) {
   // 基本
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
   //
@@ -4258,7 +4236,8 @@ async function createSlider(json, node, funcForEachChild) {
   // 基本
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
   //
@@ -4342,7 +4321,8 @@ async function createToggle(json, node, root, funcForEachChild) {
   // 基本パラメータ・コンポーネント
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
   //
@@ -4401,7 +4381,8 @@ async function createButton(json, node, root, funcForEachChild) {
   // 基本パラメータ
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
   addComponents(json, style)
@@ -4472,7 +4453,8 @@ async function createImage(
     // 基本パラメータ
     addGuid(json, node)
     addActive(json, node, style)
-    addRectTransformDraw(json, node, style)
+    addGlobalDrawBounds(json, node)
+    addRectTransform(json, node, style)
     addLayer(json, style)
     addParsedNames(json, node)
     addLayoutElement(json, node, style)
@@ -4535,7 +4517,8 @@ async function createPrefabInstance(json, node, root) {
   // 基本
   addGuid(json, node)
   addActive(json, node, style)
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
   // このPrefabがVerticalLayoutの中にはいっている場合等
@@ -4656,10 +4639,10 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   // 文字はスライスしないオプションで出力する
   if (
     style.firstAsBool(STYLE_IMAGE) ||
-    style.firstAsBool(STYLE_IMAGE_SLICE) ||
     (!style.firstAsBool(STYLE_TEXT) && !style.firstAsBool(STYLE_TEXTMP))
   ) {
     const localStyle = new Style()
+    // 文字はスライスしない
     localStyle.setFirst(STYLE_IMAGE_SLICE, 'false')
     await createImage(
       json,
@@ -4719,8 +4702,9 @@ async function nodeText(json, node, artboard, outputFolder, renditions) {
   // 基本パラメータ
   addGuid(json, node)
   addActive(json, node, style)
-  // Drawではなく、通常のレスポンシブパラメータを渡す　シャドウ等のエフェクトは自前でやる必要があるため
-  addRectTransformDraw(json, node, style)
+  addGlobalDrawBounds(json, node)
+  //TODO:Drawではなく、通常のレスポンシブパラメータを渡すべきか　シャドウ等のエフェクトは自前でやる必要があるため
+  addRectTransform(json, node, style)
   addLayer(json, style)
   addParsedNames(json, node)
 }
@@ -4845,10 +4829,7 @@ async function createRoot(renditions, outputFolder, root) {
       case 'Group':
       case 'RepeatGrid':
         {
-          if (
-            style.firstAsBool(STYLE_IMAGE) ||
-            style.firstAsBool(STYLE_IMAGE_SLICE)
-          ) {
+          if (style.firstAsBool(STYLE_IMAGE)) {
             // console.log('groupでのSTYLE_IMAGE処理 子供のコンテンツ変更は行うが、イメージ出力はしない')
             enableWriteToLayoutJson = false //TODO: 関数にわたす引数にならないか
             let tempOutputFolder = outputFolder
@@ -4991,6 +4972,7 @@ async function exportXdUnityUI(roots, outputFolder) {
 
     // createRenditionsの前にすべて可視にする
     // 正常なBoundsを得るために、makeBoundsの前にやる
+    // TODO: これによりvisible情報が取得できなくなった
     // console.log('- change visible')
     for (let root of roots) {
       traverseNode(root, node => {
@@ -4998,6 +4980,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         if (style.firstAsBool(STYLE_COMMENT_OUT)) {
           return false // 子供には行かないようにする
         }
+        globalVisibleInfo[node.guid] = node.visible
         if (!node.visible) {
           if (!selection.isInEditContext(node)) {
             const message = `warning: ${root.name}/${node.parent.name}/${node.name}<br>> May not output need image. Could not change visible parameter out edit context.`
@@ -5012,8 +4995,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         // 本来は sourceImageをNaturalWidth,Heightで出力する
         // TODO: Pathなど、レンダリングされるものもノータッチであるべきではないか
         if (
-          style.firstAsBool(STYLE_IMAGE) ||
-          style.firstAsBool(STYLE_IMAGE_SLICE)
+          style.firstAsBool(STYLE_IMAGE)
         ) {
           return false
         }
