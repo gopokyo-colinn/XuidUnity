@@ -67,6 +67,7 @@ namespace I0plus.XdUnityUI.Editor
                 Debug.Log($"parent part of prefab:{parentObject.name}");
             }
             */
+            rect.SetParent(null);
             rect.SetParent(parentObject.transform);
 
             if (renderContext.OptionAddXdGuidComponent)

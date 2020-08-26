@@ -35,7 +35,7 @@ namespace I0plus.XdUnityUI.Editor
             string[] movedFromAssetPaths)
         {
             var importFolderAssetPath = EditorUtil.GetImportFolderAssetPath();
-            
+
             // 自動インポート用フォルダが無い場合は終了
             if (importFolderAssetPath == null) return;
 
@@ -52,7 +52,7 @@ namespace I0plus.XdUnityUI.Editor
                 foreach (var forImportAssetPath in forImportAssetPaths)
                 {
                     // フォルダの場合はスルー
-                    if (IsFolder(forImportAssetPath)) continue;
+                    if (IsFolder(forImportAssetPath) == true) continue;
 
                     // インポートするファイルを削除
                     AssetDatabase.DeleteAsset(forImportAssetPath);
@@ -60,8 +60,11 @@ namespace I0plus.XdUnityUI.Editor
                     var folderName = Path.GetDirectoryName(forImportAssetPath);
                     var files = Directory.GetFiles(folderName);
                     if (files.Length == 0)
+                    {
                         // フォルダの削除
+                        Debug.Log($"ディレクトリ削除{folderName}");
                         AssetDatabase.DeleteAsset(folderName);
+                    }
                 }
 
                 AssetDatabase.Refresh();
@@ -211,8 +214,9 @@ namespace I0plus.XdUnityUI.Editor
             EditorUtility.DisplayDialog("Import", "Done.", "Ok");
         }
 
-        private static bool IsFolder(string path)
+        private static bool? IsFolder(string path)
         {
+            if (!Directory.Exists(path) && !File.Exists(path)) return null;
             try
             {
                 return File.GetAttributes(path).HasFlag(FileAttributes.Directory);
@@ -220,7 +224,7 @@ namespace I0plus.XdUnityUI.Editor
             catch (Exception exception)
             {
                 // ignored
-                Debug.LogError(exception.Message);
+                Debug.LogAssertion(exception.Message);
             }
 
             return false;
@@ -246,7 +250,7 @@ namespace I0plus.XdUnityUI.Editor
             var importedFolderAssetPaths = new FolderInfos();
             foreach (var importedAssetPath in importedAssetPaths)
             {
-                if (IsFolder(importedAssetPath))
+                if (IsFolder(importedAssetPath) == true)
                     // すでにフォルダパスはスルー
                     continue;
 
@@ -258,12 +262,11 @@ namespace I0plus.XdUnityUI.Editor
             // 出力フォルダの作成
             foreach (var importedFolderInfo in importedFolderAssetPaths)
             {
-                if (!IsFolder(importedFolderInfo.Key)) continue;
+                if (IsFolder(importedFolderInfo.Key) != true) continue;
 
                 // フォルダであった場合
                 var importedFullPath = Path.GetFullPath(importedFolderInfo.Key);
                 var subFolderName = Path.GetFileName(importedFolderInfo.Key);
-
 
                 var isSpriteFolder = importedFolderInfo.Value.Contains(".png");
                 // スプライト出力フォルダの準備
@@ -337,25 +340,34 @@ namespace I0plus.XdUnityUI.Editor
             // 画像コンバート　スライス処理
             var messageCounter = new Dictionary<string, int>();
             var total = 0;
-            foreach (var importedAsset in importedPaths)
+            try
             {
-                if (!importedAsset.EndsWith(".png", StringComparison.Ordinal)) continue;
-                //
-                if (!clearedImageMap) clearedImageMap = true;
+                foreach (var importedAsset in importedPaths)
+                {
+                    // Debug.Log($"importedAsset {importedAsset}");
+                    if (!importedAsset.EndsWith(".png", StringComparison.Ordinal)) continue;
+                    //
+                    if (!clearedImageMap) clearedImageMap = true;
 
-                // スライス処理
-                var message = TextureUtil.SliceSprite(importedAsset);
-                changed = true;
+                    // スライス処理
+                    var message = TextureUtil.SliceSprite(importedAsset);
+                    changed = true;
 
-                total++;
-                _progressCount += 1;
-                UpdateDisplayProgressBar(message);
+                    total++;
+                    _progressCount += 1;
+                    UpdateDisplayProgressBar(message);
 
-                // 出力されたログをカウントする
-                if (messageCounter.ContainsKey(message))
-                    messageCounter[message] = messageCounter[message] + 1;
-                else
-                    messageCounter.Add(message, 1);
+                    // 出力されたログをカウントする
+                    if (messageCounter.ContainsKey(message))
+                        messageCounter[message] = messageCounter[message] + 1;
+                    else
+                        messageCounter.Add(message, 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogAssertion(ex.Message);
+                Debug.LogAssertion(ex.StackTrace);
             }
 
             foreach (var keyValuePair in messageCounter)
@@ -441,6 +453,7 @@ namespace I0plus.XdUnityUI.Editor
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
                     prefabCreator.Create(ref go, renderContext);
+                    Importer.CreateFolderRecursively(Path.GetDirectoryName(saveAssetPath));
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log($"[XdUnityUI] {Path.GetFileName(saveAssetPath)} is created.", savedAsset);
                 }
@@ -531,21 +544,21 @@ namespace I0plus.XdUnityUI.Editor
         /// <summary>
         ///     複数階層のフォルダを作成する
         /// </summary>
-        /// <param name="path">一番子供のフォルダまでのパスe.g.)Assets/Resources/Sound/</param>
+        /// <param name="assetPath">一番子供のフォルダまでのパスe.g.)Assets/Resources/Sound/</param>
         /// <remarks>パスは"Assets/"で始まっている必要があります。Splitなので最後のスラッシュ(/)は不要です</remarks>
-        public static void CreateFolderRecursively(string path)
+        public static void CreateFolderRecursively(string assetPath)
         {
-            path = path.Replace("\\", "/");
-            Debug.Assert(path.StartsWith("Assets/"),
+            assetPath = assetPath.Replace("\\", "/");
+            Debug.Assert(assetPath.StartsWith("Assets/"),
                 "arg `path` of CreateFolderRecursively doesn't starts with `Assets/`");
 
             // もう存在すれば処理は不要
-            if (AssetDatabase.IsValidFolder(path)) return;
+            if (AssetDatabase.IsValidFolder(assetPath)) return;
 
             // スラッシュで終わっていたら除去
-            if (path[path.Length - 1] == '/') path = path.Substring(0, path.Length - 1);
+            if (assetPath[assetPath.Length - 1] == '/') assetPath = assetPath.Substring(0, assetPath.Length - 1);
 
-            var names = path.Split('/');
+            var names = assetPath.Split('/');
             for (var i = 1; i < names.Length; i++)
             {
                 var parent = string.Join("/", names.Take(i).ToArray());

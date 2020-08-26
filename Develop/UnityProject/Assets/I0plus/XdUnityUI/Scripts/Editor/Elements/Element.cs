@@ -78,8 +78,11 @@ namespace I0plus.XdUnityUI.Editor
 
             var rect = ElementUtil.GetOrAddComponent<RectTransform>(selfObject);
             if (parentObject)
+            {
+                rect.SetParent(null);
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
+            }
             if (renderContext.OptionAddXdGuidComponent) ElementUtil.SetGuid(selfObject, Guid);
             ElementUtil.SetActive(selfObject, Active);
             ElementUtil.SetLayer(selfObject, Layer);
