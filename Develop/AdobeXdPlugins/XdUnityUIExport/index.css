@@ -100,8 +100,9 @@ padding background
   content-size-fitter-vertical-fit: preferred-size;
 }
 
-.vertical-stack > *:not(:has-layout-properties-preferred-size) {
-  layout-element: true;
+/*.vertical-stack > *:not(:has-layout-properties-preferred-size) { 　CSSセレクタで、CSSが決定した後の値を取ろうとしているため、無限ループにはいる*/
+.vertical-stack > * {
+  layout-element: not-has-layout-properties-preferred-size;
   layout-element-preferred-height: draw-bounds-height;
 }
 
@@ -143,8 +144,9 @@ first-childになる
   content-size-fitter-horizontal-fit: preferred-size;
 }
 
-.horizontal-stack > *:not(:has-layout-properties-preferred-size) {
-  layout-element: true;
+/*.horizontal-stack > :not(:has-layout-properties-preferred-size) {*/
+.horizontal-stack > * {
+  layout-element: not-has-layout-properties-preferred-size;
   layout-element-preferred-width: draw-bounds-width;
 }
 
@@ -208,6 +210,7 @@ first-childになる
 [typeof='RepeatGrid']:horizontal-layout {
   layout-group: x;
   layout-group-spacing-x: average;
+  layout-group-padding: 0 0 0 0; /* contentが伸びたりしない場合はpaddingは必要ない*/
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
 }
@@ -215,6 +218,7 @@ first-childになる
 [typeof='RepeatGrid']:vertical-layout {
   layout-group: y;
   layout-group-spacing-y: average;
+  layout-group-padding: 0 0 0 0; /* contentが伸びたりしない場合はpaddingは必要ない*/
   content-size-fitter: true;
   content-size-fitter-vertical-fit: preferred-size;
 }
@@ -225,6 +229,7 @@ first-childになる
   layout-group-cell-size-y: average;
   layout-group-spacing-x: average;
   layout-group-spacing-y: average;
+  layout-group-padding: 0 0 0 0; /* contentが伸びたりしない場合はpaddingは必要ない*/
 }
 
 [typeof='RepeatGrid']:not(.no-mask).horizontal-scroll {

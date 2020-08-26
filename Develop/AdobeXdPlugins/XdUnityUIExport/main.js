@@ -6,8 +6,6 @@
  * https://www.w3schools.com/css/tryit.asp?filename=trycss_sel_attribute_end
  * https://codepen.io/pen/
  */
-import {hasLayoutProperties} from "../ExportUXML/style"
-
 // XD拡張APIのクラスをインポート
 const {
   Artboard,
@@ -1188,11 +1186,24 @@ function sortElementsByPositionAsc(jsonElements) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
   if (jsonElements == null) return
   jsonElements.sort((elemA, elemB) => {
-    const a_y = (elemA['component'] || !elemA['global_draw_bounds']) ? Number.MAX_VALUE : elemA['global_draw_bounds']['y']
-    const b_y = (elemB['component'] || !elemB['global_draw_bounds']) ? Number.MAX_VALUE : elemB['global_draw_bounds']['y']
-    if (a_y === b_y) { //TODO: 誤差範囲の確認必要か
-      const a_x = (elemA['component'] || !elemA['global_draw_bounds']) ? Number.MAX_VALUE : elemA['global_draw_bounds']['x']
-      const b_x = (elemB['component'] || !elemB['global_draw_bounds']) ? Number.MAX_VALUE : elemB['global_draw_bounds']['x']
+    const a_y =
+      elemA['component'] || !elemA['global_draw_bounds']
+        ? Number.MAX_VALUE
+        : elemA['global_draw_bounds']['y']
+    const b_y =
+      elemB['component'] || !elemB['global_draw_bounds']
+        ? Number.MAX_VALUE
+        : elemB['global_draw_bounds']['y']
+    if (a_y === b_y) {
+      //TODO: 誤差範囲の確認必要か
+      const a_x =
+        elemA['component'] || !elemA['global_draw_bounds']
+          ? Number.MAX_VALUE
+          : elemA['global_draw_bounds']['x']
+      const b_x =
+        elemB['component'] || !elemB['global_draw_bounds']
+          ? Number.MAX_VALUE
+          : elemB['global_draw_bounds']['x']
       return b_x - a_x
     }
     return b_y - a_y
@@ -1202,11 +1213,19 @@ function sortElementsByPositionAsc(jsonElements) {
 function sortElementsByPositionDesc(jsonElements) {
   // 子供のリスト用ソート 上から順に並ぶように　(コンポーネント化するものをは一番下 例:Image Component)
   jsonElements.sort((elemA, elemB) => {
-    const a_y = elemA['component'] ? Number.MAX_VALUE : elemA['global_draw_bounds']['y']
-    const b_y = elemB['component'] ? Number.MAX_VALUE : elemB['global_draw_bounds']['y']
+    const a_y = elemA['component']
+      ? Number.MAX_VALUE
+      : elemA['global_draw_bounds']['y']
+    const b_y = elemB['component']
+      ? Number.MAX_VALUE
+      : elemB['global_draw_bounds']['y']
     if (b_y === a_y) {
-      const a_x = elemA['component'] ? Number.MAX_VALUE : elemA['global_draw_bounds']['x']
-      const b_x = elemB['component'] ? Number.MAX_VALUE : elemB['global_draw_bounds']['x']
+      const a_x = elemA['component']
+        ? Number.MAX_VALUE
+        : elemA['global_draw_bounds']['x']
+      const b_x = elemB['component']
+        ? Number.MAX_VALUE
+        : elemB['global_draw_bounds']['x']
       return a_x - b_x
     }
     return a_y - b_y
@@ -2349,6 +2368,20 @@ class Style {
     return asBool(first)
   }
 
+  firstAsBoolParam(property, node) {
+    const first = this.first(property)
+    let result = false
+    switch (first) {
+      case 'not-has-layout-properties-preferred-size':
+        result = !hasLayoutPropertiesPreferredSize(node)
+        break
+      default:
+        result = asBool(first)
+        break
+    }
+    return result
+  }
+
   /**
    * Valuesの値を連結した文字列を返す
    * @param {string} property
@@ -2628,49 +2661,48 @@ function addCanvasGroup(json, node, style) {
   }
 }
 
-function addGlobalDrawBounds(json, node)
-{
+function addGlobalDrawBounds(json, node) {
   const global_draw_bounds = getBeforeGlobalDrawBounds(node)
   Object.assign(json, {
-    global_draw_bounds
+    global_draw_bounds,
   })
 }
 
 function overwriteRectTransform(rectTransformJson, style) {
   //TODO: 初期値はいらないだろうか
-  if (!("anchor_min" in rectTransformJson)) rectTransformJson["anchor_min"] = {}
-  if (!("anchor_max" in rectTransformJson)) rectTransformJson["anchor_max"] = {}
-  if (!("offset_min" in rectTransformJson)) rectTransformJson["offset_min"] = {}
-  if (!("offset_max" in rectTransformJson)) rectTransformJson["offset_max"] = {}
+  if (!('anchor_min' in rectTransformJson)) rectTransformJson['anchor_min'] = {}
+  if (!('anchor_max' in rectTransformJson)) rectTransformJson['anchor_max'] = {}
+  if (!('offset_min' in rectTransformJson)) rectTransformJson['offset_min'] = {}
+  if (!('offset_max' in rectTransformJson)) rectTransformJson['offset_max'] = {}
   // Styleで指定があった場合、上書きする
   const anchorX = style.values(STYLE_RECT_TRANSFORM_ANCHORS_X)
   if (anchorX) {
     // console.log(`anchorsX:${anchorOffsetX}`)
-    rectTransformJson["anchor_min"]["x"] = parseFloat(anchorX[0])
-    rectTransformJson["anchor_max"]["x"] = parseFloat(anchorX[1])
+    rectTransformJson['anchor_min']['x'] = parseFloat(anchorX[0])
+    rectTransformJson['anchor_max']['x'] = parseFloat(anchorX[1])
   }
   const anchorY = style.values(STYLE_RECT_TRANSFORM_ANCHORS_Y)
   if (anchorY) {
     // console.log(`anchorsY:${anchorOffsetY}`)
-    rectTransformJson["anchor_min"]["y"] = parseFloat(anchorY[0])
-    rectTransformJson["anchor_max"]["y"] = parseFloat(anchorY[1])
+    rectTransformJson['anchor_min']['y'] = parseFloat(anchorY[0])
+    rectTransformJson['anchor_max']['y'] = parseFloat(anchorY[1])
   }
 
   const anchorOffsetX = style.values(STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_X)
   if (anchorOffsetX) {
     // console.log(`anchorsX:${anchorOffsetX}`)
-    rectTransformJson["anchor_min"]["x"] = parseFloat(anchorOffsetX[0])
-    rectTransformJson["anchor_max"]["x"] = parseFloat(anchorOffsetX[1])
-    rectTransformJson["offset_min"]["x"] = parseFloat(anchorOffsetX[2])
-    rectTransformJson["offset_max"]["x"] = parseFloat(anchorOffsetX[3])
+    rectTransformJson['anchor_min']['x'] = parseFloat(anchorOffsetX[0])
+    rectTransformJson['anchor_max']['x'] = parseFloat(anchorOffsetX[1])
+    rectTransformJson['offset_min']['x'] = parseFloat(anchorOffsetX[2])
+    rectTransformJson['offset_max']['x'] = parseFloat(anchorOffsetX[3])
   }
   const anchorOffsetY = style.values(STYLE_RECT_TRANSFORM_ANCHORS_OFFSETS_Y)
   if (anchorOffsetY) {
     // console.log(`anchorsY:${anchorOffsetY}`)
-    rectTransformJson["anchor_min"]["y"] = parseFloat(anchorOffsetY[0])
-    rectTransformJson["anchor_max"]["y"] = parseFloat(anchorOffsetY[1])
-    rectTransformJson["offset_min"]["y"] = parseFloat(anchorOffsetY[2])
-    rectTransformJson["offset_max"]["y"] = parseFloat(anchorOffsetY[3])
+    rectTransformJson['anchor_min']['y'] = parseFloat(anchorOffsetY[0])
+    rectTransformJson['anchor_max']['y'] = parseFloat(anchorOffsetY[1])
+    rectTransformJson['offset_min']['y'] = parseFloat(anchorOffsetY[2])
+    rectTransformJson['offset_max']['y'] = parseFloat(anchorOffsetY[3])
   }
 }
 
@@ -2688,7 +2720,7 @@ function addRectTransform(json, node, style) {
     })
   }
 
-  const rectTransformJson = json["rect_transform"]
+  const rectTransformJson = json['rect_transform']
   overwriteRectTransform(rectTransformJson, style)
 }
 
@@ -3191,10 +3223,22 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
     sortElementsByPositionAsc(json.elements)
   }
 
-  const padding = calcPadding(viewportNode)
-  Object.assign(layoutGroupJson,{
-    padding
-  })
+  const paddingValues = style.values('layout-group-padding')
+  if (paddingValues && paddingValues.length === 4) {
+    Object.assign(layoutGroupJson, {
+      padding: {
+        left: parseFloat(paddingValues[0]),
+        right: parseFloat(paddingValues[1]),
+        top: parseFloat(paddingValues[2]),
+        bottom: parseFloat(paddingValues[3]),
+      },
+    })
+  } else {
+    const padding = calcPadding(viewportNode)
+    Object.assign(layoutGroupJson, {
+      padding,
+    })
+  }
 
   // spacing を計算するノードだけ取り出す
   let childNodes = children.filter(child => {
@@ -3364,11 +3408,17 @@ function addLayoutGroupParam(layoutGroupJson, style) {
   }
 }
 
-function hasLayoutPropertiesPreferredSize(style) {
+/**
+ * @param node
+ * @return {boolean}
+ */
+function hasLayoutPropertiesPreferredSize(node) {
+  const { style } = getNodeNameAndStyle(node)
   return (
     style.firstAsBool(STYLE_TEXT) ||
     style.firstAsBool(STYLE_TEXTMP) ||
-    (style.firstAsBool(STYLE_IMAGE) && style.firstAsNullOrBool(STYLE_IMAGE_SLICE) === false ) || // Imageはスライス可とするとサイズが0になる
+    (style.firstAsBool(STYLE_IMAGE) &&
+      style.firstAsNullOrBool(STYLE_IMAGE_SLICE) === false) || // Imageはスライス可とするとサイズが0になる
     style.firstAsBool(STYLE_LAYOUT_GROUP) ||
     style.firstAsBool(STYLE_LAYOUT_ELEMENT) //TODO:LAYOUT_ELEMET PREFERREDサイズをもっているか確認せねばならない
   )
@@ -3382,7 +3432,7 @@ function hasLayoutPropertiesPreferredSize(style) {
  * @param overwriteGlobalDrawBounds 上書きするGlobalDrawBounds値
  */
 function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
-  if (!style.firstAsBool(STYLE_LAYOUT_ELEMENT)) return
+  if (!style.firstAsBoolParam(STYLE_LAYOUT_ELEMENT,node)) return
 
   const layoutElementJson = {}
 
@@ -4057,14 +4107,14 @@ async function createGroup(json, node, root, funcForEachChild) {
   if (json['content']) {
     // 子供のレイアウトにまつわるStyleをContentに移動する
     // layout-groupが付与されている場合、contentに移動する
-    if(style.firstAsBool("create-content-move-layout-group")) {
+    if (style.firstAsBool('create-content-move-layout-group')) {
       if (json['layout_group']) {
         json['content']['layout_group'] = json['layout_group']
         delete json['layout_group']
       }
     }
     // content_size_fitter が付与されている場合、contentに移動する
-    if(style.firstAsBool("create-content-move-content-size-fitter")) {
+    if (style.firstAsBool('create-content-move-content-size-fitter')) {
       if (json['content_size_fitter']) {
         json['content']['content_size_fitter'] = json['content_size_fitter']
         delete json['content_size_fitter']
@@ -4074,7 +4124,6 @@ async function createGroup(json, node, root, funcForEachChild) {
     json.elements.push(json['content'])
     delete json['content']
   }
-
 }
 
 /**
@@ -4957,9 +5006,7 @@ async function exportXdUnityUI(roots, outputFolder) {
         // 自身は可視にし、子供の不可視情報は生かす
         // 本来は sourceImageをNaturalWidth,Heightで出力する
         // TODO: Pathなど、レンダリングされるものもノータッチであるべきではないか
-        if (
-          style.firstAsBool(STYLE_IMAGE)
-        ) {
+        if (style.firstAsBool(STYLE_IMAGE)) {
           return false
         }
       })
@@ -5762,6 +5809,11 @@ class CssSelector {
   }
 
   checkPseudo(node, pseudo) {
+    console.log(`checkPseudo (${globalCssCheckDepth})${pseudo.name}`)
+    globalCssCheckDepth++
+    if (globalCssCheckDepth > 50) {
+      throw 'CSS selector check too deep.'
+    }
     let result = false
     switch (pseudo.name) {
       case 'nth-child':
@@ -5827,11 +5879,13 @@ class CssSelector {
           }
         }
         break
-        //if-not-content-only-child-has-layout-properties
+      /*
+      CSSが決定した後の値を取ろうとしているため、無限ループにはいる
       case 'has-layout-properties-preferred-size':
-        result = hasLayoutPropertiesPreferredSize(node)
-        break;
-
+        result = hasLayoutPropertiesPreferredSize(node) //この関数の中でCSSスタイルを決定する処理が走る
+        console.log(result)
+        break
+      */
       case 'not':
         // console.log('----------------- not')
         result = !this.matchRule(node, pseudo.value, false)
@@ -5841,6 +5895,7 @@ class CssSelector {
         result = false
         break
     }
+    globalCssCheckDepth--
     return result
   }
 
@@ -5880,6 +5935,8 @@ class CssSelector {
     return false
   }
 }
+
+let globalCssCheckDepth = 0
 
 const CssSelectorParser = require('./node_modules/css-selector-parser/lib/css-selector-parser')
   .CssSelectorParser
