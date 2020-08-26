@@ -46,25 +46,30 @@ padding
 - .contentのサイズ
  */
 .padding {
+  /* layout-groupをつかってpaddingを構成する*/
+  /* layout-group このスタイルはcontentに移動させない */
   layout-group: vertical;
   layout-group-child-control-size: width height;
   layout-group-child-force-expand: width height;
   layout-group-child-alignment: upper-center;
+  /* content-size-fitter このスタイルはcontentに移動させない */
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
   content-size-fitter-vertical-fit: preferred-size;
-  create-content: if-not-content-only-child-has-layout-properties; /* 削除予定 */
-  create-content-name: '.content';
-  /* create-content で成功したときのみ操作　レイアウトに関するものを移動する*/
-}
-
-/*
- このように置き換え可能なはず
-.padding:not(:only-child:has-some-child(:has-layout-properties)) {
   create-content: true;
   create-content-name: '.content';
 }
- */
+
+/*
+ このように書くことで、.contentを作成せずに実現可能か？
+ - 1つだけ子供をもつ
+ - その子供は.contentをもつ
+ - その子供は.contentはlayout-propertyを持つ
+.padding:not(:has-only-child:has-some-child(.content):has-some-child(:has-layout-properties-size)) {
+  create-content: true;
+  create-content-name: '.content';
+}
+*/
 
 .padding > .content {
   layout-element: true;
@@ -95,8 +100,9 @@ padding background
   content-size-fitter-vertical-fit: preferred-size;
 }
 
+/*.vertical-stack > *:not(:has-layout-properties-preferred-size) { 　CSSセレクタで、CSSが決定した後の値を取ろうとしているため、無限ループにはいる*/
 .vertical-stack > * {
-  layout-element: if-not-has-layout-properties; /* 削除予定 */
+  layout-element: not-has-layout-properties-preferred-size;
   layout-element-preferred-height: draw-bounds-height;
 }
 
@@ -138,8 +144,9 @@ first-childになる
   content-size-fitter-horizontal-fit: preferred-size;
 }
 
+/*.horizontal-stack > :not(:has-layout-properties-preferred-size) {*/
 .horizontal-stack > * {
-  layout-element: if-not-has-layout-properties;
+  layout-element: not-has-layout-properties-preferred-size;
   layout-element-preferred-width: draw-bounds-width;
 }
 
@@ -203,6 +210,7 @@ first-childになる
 [typeof='RepeatGrid']:horizontal-layout {
   layout-group: x;
   layout-group-spacing-x: average;
+  layout-group-padding: 0 0 0 0; /* contentが伸びたりしない場合はpaddingは必要ない*/
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
 }
@@ -210,6 +218,7 @@ first-childになる
 [typeof='RepeatGrid']:vertical-layout {
   layout-group: y;
   layout-group-spacing-y: average;
+  layout-group-padding: 0 0 0 0; /* contentが伸びたりしない場合はpaddingは必要ない*/
   content-size-fitter: true;
   content-size-fitter-vertical-fit: preferred-size;
 }
@@ -220,6 +229,7 @@ first-childになる
   layout-group-cell-size-y: average;
   layout-group-spacing-x: average;
   layout-group-spacing-y: average;
+  layout-group-padding: 0 0 0 0; /* contentが伸びたりしない場合はpaddingは必要ない*/
 }
 
 [typeof='RepeatGrid']:not(.no-mask).horizontal-scroll {
