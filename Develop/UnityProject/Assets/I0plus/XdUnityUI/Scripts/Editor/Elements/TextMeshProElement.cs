@@ -39,7 +39,8 @@ namespace I0plus.XdUnityUI.Editor
             var align = _textJson.Get("align");
             var type = _textJson.Get("textType");
 
-            var text = targetObject.GetComponent<TextMeshProUGUI>();
+            //var text = targetObject.GetComponent<TextMeshProUGUI>();
+            var text = ElementUtil.GetOrAddComponent<TextMeshProUGUI>(targetObject);
 
             //if a text component is already present this means this go is part of a prefab and we skip the font generation
             if (text == null)
