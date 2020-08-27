@@ -62,7 +62,7 @@ namespace I0plus.XdUnityUI.Editor
                     if (files.Length == 0)
                     {
                         // フォルダの削除
-                        Debug.Log($"ディレクトリ削除{folderName}");
+                        // Debug.Log($"ディレクトリ削除{folderName}");
                         AssetDatabase.DeleteAsset(folderName);
                     }
                 }
