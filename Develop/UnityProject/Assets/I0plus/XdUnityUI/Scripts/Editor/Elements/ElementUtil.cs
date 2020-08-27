@@ -7,8 +7,8 @@ using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 #if ODIN_INSPECTOR
+using System.Reflection;
 using Sirenix.Utilities;
-
 #endif
 
 namespace I0plus.XdUnityUI.Editor
