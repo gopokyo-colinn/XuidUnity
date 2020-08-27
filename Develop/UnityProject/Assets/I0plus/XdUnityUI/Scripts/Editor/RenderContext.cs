@@ -237,9 +237,14 @@ namespace I0plus.XdUnityUI.Editor
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spriteAssetPath);
             if (sprite == null)
             {
+                Debug.LogWarning($"pngで見つからなかった{spriteAssetPath}");
+                sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Path.ChangeExtension(spriteAssetPath,"asset"));
+            }
+            if (sprite == null)
+            {
                 var folderPath = Path.GetDirectoryName(spriteAssetPath);
                 var obj = AssetDatabase.LoadAssetAtPath<Object>(folderPath);
-                Debug.LogError($"[XdUnityUI] sprite \"{spriteAssetPath}\" is not found.", obj);
+                Debug.LogError($"[XdUnityUI] sprite not found:\"{spriteAssetPath}\"", obj);
             }
 
             return sprite;

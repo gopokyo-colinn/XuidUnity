@@ -792,8 +792,12 @@ namespace I0plus.XdUnityUI.Editor
             if (typeof(T).IsSubclassOf(typeof(Graphic)))
             {
                 var graphic = go.GetComponent<Graphic>() as Component;
-                Debug.LogWarning($"[XdUnityUI] {graphic.gameObject.name}: Graphic Component change to {typeof(T)}.", go);
-                Object.DestroyImmediate(graphic);
+                if (graphic != null)
+                {
+                    // すでにGraphicコンポーネントがある 入れ替える
+                    Debug.LogWarning($"[XdUnityUI] {graphic.gameObject.name}: Graphic Component change to {typeof(T)}.", go);
+                    Object.DestroyImmediate(graphic);
+                }
             }
             return go.AddComponent<T>();
         }
