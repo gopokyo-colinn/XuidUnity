@@ -58,14 +58,10 @@ namespace I0plus.XdUnityUI.Editor
             {
                 toggle.graphic = graphicImage;
                 if (graphicImage.gameObject.activeSelf)
-                {
                     toggle.isOn = true;
-                }
                 else
-                {
                     //TODO: 強制的にActiveにする
                     graphicImage.gameObject.SetActive(true);
-                }
             }
 
             // ON/OFF が画像の入れ替えとして動作するコンポーネント

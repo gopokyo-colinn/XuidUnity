@@ -2638,11 +2638,9 @@ function addActive(json, node, style) {
       active: style.firstAsBool('active'),
     })
   } else {
-    if (getVisibleInfo(node) == false) {
-      Object.assign(json, {
-        active: false,
-      })
-    }
+    Object.assign(json, {
+      active: getVisibleInfo(node),
+    })
   }
 }
 
@@ -3432,7 +3430,7 @@ function hasLayoutPropertiesPreferredSize(node) {
  * @param overwriteGlobalDrawBounds 上書きするGlobalDrawBounds値
  */
 function addLayoutElement(json, node, style, overwriteGlobalDrawBounds = null) {
-  if (!style.firstAsBoolParam(STYLE_LAYOUT_ELEMENT,node)) return
+  if (!style.firstAsBoolParam(STYLE_LAYOUT_ELEMENT, node)) return
 
   const layoutElementJson = {}
 

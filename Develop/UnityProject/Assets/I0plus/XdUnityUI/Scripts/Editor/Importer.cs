@@ -453,7 +453,7 @@ namespace I0plus.XdUnityUI.Editor
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
                     prefabCreator.Create(ref go, renderContext);
-                    Importer.CreateFolderRecursively(Path.GetDirectoryName(saveAssetPath));
+                    CreateFolderRecursively(Path.GetDirectoryName(saveAssetPath));
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log($"[XdUnityUI] {Path.GetFileName(saveAssetPath)} is created.", savedAsset);
                 }
