@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,7 +18,7 @@ namespace I0plus.XdUnityUI.Editor
             ButtonJson = json.GetDic("button");
         }
 
-        public override void Render([CanBeNull] ref GameObject targetObject,
+        public override void Render(ref GameObject targetObject,
             RenderContext renderContext,
             GameObject parentObject)
         {
@@ -87,15 +86,11 @@ namespace I0plus.XdUnityUI.Editor
 
                 var image = targetObject.GetComponentInChildren<Image>();
                 if (image != null)
-                {
                     // アクティブにする
                     image.gameObject.SetActive(true);
-                }
                 else
-                {
                     // componentでないか探す
                     image = targetObject.GetComponent<Image>();
-                }
 
                 button.targetGraphic = image;
             }

@@ -239,7 +239,7 @@ namespace I0plus.XdUnityUI.Editor
             {
                 var folderPath = Path.GetDirectoryName(spriteAssetPath);
                 var obj = AssetDatabase.LoadAssetAtPath<Object>(folderPath);
-                Debug.LogError($"[XdUnityUI] sprite \"{spriteAssetPath}\" is not found.",obj);
+                Debug.LogError($"[XdUnityUI] sprite \"{spriteAssetPath}\" is not found.", obj);
             }
 
             return sprite;

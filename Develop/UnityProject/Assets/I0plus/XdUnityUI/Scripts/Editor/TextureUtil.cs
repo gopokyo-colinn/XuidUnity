@@ -15,8 +15,8 @@ namespace I0plus.XdUnityUI.Editor
     public class Dict : Dictionary<string, string>, ISerializationCallbackReceiver
     {
         // ReadOnlyをつけるとシリアライズできなくなる
-        [SerializeField] private List<string> keys = new List<string>();
-        [SerializeField] private List<string> vals = new List<string>();
+        [SerializeField] private readonly List<string> keys = new List<string>();
+        [SerializeField] private readonly List<string> vals = new List<string>();
 
         public void OnBeforeSerialize()
         {
@@ -164,7 +164,7 @@ namespace I0plus.XdUnityUI.Editor
         }
 
         /// <summary>
-        /// ハッシュをつかって
+        ///     ハッシュをつかって
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>

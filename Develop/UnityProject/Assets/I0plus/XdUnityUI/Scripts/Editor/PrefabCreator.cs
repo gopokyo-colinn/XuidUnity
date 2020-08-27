@@ -35,7 +35,7 @@ namespace I0plus.XdUnityUI.Editor
             nestedPrefabs = prefabs;
         }
 
-        public void Create( ref GameObject targetObject, RenderContext renderContext)
+        public void Create(ref GameObject targetObject, RenderContext renderContext)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
@@ -84,7 +84,7 @@ namespace I0plus.XdUnityUI.Editor
                     }
                     else
                     {
-                        Debug.Log($"既に廃棄されています");
+                        Debug.Log("既に廃棄されています");
                     }
                 }
             }

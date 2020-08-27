@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,8 +19,8 @@ namespace I0plus.XdUnityUI.Editor
         protected readonly List<Element> Elements;
         protected readonly string FillColorJson;
         protected readonly Dictionary<string, object> LayoutGroupJson;
-        protected readonly Dictionary<string, object> ScrollRectJson;
         protected readonly Dictionary<string, object> MaskJson;
+        protected readonly Dictionary<string, object> ScrollRectJson;
         protected bool? RectMask2D;
 
         public GroupElement(Dictionary<string, object> json, Element parent, bool resetStretch = false) : base(json,
@@ -50,7 +49,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public List<Tuple<GameObject, Element>> RenderedChildren { get; private set; }
 
-        public override void Render([CanBeNull] ref GameObject targetObject,
+        public override void Render( ref GameObject targetObject,
             RenderContext renderContext,
             GameObject parentObject)
         {

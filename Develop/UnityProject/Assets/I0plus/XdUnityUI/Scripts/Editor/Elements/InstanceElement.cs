@@ -15,24 +15,20 @@ namespace I0plus.XdUnityUI.Editor
 
         public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
         {
-            targetObject = renderContext.OccupyObject(this.Guid, this.name, parentObject);
-            if(targetObject != null)
-            {
+            targetObject = renderContext.OccupyObject(Guid, name, parentObject);
+            if (targetObject != null)
                 if (!PrefabUtility.IsAnyPrefabInstanceRoot(targetObject))
                 {
                     Debug.Log($"CreateInstanceだが、プレハブのインスタンスではない:{targetObject.name}");
                     // 使われないように xd guidを書き換え
                     var xdGuidComponent = targetObject.GetComponent<XdGuid>();
-                    if (xdGuidComponent != null)
-                    {
-                        xdGuidComponent.guid = "old:" + xdGuidComponent.guid;
-                    }
+                    if (xdGuidComponent != null) xdGuidComponent.guid = "old:" + xdGuidComponent.guid;
                     // Freeに戻す
                     renderContext.AddFreeObject(targetObject);
                     // 見つからなかったことにする
                     targetObject = null;
                 }
-            } 
+
             if (targetObject == null)
             {
                 //　見つからなかった場合は プレハブの生成をする
@@ -56,10 +52,11 @@ namespace I0plus.XdUnityUI.Editor
                     Object.DestroyImmediate(tempObject);
                     prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 }
+
                 // 仮のプレハブをセットする
                 targetObject = PrefabUtility.InstantiatePrefab(prefabObject) as GameObject;
             }
-            
+
             var rect = ElementUtil.GetOrAddComponent<RectTransform>(targetObject);
             /*
             if (PrefabUtility.IsPartOfPrefabInstance(parentObject))

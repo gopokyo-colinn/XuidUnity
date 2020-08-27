@@ -16,7 +16,7 @@ namespace I0plus.XdUnityUI
 
         [SerializeField] private Toggle dotPrefab;
 
-        [SerializeField] private List<Toggle> dots = default;
+        [SerializeField] private List<Toggle> dots;
 
         private ToggleGroup _dotGroup;
 

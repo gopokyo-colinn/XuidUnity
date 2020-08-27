@@ -80,7 +80,7 @@ namespace I0plus.XdUnityUI.Editor
 
             return fileAssetPath;
         }
-        
+
         public static string FindFolderAssetPath(string fileName, bool throwException = true)
         {
             var fileAssetPath = FindFileAssetPath(fileName, throwException);

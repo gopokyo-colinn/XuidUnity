@@ -70,11 +70,9 @@ namespace I0plus.XdUnityUI.Editor
 
                 var preserveAspect = ImageJson.GetBool("preserve_aspect");
                 if (preserveAspect != null)
-                {
                     // アスペクト比を保つ場合はSimpleにする
                     // image.type = Image.Type.Simple;
                     image.preserveAspect = preserveAspect.Value;
-                }
             }
 
 

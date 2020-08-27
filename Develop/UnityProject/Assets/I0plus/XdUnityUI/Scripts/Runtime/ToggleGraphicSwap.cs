@@ -4,7 +4,7 @@ using UnityEngine.UI;
 namespace I0plus.XdUnityUI
 {
     /// <summary>
-    /// トグルのON/OFFで画像の入れ替えをする
+    ///     トグルのON/OFFで画像の入れ替えをする
     /// </summary>
     [ExecuteAlways]
     public class ToggleGraphicSwap : MonoBehaviour
@@ -21,13 +21,13 @@ namespace I0plus.XdUnityUI
         private void OnEnable()
         {
             var target = Toggle.targetGraphic;
-            if( target != null) target.enabled = !Toggle.isOn;
+            if (target != null) target.enabled = !Toggle.isOn;
         }
 
         private void OnValueChanged(bool on)
         {
             var target = Toggle.targetGraphic;
-            if( target != null) target.enabled = !on;
+            if (target != null) target.enabled = !on;
         }
     }
 }

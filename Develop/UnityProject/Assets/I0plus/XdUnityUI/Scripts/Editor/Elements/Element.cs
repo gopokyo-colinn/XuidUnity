@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 
 namespace I0plus.XdUnityUI.Editor
@@ -38,7 +37,7 @@ namespace I0plus.XdUnityUI.Editor
 
         public string Name => name;
 
-        public abstract void Render([NotNull] ref GameObject targetObject, RenderContext renderContext,
+        public abstract void Render(ref GameObject targetObject, RenderContext renderContext,
             GameObject parentObject);
 
         public virtual void RenderPass2(List<Tuple<GameObject, Element>> selfAndSiblings)
@@ -83,6 +82,7 @@ namespace I0plus.XdUnityUI.Editor
                 //親のパラメータがある場合､親にする 後のAnchor定義のため
                 rect.SetParent(parentObject.transform);
             }
+
             if (renderContext.OptionAddXdGuidComponent) ElementUtil.SetGuid(selfObject, Guid);
             ElementUtil.SetActive(selfObject, Active);
             ElementUtil.SetLayer(selfObject, Layer);
