@@ -172,7 +172,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Importer.NAME} ReadPixels failed.:{ex.Message}");
+                Debug.LogError($"[{Importer.NAME}] ReadPixels failed.:{ex.Message}");
             }
 
             // レンダーテクスチャをもとに戻す
@@ -457,7 +457,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                     return CheckWriteSpriteFromTexture(newPath, readableTexture, new Boarder(left, bottom, right, top));
                 }
             }
-            Debug.LogError($"{Importer.NAME} SliceSpriteの処理ができませんでした");
+            Debug.LogError($"[{Importer.NAME}] SliceSpriteの処理ができませんでした");
             return null;
         }
     }

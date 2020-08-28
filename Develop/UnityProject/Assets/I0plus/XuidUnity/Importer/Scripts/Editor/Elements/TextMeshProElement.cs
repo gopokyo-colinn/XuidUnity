@@ -57,7 +57,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                 text.textInfo.textComponent.enableWordWrapping = true;
             else
                 // Essential がインストールしてない場合に　NULLになる可能性
-                Debug.LogError("{Importer.Name} Can not access text.textInfo.textComponent");
+                Debug.LogError("[{Importer.Name}] Can not access text.textInfo.textComponent");
 
             var color = _textJson.Get("color");
             if (color != null) text.color = EditorUtil.HexToColor(color);

@@ -36,7 +36,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             var type = json.Get("type");
             if (type == null || !Generator.ContainsKey(type))
             {
-                Debug.LogError("{Importer.Name} Unknown type: " + type);
+                Debug.LogError("[{Importer.Name}] Unknown type: " + type);
                 return null;
             }
 

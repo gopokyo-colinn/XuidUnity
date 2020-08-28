@@ -19,7 +19,7 @@ namespace I0plus.XduiUnity.Importer.Editor
     /// </summary>
     public sealed class Importer : AssetPostprocessor
     {
-        public const string NAME = "[XuidUnity]";
+        public const string NAME = "XuidUnity";
         private static int _progressTotal = 1;
         private static int _progressCount;
         private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
@@ -38,12 +38,15 @@ namespace I0plus.XduiUnity.Importer.Editor
             var importFolderAssetPath = EditorUtil.GetImportFolderAssetPath();
             // 自動インポート用フォルダが無い場合は終了
             if (importFolderAssetPath == null) return;
+            var importMarkFileAssetPath = EditorUtil.GetImportMarkFileAssetPath();
 
             var forImportAssetPaths = importedAssets
-                .Where(importedAsset => importedAsset.StartsWith(importFolderAssetPath))
+                .Where(importedAsset => importedAsset.StartsWith(importFolderAssetPath) &&
+                                        // IMPORT_FOLDER_MARK　ファイルをはじく
+                                        importedAsset != importMarkFileAssetPath)
                 .ToList();
             if (forImportAssetPaths.Count <= 0) return;
-            
+
             await Import(forImportAssetPaths, true, true);
         }
 
@@ -289,7 +292,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                     }
                     else
                     {
-                        // Debug.Log($"{Importer.Name} Create Folder: {subFolderName}");
+                        // Debug.Log($"[{Importer.Name}] Create Folder: {subFolderName}");
                         AssetDatabase.CreateFolder(EditorUtil.GetOutputSpritesFolderAssetPath(),
                             subFolderName);
                     }
@@ -350,7 +353,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             }
 
             foreach (var keyValuePair in messageCounter)
-                Debug.Log($"{Importer.NAME} {keyValuePair.Key} {keyValuePair.Value}/{total}");
+                Debug.Log($"[{Importer.NAME}] {keyValuePair.Key} {keyValuePair.Value}/{total}");
 
 
             var importLayoutFilePaths = new List<string>();
@@ -376,7 +379,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             await Task.Delay(1000);
             if (PreprocessTexture.SlicedTextures != null && PreprocessTexture.SlicedTextures.Count != 0)
             {
-                // Debug.LogWarning($"{Importer.Name} SlicedTextures is still available.");
+                // Debug.LogWarning($"[{Importer.Name}] SlicedTextures is still available.");
             }
 
             var prefabs = new List<GameObject>();
@@ -390,7 +393,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                 GameObject go = null;
                 try
                 {
-                    // Debug.Log($"{Importer.Name} in process...{Path.GetFileName(layoutFilePath)}");
+                    // Debug.Log($"[{Importer.Name}] in process...{Path.GetFileName(layoutFilePath)}");
                     var saveAssetPath = GetPrefabPath(layoutFilePath);
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
@@ -419,12 +422,12 @@ namespace I0plus.XduiUnity.Importer.Editor
                     prefabCreator.Create(ref go, renderContext);
                     CreateFolder(Path.GetDirectoryName(saveAssetPath));
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
-                    Debug.Log($"{Importer.NAME} Created: <color=#7FD6FC>{Path.GetFileName(saveAssetPath)}</color>",
+                    Debug.Log($"[{Importer.NAME}] Created: <color=#7FD6FC>{Path.GetFileName(saveAssetPath)}</color>",
                         savedAsset);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogAssertion($"{Importer.NAME} " + ex.Message + "\n" + ex.StackTrace);
+                    Debug.LogAssertion($"[{Importer.NAME}] " + ex.Message + "\n" + ex.StackTrace);
                     // 変換中例外が起きた場合もテンポラリGameObjectを削除する
                     EditorUtility.ClearProgressBar();
                     EditorUtility.DisplayDialog("Import Failed", ex.Message, "Close");
@@ -473,12 +476,12 @@ namespace I0plus.XduiUnity.Importer.Editor
             var directoryFullPath = Path.Combine(directoryPath, directoryName);
             if (Directory.Exists(directoryFullPath))
                 // 画像出力用フォルダに画像がのこっていればすべて削除
-                // Debug.LogFormat($"{Importer.Name} Delete Exist Sprites: {0}", EditorUtil.ToUnityPath(directoryFullPath));
+                // Debug.LogFormat($"[{Importer.Name}] Delete Exist Sprites: {0}", EditorUtil.ToUnityPath(directoryFullPath));
                 foreach (var filePath in Directory.GetFiles(directoryFullPath, "*.png",
                     SearchOption.TopDirectoryOnly))
                     File.Delete(filePath);
             else
-                // Debug.LogFormat($"{Importer.Name} Create Directory: {0}", EditorUtil.ToUnityPath(directoryPath) + "/" + directoryName);
+                // Debug.LogFormat($"[{Importer.Name}] Create Directory: {0}", EditorUtil.ToUnityPath(directoryPath) + "/" + directoryName);
                 AssetDatabase.CreateFolder(EditorUtil.ToAssetPath(directoryPath),
                     Path.GetFileName(directoryFullPath));
         }
@@ -521,7 +524,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                 var subFolderName = names[i];
                 if (IsFolder(folderAssetPath) != true)
                 {
-                    // Debug.Log($"{Importer.Name} CreateFolder: {subFolderName}");
+                    // Debug.Log($"[{Importer.Name}] CreateFolder: {subFolderName}");
                     AssetDatabase.CreateFolder(parent, subFolderName);
                 }
             }

@@ -14,10 +14,10 @@ namespace I0plus.XduiUnity.Importer.Editor
     /// </summary>
     public static class EditorUtil
     {
-        private const string IMPORT_FOLDER_MARK_FILENAME = "_XuidUnity_Import";
-        private const string SPRITES_FOLDER_MARK_FILENAME = "_XuidUnity_Sprite";
-        private const string PREFABS_FOLDER_MARK_FILENAME = "_XuidUnity_Prefabs";
-        private const string FONTS_FOLDER_MARK_FILENAME = "_XuidUnity_Fonts";
+        public const string IMPORT_FOLDER_MARK_FILENAME = "_XuidUnity_Import";
+        public const string SPRITES_FOLDER_MARK_FILENAME = "_XuidUnity_Sprite";
+        public const string PREFABS_FOLDER_MARK_FILENAME = "_XuidUnity_Prefabs";
+        public const string FONTS_FOLDER_MARK_FILENAME = "_XuidUnity_Fonts";
 
         /// <summary>
         ///     【C#】ドライブ直下からのファイルリスト取得について - Qiita
@@ -84,17 +84,24 @@ namespace I0plus.XduiUnity.Importer.Editor
             return fileAssetPath;
         }
 
-        private static string ImportFolderAssetPath(string[] markFiles)
+        private static string FindSomeFileAssetPath(IEnumerable<string> fileNames)
         {
-            foreach (var markFile in markFiles)
+            foreach (var fileName in fileNames)
             {
                 // var path = FindFolderAssetPath(markFile, false);
-                var fileAssetPath = FindFileAssetPath(markFile, false);
-                var path = Path.GetDirectoryName(fileAssetPath)?.Replace("\\", "/");
+                var fileAssetPath = FindFileAssetPath(fileName, false);
+                var path = fileAssetPath?.Replace("\\", "/");
                 if (path != null) return path;
             }
             return null;
         }
+
+        private static string FindSomeFolderAssetPath(IEnumerable<string> fileNames)
+        {
+            var filePath = FindSomeFileAssetPath(fileNames);
+            return Path.GetDirectoryName(filePath)?.Replace("\\", "/");
+        }
+
 
         /// <summary>
         ///     優先順位に基づき、みつかったマークファイル名を返す
@@ -107,7 +114,26 @@ namespace I0plus.XduiUnity.Importer.Editor
                 IMPORT_FOLDER_MARK_FILENAME + "1",
                 IMPORT_FOLDER_MARK_FILENAME
             };
-            return ImportFolderAssetPath(markFiles);
+            var assetPath = FindSomeFolderAssetPath(markFiles);
+            if (assetPath == null)
+            {
+                // Importフォルダは無くてもよいため、Log出力しない
+                // Debug.LogAssertion($"[{Importer.Name}] {IMPORT_FOLDER_MARK_FILENAME} not found.");
+                return null;
+            }
+
+            return assetPath;
+        }
+        
+        public static string GetImportMarkFileAssetPath()
+        {
+            var markFiles = new[]
+            {
+                IMPORT_FOLDER_MARK_FILENAME + "1",
+                IMPORT_FOLDER_MARK_FILENAME
+            };
+            var assetPath = FindSomeFileAssetPath(markFiles);
+            return assetPath;
         }
 
         public static string GetOutputSpritesFolderAssetPath()
@@ -117,7 +143,14 @@ namespace I0plus.XduiUnity.Importer.Editor
                 SPRITES_FOLDER_MARK_FILENAME + "1",
                 SPRITES_FOLDER_MARK_FILENAME
             };
-            return ImportFolderAssetPath(markFiles);
+            var assetPath = FindSomeFolderAssetPath(markFiles);
+            if (assetPath == null)
+            {
+                Debug.LogAssertion($"[{Importer.NAME}] ${SPRITES_FOLDER_MARK_FILENAME} not found.");
+                return null;
+            }
+
+            return assetPath;
         }
 
         public static string GetOutputPrefabsFolderAssetPath()
@@ -127,7 +160,14 @@ namespace I0plus.XduiUnity.Importer.Editor
                 PREFABS_FOLDER_MARK_FILENAME + "1",
                 PREFABS_FOLDER_MARK_FILENAME
             };
-            return ImportFolderAssetPath(markFiles);
+            var assetPath = FindSomeFolderAssetPath(markFiles);
+            if (assetPath == null)
+            {
+                Debug.LogAssertion($"[{Importer.NAME}] ${PREFABS_FOLDER_MARK_FILENAME} not found.");
+                return null;
+            }
+
+            return assetPath;
         }
 
         public static string GetFontsFolderAssetPath()
@@ -137,7 +177,14 @@ namespace I0plus.XduiUnity.Importer.Editor
                 FONTS_FOLDER_MARK_FILENAME + "1",
                 FONTS_FOLDER_MARK_FILENAME
             };
-            return ImportFolderAssetPath(markFiles);
+            var assetPath = FindSomeFolderAssetPath(markFiles);
+            if (assetPath == null)
+            {
+                Debug.LogAssertion($"[{Importer.NAME}] ${FONTS_FOLDER_MARK_FILENAME} not found.");
+                return null;
+            }
+
+            return assetPath;
         }
 
         /**

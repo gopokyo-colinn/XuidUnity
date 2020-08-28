@@ -244,7 +244,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             {
                 var folderPath = Path.GetDirectoryName(spriteAssetPath);
                 var obj = AssetDatabase.LoadAssetAtPath<Object>(folderPath);
-                Debug.LogError($"{Importer.NAME} sprite not found:\"{spriteAssetPath}\"", obj);
+                Debug.LogError($"[{Importer.NAME}] sprite not found:\"{spriteAssetPath}\"", obj);
             }
 
             return sprite;
@@ -256,7 +256,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             if (font == null)
                 font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".otf");
             if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
-            if (font == null) Debug.LogError($"{Importer.NAME} font {fontName}.ttf (or .otf) is not found");
+            if (font == null) Debug.LogError($"[{Importer.NAME}] font {fontName}.ttf (or .otf) is not found");
 
             return font;
         }
@@ -268,7 +268,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(fontFileName);
             if (font == null)
             {
-                Debug.LogError(string.Format($"{Importer.NAME} TMP_FontAsset {fontFileName} is not found"));
+                Debug.LogError(string.Format($"[{Importer.NAME}] TMP_FontAsset {fontFileName} is not found"));
             }
 
             return font;

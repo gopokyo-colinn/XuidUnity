@@ -48,7 +48,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                     // prefabの作成
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(tempObject, path);
                     AssetDatabase.Refresh();
-                    // Debug.Log($"{Importer.Name} Created temporary prefab. {path}", savedAsset);
+                    // Debug.Log($"[{Importer.Name}] Created temporary prefab. {path}", savedAsset);
                     Object.DestroyImmediate(tempObject);
                     prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 }
