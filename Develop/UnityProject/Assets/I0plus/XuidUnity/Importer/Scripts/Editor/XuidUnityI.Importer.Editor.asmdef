@@ -1,7 +1,13 @@
 {
-    "name": "XdUnityUI.Runtime",
-    "references": [],
-    "includePlatforms": [],
+    "name": "XuidUnity.Importer.Editor",
+    "references": [
+        "Unity.TextMeshPro",
+        "Sirenix.OdinInspector.CompatibilityLayer.Editor",
+        "XuidUnity.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

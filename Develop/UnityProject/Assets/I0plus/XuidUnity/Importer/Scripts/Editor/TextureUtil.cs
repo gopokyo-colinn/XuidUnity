@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     シリアライズできるDictionaryクラス
@@ -46,8 +46,8 @@ namespace I0plus.XdUnityUI.Editor
 
     public class TextureUtil
     {
-        public const string ImageHashMapCacheFileName = "ImageHashMap.xdunityui-cache";
-        public const string ImagePathMapCacheFileName = "ImagePathMap.xdunityui-cache";
+        public const string ImageHashMapCacheFileName = "ImageHashMap-cache.json";
+        public const string ImagePathMapCacheFileName = "ImagePathMap-cache.json";
 
         /// <summary>
         ///     Layout.jsonのみ読み込んだときに、過去出力したテクスチャを読み込めるようにするための情報（シェアしていても）

@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     public class InstanceElement : Element
     {

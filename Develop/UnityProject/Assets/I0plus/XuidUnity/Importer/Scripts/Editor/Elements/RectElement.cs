@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     RectElement class.

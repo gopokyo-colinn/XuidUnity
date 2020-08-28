@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using TMPro;
 #endif
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     public class GameObjectIdentifier
     {

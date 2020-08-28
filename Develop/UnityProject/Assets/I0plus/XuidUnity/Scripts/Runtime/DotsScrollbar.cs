@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace I0plus.XdUnityUI
+namespace I0plus.XduiUnity
 {
     /// <summary>
     ///     @author Kazuma Kuwabara

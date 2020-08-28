@@ -2,7 +2,7 @@
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace I0plus.XdUnityUI
+namespace I0plus.XduiUnity
 {
     public class ScrollRectEx : ScrollRect
     {

@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 using TMPro;
 #endif
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     PrefabCreator class.
@@ -66,7 +66,7 @@ namespace I0plus.XdUnityUI.Editor
 
             // 使われなかったオブジェクトの退避グループ
             var notUsedGroupObject =
-                ElementUtil.GetOrCreateGameObject(renderContext, null, "!XdUnityUI Not Used", null);
+                ElementUtil.GetOrCreateGameObject(renderContext, null, "!XuidUnity Not Used", null);
             var notUsedchilds = renderContext.FreeChildObjects;
             if (notUsedchilds.Count > 0)
             {

@@ -12,14 +12,14 @@ using UnityEngine.U2D;
 
 #endif
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     based on Baum2/Editor/Scripts/BaumImporter file.
     /// </summary>
     public sealed class Importer : AssetPostprocessor
     {
-        public const string NAME = "[XdUnityUI]";
+        public const string NAME = "[XuidUnity]";
         private static int _progressTotal = 1;
         private static int _progressCount;
         private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
@@ -61,7 +61,7 @@ namespace I0plus.XdUnityUI.Editor
         }
 
         /*
-        [MenuItem("Assets/XdUnityUI/Import Selected Folders")]
+        [MenuItem("Assets/XuidUnity/Import Selected Folders")]
         public static async Task MenuImportFromSelectFolder()
         {
             var folderPaths = ProjectHighlightedFolders();
@@ -70,7 +70,7 @@ namespace I0plus.XdUnityUI.Editor
         */
 
         /*
-        [MenuItem("Assets/XdUnityUI/Import Selected Folders", true)]
+        [MenuItem("Assets/XuidUnity/Import Selected Folders", true)]
         public static bool MenuImportSelectedFolderCheck()
         {
             var folderPaths = ProjectHighlightedFolders();
@@ -79,7 +79,7 @@ namespace I0plus.XdUnityUI.Editor
         */
 
         /*
-        [MenuItem("Assets/XdUnityUI/Import Selected Folders(Layout Only)")]
+        [MenuItem("Assets/XuidUnity/Import Selected Folders(Layout Only)")]
         public static async Task MenuImportSelectedFolderLayoutOnly()
         {
             var folderPaths = ProjectHighlightedFolders();
@@ -88,7 +88,7 @@ namespace I0plus.XdUnityUI.Editor
         */
 
         /*
-        [MenuItem("Assets/XdUnityUI/Import Selected Folders(Layout Only)", true)]
+        [MenuItem("Assets/XuidUnity/Import Selected Folders(Layout Only)", true)]
         public static bool MenuImportSelectedFolderLayoutOnlyCheck()
         {
             var folderPaths = ProjectHighlightedFolders();
@@ -96,7 +96,7 @@ namespace I0plus.XdUnityUI.Editor
         }
         */
 
-        [MenuItem("Assets/XdUnityUI/Clean Import...")]
+        [MenuItem("Assets/XuidUnity/Clean Import...")]
         public static async void MenuImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Clean import:Specify Folder", "", "");
@@ -106,7 +106,7 @@ namespace I0plus.XdUnityUI.Editor
             await ImportFolders(folders, false, true, false);
         }
 
-        [MenuItem("Assets/XdUnityUI/(experimental)Overwrite Import...")]
+        [MenuItem("Assets/XuidUnity/(experimental)Overwrite Import...")]
         public static async void MenuOverwriteImportSpecifiedFolder()
         {
             var path = EditorUtility.OpenFolderPanel("Overwrite Import:Specify Folder", "", "");
@@ -118,7 +118,7 @@ namespace I0plus.XdUnityUI.Editor
 
 
         /*
-        [MenuItem("Assets/XdUnityUI/Specify Folder Import(layout only)...")]
+        [MenuItem("Assets/XuidUnity/Specify Folder Import(layout only)...")]
         public static async Task MenuImportSpecifiedFolderLayoutOnly()
         {
             var path = EditorUtility.OpenFolderPanel("Specify Exported Folder", "", "");

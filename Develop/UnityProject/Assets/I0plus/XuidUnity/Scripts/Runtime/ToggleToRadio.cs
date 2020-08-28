@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace I0plus.XdUnityUI
+namespace I0plus.XduiUnity
 {
     /**
      * このクラスの仕事はEditorできるはず

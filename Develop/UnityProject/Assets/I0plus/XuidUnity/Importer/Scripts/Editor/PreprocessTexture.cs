@@ -4,7 +4,7 @@ using OnionRing;
 using UnityEditor;
 using UnityEngine;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     PreprocessTexture class.
@@ -40,7 +40,7 @@ namespace I0plus.XdUnityUI.Editor
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.spritePackingTag =
-                    $"XdUnityUI_{Path.GetFileName(Path.GetDirectoryName(assetPath))}";
+                    $"XuidUnity_{Path.GetFileName(Path.GetDirectoryName(assetPath))}";
                 importer.spritePixelsPerUnit = 100.0f;
                 importer.spritePivot = new Vector2(0.5f, 0.5f);
                 importer.mipmapEnabled = false;

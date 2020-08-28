@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     TextMeshProElement class.

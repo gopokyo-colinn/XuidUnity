@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace I0plus.XdUnityUI
+namespace I0plus.XduiUnity
 {
     [ExecuteAlways]
     public class CoverImage : MonoBehaviour

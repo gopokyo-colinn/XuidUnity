@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     EditorUtil class.
@@ -14,10 +14,10 @@ namespace I0plus.XdUnityUI.Editor
     /// </summary>
     public static class EditorUtil
     {
-        private const string IMPORT_FOLDER_MARK_FILENAME = "_XdUnityUI_Import";
-        private const string SPRITES_FOLDER_MARK_FILENAME = "_XdUnityUI_Sprite";
-        private const string PREFABS_FOLDER_MARK_FILENAME = "_XdUnityUI_Prefabs";
-        private const string FONTS_FOLDER_MARK_FILENAME = "_XdUnityUI_Fonts";
+        private const string IMPORT_FOLDER_MARK_FILENAME = "_XuidUnity_Import";
+        private const string SPRITES_FOLDER_MARK_FILENAME = "_XuidUnity_Sprite";
+        private const string PREFABS_FOLDER_MARK_FILENAME = "_XuidUnity_Prefabs";
+        private const string FONTS_FOLDER_MARK_FILENAME = "_XuidUnity_Fonts";
 
         /// <summary>
         ///     【C#】ドライブ直下からのファイルリスト取得について - Qiita

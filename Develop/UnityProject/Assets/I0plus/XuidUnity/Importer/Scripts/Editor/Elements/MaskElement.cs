@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace I0plus.XdUnityUI.Editor
+namespace I0plus.XduiUnity.Importer.Editor
 {
     /// <summary>
     ///     MaskElement class.
