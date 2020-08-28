@@ -11,7 +11,7 @@ echo "# Packaging"
 # リポジトリ内から AdobeXDプラグインファイルを作成する
 echo "## make AdobeXD plugin .xdx file."
 echo "- XuidUnityExport.xdx"
-(cd ../Develop/AdobeXdPlugins && zip -q -r ../../Release/XuidUnityExporter.xdx ./XdUnityUIExport -x \*/types/*)
+(cd ../Develop/AdobeXdPlugins && zip -q -r ../../Release/XuidUnityExporter.xdx ./XuidUnityExport -x \*/types/*)
 echo "- 9SliceHelper.xdx"
 (cd ../Develop/AdobeXdPlugins && zip -q -r ../../Release/9SliceHelper.xdx ./9SliceHelper -x \*/types/*)
 echo "- RoundRects.xdx"
