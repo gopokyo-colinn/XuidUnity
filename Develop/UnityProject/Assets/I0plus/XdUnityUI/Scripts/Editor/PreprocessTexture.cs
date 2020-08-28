@@ -28,25 +28,27 @@ namespace I0plus.XdUnityUI.Editor
             }
             else 
             */
-            if (assetPath.Contains(EditorUtil.ToAssetPath(EditorUtil.GetOutputSpritesFolderAssetPath())))
+            var spriteFolderAssetPath = EditorUtil.ToAssetPath(EditorUtil.GetOutputSpritesFolderAssetPath());
+            if (assetPath.Contains(spriteFolderAssetPath))
             {
+                if (SlicedTextures == null || !SlicedTextures.ContainsKey(assetPath)) return;
+                var slicedTexture = SlicedTextures[assetPath];
                 var fileName = Path.GetFileName(assetPath);
-                if (SlicedTextures == null || !SlicedTextures.ContainsKey(fileName)) return;
                 var importer = assetImporter as TextureImporter;
                 if (importer == null) return;
 
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.spritePackingTag =
-                    string.Format("{0}_{1}", "Baum2", Path.GetFileName(Path.GetDirectoryName(assetPath)));
+                    $"XdUnityUI_{Path.GetFileName(Path.GetDirectoryName(assetPath))}";
                 importer.spritePixelsPerUnit = 100.0f;
                 importer.spritePivot = new Vector2(0.5f, 0.5f);
                 importer.mipmapEnabled = false;
                 importer.isReadable = false;
-                importer.spriteBorder = SlicedTextures[fileName].Boarder.ToVector4();
+                importer.spriteBorder = slicedTexture.Boarder.ToVector4();
                 importer.filterMode = FilterMode.Bilinear;
                 importer.textureCompression = TextureImporterCompression.Uncompressed;
-                SlicedTextures.Remove(fileName);
+                SlicedTextures.Remove(assetPath);
                 if (SlicedTextures.Count == 0) SlicedTextures = null;
             }
         }

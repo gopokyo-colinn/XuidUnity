@@ -44,11 +44,11 @@ namespace I0plus.XdUnityUI.Editor
                     // var image = tempObject.AddComponent<Image>();
                     // image.color = Color.magenta;
                     // フォルダの用意
-                    Importer.CreateFolderRecursively(path.Substring(0, path.LastIndexOf('/')));
+                    Importer.CreateFolder(path.Substring(0, path.LastIndexOf('/')));
                     // prefabの作成
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(tempObject, path);
                     AssetDatabase.Refresh();
-                    Debug.Log($"[XdUnityUI] Created temporary prefab. {path}", savedAsset);
+                    // Debug.Log($"[XdUnityUI] Created temporary prefab. {path}", savedAsset);
                     Object.DestroyImmediate(tempObject);
                     prefabObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 }

@@ -302,13 +302,13 @@ namespace I0plus.XdUnityUI.Editor
             }
 
             // 本来はフォルダを作成しなくても良いはず
-            Importer.CreateFolderRecursively(Path.GetDirectoryName(writePngPath));
+            Importer.CreateFolder(Path.GetDirectoryName(writePngPath));
             File.WriteAllBytes(writePngPath, pngData);
             SaveCache(Path.GetDirectoryName(writePngPath));
-            return "Created new texture.";
+            return "Texture: Created";
         }
 
-        private static string CheckWriteSpriteFromTexture(string writeSpritePath, Texture2D texture)
+        private static string CheckWriteSpriteFromTexture(string writeSpritePath, Texture2D texture, Boarder boarder)
         {
             if (texture == null)
             {
@@ -336,7 +336,7 @@ namespace I0plus.XdUnityUI.Editor
                     // Debug.Log("shared texture " + Path.GetFileName(newPath) + "==" + Path.GetFileName(name));
                     imagePathMap[writeSpritePath] = path;
                     SaveCache(writeFolder);
-                    return "Shared other path texture.";
+                    return "Texture: Shared";
                 }
 
                 // ファイルが存在しない
@@ -358,10 +358,15 @@ namespace I0plus.XdUnityUI.Editor
             // 置き換え対象のパスを登録
             imagePathMap[writeSpritePath] = writeSpritePath;
 
+            // のちのUnity PreprocessTextureの処理への情報受け渡し
+            // （PNGインポートでスプライトを作成するUnityのイベント）
+            var slicedTexture = new SlicedTexture(texture, boarder);
+            PreprocessTexture.SlicedTextures[writeSpritePath] = slicedTexture;
+
             try
             {
                 // 本来はフォルダを作成しなくても良いはず
-                Importer.CreateFolderRecursively(Path.GetDirectoryName(writeSpritePath));
+                Importer.CreateFolder(Path.GetDirectoryName(writeSpritePath));
 
                 // PNG での保存　（多プラットフォームに対応しやすい）
                 var pngData = ImageConversion.EncodeToPNG(texture);
@@ -381,7 +386,7 @@ namespace I0plus.XdUnityUI.Editor
                 Debug.LogAssertion($"Textureの書き込み中に例外が発生しました:{ex.Message}");
             }
 
-            return "Created new texture.";
+            return "Texture: Created";
         }
 
         /// <summary>
@@ -425,60 +430,35 @@ namespace I0plus.XdUnityUI.Editor
             if (PreprocessTexture.SlicedTextures == null)
                 PreprocessTexture.SlicedTextures = new Dictionary<string, SlicedTexture>();
 
-            if (json != null)
+            var slice = json?.Get("slice").ToLower();
+            switch (slice)
             {
-                var slice = json.Get("slice");
-                switch (slice.ToLower())
+                case null:
+                case "auto":
+                    var slicedTexture = TextureSlicer.Slice(readableTexture);
+                    return CheckWriteSpriteFromTexture(filePath, slicedTexture.Texture, slicedTexture.Boarder);
+                case "none":
                 {
-                    case "auto":
-                        break;
-                    case "none":
-                    {
-                        var slicedTexture = new SlicedTexture(readableTexture, new Boarder(0, 0, 0, 0));
-                        var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
-                        PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                        var pngData = readableTexture.EncodeToPNG();
-                        var imageHash = readableTexture.imageContentsHash;
-                        // Object.DestroyImmediate(slicedTexture.Texture);
-                        //return CheckWrite(newPath, pngData, imageHash);
-                        return CheckWriteSpriteFromTexture(newPath, readableTexture);
-                    }
-                    case "border":
-                    {
-                        var border = json.GetDic("slice_border");
-                        if (border == null) break; // borderパラメータがなかった
+                    var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
+                    return CheckWriteSpriteFromTexture(newPath, readableTexture, new Boarder(0, 0, 0, 0));
+                }
+                case "border":
+                {
+                    var border = json.GetDic("slice_border");
+                    if (border == null) break; // borderパラメータがなかった
 
-                        // 上・右・下・左の端から内側へのオフセット量
-                        var top = border.GetInt("top") ?? 0;
-                        var right = border.GetInt("right") ?? 0;
-                        var bottom = border.GetInt("bottom") ?? 0;
-                        var left = border.GetInt("left") ?? 0;
+                    // 上・右・下・左の端から内側へのオフセット量
+                    var top = border.GetInt("top") ?? 0;
+                    var right = border.GetInt("right") ?? 0;
+                    var bottom = border.GetInt("bottom") ?? 0;
+                    var left = border.GetInt("left") ?? 0;
 
-                        var slicedTexture = new SlicedTexture(readableTexture, new Boarder(left, bottom, right, top));
-                        var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
-
-                        PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                        // var pngData = readableTexture.EncodeToPNG();
-                        var imageHash = readableTexture.imageContentsHash;
-                        // Object.DestroyImmediate(slicedTexture.Texture);
-                        // return CheckWrite(newPath, pngData, imageHash);
-                        return CheckWriteSpriteFromTexture(newPath, readableTexture);
-                    }
+                    var newPath = Path.Combine(outputDirectoryPath, sourceImageFileName);
+                    return CheckWriteSpriteFromTexture(newPath, readableTexture, new Boarder(left, bottom, right, top));
                 }
             }
-
-            {
-                // JSONがない場合、slice:auto
-                // ToDo:ここはnoneにするべき
-                var slicedTexture = TextureSlicer.Slice(readableTexture);
-                PreprocessTexture.SlicedTextures[sourceImageFileName] = slicedTexture;
-                // var pngData = slicedTexture.Texture.EncodeToPNG();
-                var imageHash = readableTexture.imageContentsHash;
-                // Object.DestroyImmediate(slicedTexture.Texture);
-                // return CheckWrite(filePath, pngData, imageHash);
-                return CheckWriteSpriteFromTexture(filePath, readableTexture);
-            }
-            // Debug.LogFormat("[XdUnityUI] Slice: {0} -> {1}", EditorUtil.ToUnityPath(asset), EditorUtil.ToUnityPath(newPath));
+            Debug.LogError("[XdUnityUI] SliceSpriteの処理ができませんでした");
+            return null;
         }
     }
 }
