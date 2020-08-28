@@ -1,13 +1,13 @@
 {
   "id": "f754b2ca",
-  "name": "XdUnityUI export",
-  "version": "0.9.0",
+  "name": "Xuid Unity Export",
+  "version": "0.9.6",
   "host": {
     "app": "XD",
     "minVersion": "30.0"
   },
   "description": "Convert AdobeXD artboards to Unity UI Prefabs.",
-  "summary": "XdUnityUI export",
+  "summary": "Xuid Unity Export",
   "author": "Hiroki Ito / i0plus inc.",
   "languages": [
     "en",
@@ -39,7 +39,7 @@
   "uiEntryPoints": [
     {
       "type": "menu",
-      "label": "XdUnityUI export",
+      "label": "Xuid Unity Export",
       "commandId": "pluginExportXdUnityUI",
       "shortcut": {
         "win": "Ctrl+Shift+Alt+p"

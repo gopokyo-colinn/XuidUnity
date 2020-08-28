@@ -5156,7 +5156,7 @@ function h(tag, props, ...children) {
  */
 async function alert(message, title) {
   if (title == null) {
-    title = 'XdUnityUI export'
+    title = 'Xuid Unity Export'
   }
   let dialog = h(
     'dialog',
@@ -5262,7 +5262,7 @@ async function pluginExportXdUnityUI(selection, root) {
           width: 500,
         },
       },
-      h('h1', 'XdUnityUI export'),
+      h('h1', 'Xuid Unity Export'),
       h('hr'),
       h('label', getString(strings.ExportDialogSelected)),
       h('br'),
@@ -5335,6 +5335,7 @@ async function pluginExportXdUnityUI(selection, root) {
         })),
         getString(strings.ExportDialogOptionNotExportImage),
       ),
+      /*
       h('br'),
       h('hr'),
       h('label', getString(strings.ExportDialogUnderDevelopmentOptions)),
@@ -5359,6 +5360,7 @@ async function pluginExportXdUnityUI(selection, root) {
         getString(strings.ExportDialogOptionOnlyCssChangeContent),
       ),
       h('br'),
+       */
       (errorLabel = h('div', divStyle, '')),
       h(
         'footer',
@@ -5386,11 +5388,10 @@ async function pluginExportXdUnityUI(selection, root) {
               }
 
               globalScale = tmpScale
-              optionSymbolInstanceAsPrefab =
-                checkComponentInstanceAsPrefab.checked
+              // optionSymbolInstanceAsPrefab = checkComponentInstanceAsPrefab.checked
               optionImageNoExport = checkImageNoExport.checked
               optionCheckMarkedForExport = checkCheckMarkedForExport.checked
-              optionChangeContentOnly = checkChangeContentOnly.checked
+              //optionChangeContentOnly = checkChangeContentOnly.checked
 
               // 出力フォルダは設定してあるか
               if (!optionChangeContentOnly && outputFolder == null) {
@@ -5416,10 +5417,10 @@ async function pluginExportXdUnityUI(selection, root) {
     inputFolder.value = outputFolder.nativePath
   }
   // Responsive Parameter
-  checkComponentInstanceAsPrefab.checked = optionSymbolInstanceAsPrefab
+  // checkComponentInstanceAsPrefab.checked = optionSymbolInstanceAsPrefab
   checkImageNoExport.checked = optionImageNoExport
   checkCheckMarkedForExport.checked = optionCheckMarkedForExport
-  checkChangeContentOnly.checked = optionChangeContentOnly
+  // checkChangeContentOnly.checked = optionChangeContentOnly
 
   // Dialog表示
   document.body.appendChild(dialog)
