@@ -1,6 +1,9 @@
-# <img src="https://user-images.githubusercontent.com/20549024/76211417-8616d780-6249-11ea-8e94-2f337664f595.gif" width=25> XdUnityUI - AdobeXD to Unity UI
+# <img src="https://user-images.githubusercontent.com/20549024/76211417-8616d780-6249-11ea-8e94-2f337664f595.gif" width=25> XuidUnity (old name: XdUnityUI) - AdobeXD to Unity UI
 
 ![introduction](https://user-images.githubusercontent.com/20549024/76156453-0f40e800-613e-11ea-9923-59554aceae3c.gif)
+
+## Renamed!
+- Renamed to pass platform release requirements.
 
 ## Language.
 
@@ -33,20 +36,20 @@
 ## Quick Start
 
 1. open the Adobe XD sample.
-    - It's in /Assets/I0plus/XdUnityUI-ForAdobeXD/samples.xd.
+    - It's in /Assets/I0plus/XuidUnity/Samples/samples.xd.
 
 2. AdobeXD export
     1. click on the artboard name and select the artboard.
-    1. click on "XdUnityUI export plugin" in the plugin menu.
+    1. click on "Xuid Unity Export" in the plugin menu.
     1. "Folder" is the destination of the output folder.
     1. click on "Export" to start outputting. 
 
 <img src="https://user-images.githubusercontent.com/20549024/76756957-0bf6cd80-67ca-11ea-9504-7ef273613a36.gif" width="640" />
 
 3. Unity conversion
-    - Unity Menu > Assets > XdUnityUI > Specify Folder Import
+    - Unity Menu > Assets > XuidUnity > Clean Import
     - Specifies the same folder as the export.
-    - The created Prefab will be placed in Assets/I0plus/CreatedPrefabs.
+    - The created Prefab will be placed in Assets/I0plus/XuidCreatedPrefabs.
     - The created UI images are placed in Assets/I0plus/CreatedSprites.
       - UI images are sliced.
 
