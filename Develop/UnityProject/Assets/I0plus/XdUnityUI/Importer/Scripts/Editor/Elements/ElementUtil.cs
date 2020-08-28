@@ -795,7 +795,7 @@ namespace I0plus.XdUnityUI.Editor
                 if (graphic != null)
                 {
                     // すでにGraphicコンポーネントがある 入れ替える
-                    Debug.LogWarning($"[XdUnityUI] {graphic.gameObject.name}: Graphic Component change to {typeof(T)}.", go);
+                    Debug.LogWarning($"{Importer.NAME} {graphic.gameObject.name}: Graphic Component change to {typeof(T)}.", go);
                     Object.DestroyImmediate(graphic);
                 }
             }

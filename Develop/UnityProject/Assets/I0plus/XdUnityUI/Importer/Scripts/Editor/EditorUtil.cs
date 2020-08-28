@@ -14,7 +14,10 @@ namespace I0plus.XdUnityUI.Editor
     /// </summary>
     public static class EditorUtil
     {
-        private const string ImportFolderMarkFilename = "_XdUnityUIImport";
+        private const string IMPORT_FOLDER_MARK_FILENAME = "_XdUnityUI_Import";
+        private const string SPRITES_FOLDER_MARK_FILENAME = "_XdUnityUI_Sprite";
+        private const string PREFABS_FOLDER_MARK_FILENAME = "_XdUnityUI_Prefabs";
+        private const string FONTS_FOLDER_MARK_FILENAME = "_XdUnityUI_Fonts";
 
         /// <summary>
         ///     【C#】ドライブ直下からのファイルリスト取得について - Qiita
@@ -81,10 +84,16 @@ namespace I0plus.XdUnityUI.Editor
             return fileAssetPath;
         }
 
-        public static string FindFolderAssetPath(string fileName, bool throwException = true)
+        private static string ImportFolderAssetPath(string[] markFiles)
         {
-            var fileAssetPath = FindFileAssetPath(fileName, throwException);
-            return Path.GetDirectoryName(fileAssetPath)?.Replace("\\", "/");
+            foreach (var markFile in markFiles)
+            {
+                // var path = FindFolderAssetPath(markFile, false);
+                var fileAssetPath = FindFileAssetPath(markFile, false);
+                var path = Path.GetDirectoryName(fileAssetPath)?.Replace("\\", "/");
+                if (path != null) return path;
+            }
+            return null;
         }
 
         /// <summary>
@@ -95,67 +104,40 @@ namespace I0plus.XdUnityUI.Editor
         {
             var markFiles = new[]
             {
-                ImportFolderMarkFilename + "1",
-                ImportFolderMarkFilename
+                IMPORT_FOLDER_MARK_FILENAME + "1",
+                IMPORT_FOLDER_MARK_FILENAME
             };
-            foreach (var markFile in markFiles)
-            {
-                var path = FindFolderAssetPath(markFile, false);
-                if (path != null) return path;
-            }
-
-            return null;
+            return ImportFolderAssetPath(markFiles);
         }
 
         public static string GetOutputSpritesFolderAssetPath()
         {
-            var path = FindFolderAssetPath("_XdUnityUISprites1", false);
-            if (path != null) return path;
-            return FindFolderAssetPath("_XdUnityUISprites");
+            var markFiles = new[]
+            {
+                SPRITES_FOLDER_MARK_FILENAME + "1",
+                SPRITES_FOLDER_MARK_FILENAME
+            };
+            return ImportFolderAssetPath(markFiles);
         }
 
         public static string GetOutputPrefabsFolderAssetPath()
         {
-            var path = FindFolderAssetPath("_XdUnityUIPrefabs1", false);
-            if (path != null) return path;
-            return FindFolderAssetPath("_XdUnityUIPrefabs");
+            var markFiles = new[]
+            {
+                PREFABS_FOLDER_MARK_FILENAME + "1",
+                PREFABS_FOLDER_MARK_FILENAME
+            };
+            return ImportFolderAssetPath(markFiles);
         }
 
-        public static string GetFontsAssetPath()
+        public static string GetFontsFolderAssetPath()
         {
-            var path = FindFolderAssetPath("_XdUnityUIFonts1", false);
-            if (path != null) return path;
-            return FindFolderAssetPath("_XdUnityUIFonts");
-        }
-
-        public static string GetBaumAtlasAssetPath()
-        {
-            var path = FindFolderAssetPath("_XdUnityUIAtlas1", false);
-            if (path != null) return path;
-            return FindFolderAssetPath("_XdUnityUIAtlas");
-        }
-
-        /// <summary>
-        ///     サブディレクトリを含めたスプライトの出力パスを取得する
-        /// </summary>
-        /// <param name="spritePath"></param>
-        /// <returns></returns>
-        public static string GetSpriteFolderAssetPath(string spritePath)
-        {
-            // サブディレクトリ名を取得する
-            var directoryName = Path.GetFileName(Path.GetFileName(spritePath));
-            var directoryPath = GetOutputSpritesFolderAssetPath();
-            var directoryFullPath = Path.Combine(directoryPath, directoryName);
-            return directoryFullPath;
-        }
-
-        public static string GetPrefabFolderAssetPath(string prefabPath)
-        {
-            // サブディレクトリ名を取得する
-            var directoryName = Path.GetFileName(Path.GetFileName(prefabPath));
-            var directoryPath = GetOutputPrefabsFolderAssetPath();
-            var directoryFullPath = Path.Combine(directoryPath, directoryName);
-            return directoryFullPath;
+            var markFiles = new[]
+            {
+                FONTS_FOLDER_MARK_FILENAME + "1",
+                FONTS_FOLDER_MARK_FILENAME
+            };
+            return ImportFolderAssetPath(markFiles);
         }
 
         /**

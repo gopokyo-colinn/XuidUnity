@@ -64,7 +64,7 @@ namespace I0plus.XdUnityUI.Editor
                             image.type = Image.Type.Simple;
                             break;
                         default:
-                            Debug.LogAssertion("[XdUnityUI] unknown image_type:" + imageType);
+                            Debug.LogAssertion("{Importer.Name} unknown image_type:" + imageType);
                             break;
                     }
 

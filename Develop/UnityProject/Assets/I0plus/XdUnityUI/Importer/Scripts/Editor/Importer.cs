@@ -19,6 +19,7 @@ namespace I0plus.XdUnityUI.Editor
     /// </summary>
     public sealed class Importer : AssetPostprocessor
     {
+        public const string NAME = "[XdUnityUI]";
         private static int _progressTotal = 1;
         private static int _progressCount;
         private static bool _autoEnableFlag; // デフォルトがチェック済みの時には true にする
@@ -288,7 +289,7 @@ namespace I0plus.XdUnityUI.Editor
                     }
                     else
                     {
-                        // Debug.Log($"[XdUnityUI] Create Folder: {subFolderName}");
+                        // Debug.Log($"{Importer.Name} Create Folder: {subFolderName}");
                         AssetDatabase.CreateFolder(EditorUtil.GetOutputSpritesFolderAssetPath(),
                             subFolderName);
                     }
@@ -349,7 +350,7 @@ namespace I0plus.XdUnityUI.Editor
             }
 
             foreach (var keyValuePair in messageCounter)
-                Debug.Log($"[XdUnityUI] {keyValuePair.Key} {keyValuePair.Value}/{total}");
+                Debug.Log($"{Importer.NAME} {keyValuePair.Key} {keyValuePair.Value}/{total}");
 
 
             var importLayoutFilePaths = new List<string>();
@@ -375,7 +376,7 @@ namespace I0plus.XdUnityUI.Editor
             await Task.Delay(1000);
             if (PreprocessTexture.SlicedTextures != null && PreprocessTexture.SlicedTextures.Count != 0)
             {
-                // Debug.LogWarning("[XdUnityUI] SlicedTextures is still available.");
+                // Debug.LogWarning($"{Importer.Name} SlicedTextures is still available.");
             }
 
             var prefabs = new List<GameObject>();
@@ -389,11 +390,11 @@ namespace I0plus.XdUnityUI.Editor
                 GameObject go = null;
                 try
                 {
-                    // Debug.Log($"[XdUnityUI] in process...{Path.GetFileName(layoutFilePath)}");
+                    // Debug.Log($"{Importer.Name} in process...{Path.GetFileName(layoutFilePath)}");
                     var saveAssetPath = GetPrefabPath(layoutFilePath);
                     var spriteOutputFolderAssetPath =
                         Path.Combine(EditorUtil.GetOutputSpritesFolderAssetPath(), subFolderName);
-                    var fontAssetPath = EditorUtil.GetFontsAssetPath();
+                    var fontAssetPath = EditorUtil.GetFontsFolderAssetPath();
 
                     // overwriteImportFlagがTrueなら、ベースとなるPrefab上に生成していく
                     // 利用できるオブジェクトは利用していく
@@ -418,12 +419,12 @@ namespace I0plus.XdUnityUI.Editor
                     prefabCreator.Create(ref go, renderContext);
                     CreateFolder(Path.GetDirectoryName(saveAssetPath));
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
-                    Debug.Log($"[XdUnityUI] Created: <color=#7FD6FC>{Path.GetFileName(saveAssetPath)}</color>",
+                    Debug.Log($"{Importer.NAME} Created: <color=#7FD6FC>{Path.GetFileName(saveAssetPath)}</color>",
                         savedAsset);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogAssertion("[XdUnityUI] " + ex.Message + "\n" + ex.StackTrace);
+                    Debug.LogAssertion($"{Importer.NAME} " + ex.Message + "\n" + ex.StackTrace);
                     // 変換中例外が起きた場合もテンポラリGameObjectを削除する
                     EditorUtility.ClearProgressBar();
                     EditorUtility.DisplayDialog("Import Failed", ex.Message, "Close");
@@ -472,12 +473,12 @@ namespace I0plus.XdUnityUI.Editor
             var directoryFullPath = Path.Combine(directoryPath, directoryName);
             if (Directory.Exists(directoryFullPath))
                 // 画像出力用フォルダに画像がのこっていればすべて削除
-                // Debug.LogFormat("[XdUnityUI] Delete Exist Sprites: {0}", EditorUtil.ToUnityPath(directoryFullPath));
+                // Debug.LogFormat($"{Importer.Name} Delete Exist Sprites: {0}", EditorUtil.ToUnityPath(directoryFullPath));
                 foreach (var filePath in Directory.GetFiles(directoryFullPath, "*.png",
                     SearchOption.TopDirectoryOnly))
                     File.Delete(filePath);
             else
-                // Debug.LogFormat("[XdUnityUI] Create Directory: {0}", EditorUtil.ToUnityPath(directoryPath) + "/" + directoryName);
+                // Debug.LogFormat($"{Importer.Name} Create Directory: {0}", EditorUtil.ToUnityPath(directoryPath) + "/" + directoryName);
                 AssetDatabase.CreateFolder(EditorUtil.ToAssetPath(directoryPath),
                     Path.GetFileName(directoryFullPath));
         }
@@ -492,45 +493,6 @@ namespace I0plus.XdUnityUI.Editor
             var fileName = Path.GetFileName(asset);
             return Path.Combine(folderPath, fileName);
         }
-
-#if UNITY_2019_1_OR_NEWER
-        private static void CreateAtlas(string name, List<string> importPaths)
-        {
-            var filename = Path.Combine(EditorUtil.GetBaumAtlasAssetPath(), name + ".spriteatlas");
-
-            var atlas = new SpriteAtlas();
-            var settings = new SpriteAtlasPackingSettings
-            {
-                padding = 8,
-                enableTightPacking = false
-            };
-            atlas.SetPackingSettings(settings);
-            var textureSettings = new SpriteAtlasTextureSettings
-            {
-                filterMode = FilterMode.Point,
-                generateMipMaps = false,
-                sRGB = true
-            };
-            atlas.SetTextureSettings(textureSettings);
-
-            var textureImporterPlatformSettings = new TextureImporterPlatformSettings {maxTextureSize = 8192};
-            atlas.SetPlatformSettings(textureImporterPlatformSettings);
-
-            // iOS用テクスチャ設定
-            // ASTCに固定してしまいっている　これらの設定を記述できるようにしたい
-            textureImporterPlatformSettings.overridden = true;
-            textureImporterPlatformSettings.name = "iPhone";
-            textureImporterPlatformSettings.format = TextureImporterFormat.ASTC_4x4;
-            atlas.SetPlatformSettings(textureImporterPlatformSettings);
-
-            // アセットの生成
-            AssetDatabase.CreateAsset(atlas, EditorUtil.ToAssetPath(filename));
-
-            // ディレクトリを登録する場合
-            // var iconsDirectory = AssetDatabase.LoadAssetAtPath<Object>("Assets/ExternalAssets/Baum2/CreatedSprites/UIESMessenger");
-            // atlas.Add(new Object[]{iconsDirectory});
-        }
-#endif
 
         /// <summary>
         ///     複数階層のフォルダを作成する
@@ -559,7 +521,7 @@ namespace I0plus.XdUnityUI.Editor
                 var subFolderName = names[i];
                 if (IsFolder(folderAssetPath) != true)
                 {
-                    // Debug.Log($"[XdUnityUI] CreateFolder: {subFolderName}");
+                    // Debug.Log($"{Importer.Name} CreateFolder: {subFolderName}");
                     AssetDatabase.CreateFolder(parent, subFolderName);
                 }
             }
