@@ -15,7 +15,7 @@ namespace I0plus.XduiUnity.Importer.Editor
     public static class EditorUtil
     {
         public const string IMPORT_FOLDER_MARK_FILENAME = "_XuidUnity_Import";
-        public const string SPRITES_FOLDER_MARK_FILENAME = "_XuidUnity_Sprite";
+        public const string SPRITES_FOLDER_MARK_FILENAME = "_XuidUnity_Sprites";
         public const string PREFABS_FOLDER_MARK_FILENAME = "_XuidUnity_Prefabs";
         public const string FONTS_FOLDER_MARK_FILENAME = "_XuidUnity_Fonts";
 
