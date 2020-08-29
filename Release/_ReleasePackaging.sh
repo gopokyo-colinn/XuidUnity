@@ -19,6 +19,6 @@ echo "- RoundRects.xdx"
 echo "## Sample"
 echo "- Samples.zip"
 (cd .. && zip -q -r ./Release/Samples.zip ./Samples)
-echo "- unitypackage"
-./create_unitypackage.py -r -o XuidUnity.unitypackage ../Develop/UnityProject/Assets/I0plus
+#echo "- unitypackage"
+#./create_unitypackage.py -r -o XuidUnity.unitypackage ../Develop/UnityProject/Assets/I0plus
 echo "done.\n"
