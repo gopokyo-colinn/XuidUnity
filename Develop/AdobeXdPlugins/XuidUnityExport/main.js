@@ -3272,7 +3272,7 @@ function addLayoutGroup(json, viewportNode, maskNode, children, style) {
   if (layoutSpacingX !== null) {
     if (layoutSpacingX === 'average') {
       const spaces = getHorizontalDrawSpaces(rowNodes)
-      console.log(`spaces:`, spaces)
+      // console.log(`spaces:`, spaces)
       if (spaces.length !== 0) {
         layoutSpacingX =
           spaces.reduce((previous, current) => previous + current) /
@@ -5808,7 +5808,7 @@ class CssSelector {
   }
 
   checkPseudo(node, pseudo) {
-    console.log(`checkPseudo (${globalCssCheckDepth})${pseudo.name}`)
+    //  console.log(`checkPseudo (${globalCssCheckDepth})${pseudo.name}`)
     globalCssCheckDepth++
     if (globalCssCheckDepth > 50) {
       throw 'CSS selector check too deep.'

@@ -372,7 +372,6 @@ ScrollableGroup
 
 .horizontal-scrollbar,
 .scrollbar-x {
-  match-log: '-------------------horizontal-scrollbar---------------------';
   scrollbar: true;
   scrollbar-direction: ltr;
   scrollbar-handle-target: '.handle';
@@ -385,7 +384,6 @@ ScrollableGroup
 
 .vertical-scrollbar,
 .scrollbar-y {
-  match-log: '-------------------vertical-scrollbar---------------------';
   scrollbar: true;
   scrollbar-direction: btt;
   scrollbar-handle-target: '.handle';
@@ -445,38 +443,21 @@ ScrollableGroup
 }
 
 .image,
-[tag-name='image'],
-[tag-name$='-image'],
-[tag-name$='_image'],
-[class$='-image'],
-[class$='_image'] {
+[class$='-image'] {
   image: true;
 }
 
-.text,
-[tag-name='text'],
-[tag-name$='-text'],
-[tag-name$='_text'],
-[class$='-text'],
-[class$='_text'] {
+[typeof='Text'],
+[class$='-text'] .text {
   text: true;
 }
 
 .textmp,
-[tag-name='textmp'],
-[tag-name$='-textmp'],
-[tag-name$='_textmp'],
-[class$='-textmp'],
-[class$='_textmp'] {
+[class$='-textmp'] {
   textmp: true;
 }
 
-.button,
-[tag-name='button'],
-[tag-name$='-button'],
-[tag-name$='_button'],
-[class$='-button'],
-[class$='_button'] {
+.button {
   button: true;
   button-transition-target-graphic: '.target-graphic' '.target-image';
   button-transition-highlighted-sprite: '.highlighted-image';
@@ -485,12 +466,7 @@ ScrollableGroup
   button-transition-disabled-sprite: '.disabled-image';
 }
 
-.toggle,
-[tag-name$='toggle'],
-[tag-name$='-toggle'],
-[tag-name$='_toggle'],
-[class$='-toggle'],
-[class$='_toggle'] {
+.toggle {
   toggle: true;
   toggle-transition-target-graphic: '.target-graphic' '.target-image';
   toggle-transition-highlighted-sprite-target: '.highlighted-image';
@@ -501,15 +477,11 @@ ScrollableGroup
 }
 
 .no-slice {
+  image: true;
   image-slice: false;
 }
 
-.input,
-[tag-name$='input'],
-[tag-name$='-input'],
-[tag-name$='_input'],
-[class$='-input'],
-[class$='_input'] {
+.input {
   input: true;
   input-transition-target-graphic: '.target-image';
   input-transition-highlighted-sprite-target: '.highlighted-image';
@@ -517,7 +489,7 @@ ScrollableGroup
   input-transition-selected-sprite-target: '.selected-image';
   input-transition-disabled-sprite-target: '.disabled-image';
   input-target-graphic: '.target-image'; /* ONのときのチェック画像 */
-  input-text-target: '.input-text';
+  input-text-target: '.input-text' '.input-textmp';
   input-placeholder-target: '.placeholder';
 }
 
