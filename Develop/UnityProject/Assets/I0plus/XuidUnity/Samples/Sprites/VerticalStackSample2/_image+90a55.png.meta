@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ea4b9b8d838e05b4a9d2282ce23fe7d1
+guid: 7c8d9ab56100b274da3bbfbe8a43363e
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -132,7 +132,7 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-  spritePackingTag: Baum2_MaskSample
+  spritePackingTag: XuidUnity_VerticalStackSample2
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
   userData: 
