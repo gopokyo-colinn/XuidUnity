@@ -33,19 +33,21 @@ let globalScale = 1.0
  * 出力するフォルダ
  * @type {Folder|null}
  */
-let outputFolder = null
+let globalOutputFolder = null
+
+let globalAddtionalCssFolder = null
 
 // エキスポートフラグを見るかどうか
-let optionCheckMarkedForExport = false
+let globalCheckMarkedForExport = false
 
 // 画像を出力するかどうか
-let optionImageNoExport = false
+let globalFlagImageNoExport = false
 
 // コンテンツの変更のみかどうか
-let optionChangeContentOnly = false
+let globalFlagChangeContentOnly = false
 
 // SymbolInstanceをPrefabにするかどうか
-let optionSymbolInstanceAsPrefab = false
+let globalFlagSymbolInstanceAsPrefab = false
 
 // 初期状態の可視情報
 // globalVisibleInfo[node.guid]
@@ -81,9 +83,10 @@ function resetGlobalVariables() {
   globalCssVars = {}
   cacheParseNodeName = {}
   cacheNodeNameAndStyle = {}
-  // こちらの値はRootをまたいで必要になる情報のためとっておく
+  // こちらの値はRootをまたいで必要になる情報のためリセットしない
   // globalSymbolIdToPrefabGuid = {}
   // globalErrorLog = []
+  // globalExternalCssFolder = null
 }
 
 const STR_CONTENT = 'content'
@@ -169,7 +172,7 @@ const STYLE_SLIDER_FILL_RECT_TARGET = 'slider-fill-rect-target'
 const STYLE_SLIDER_HANDLE_RECT_TARGET = 'slider-handle-rect-target'
 const STYLE_TEXT = 'text'
 const STYLE_TEXTMP = 'textmp' // TextMeshPro
-const STYLE_TEXT_STRING = 'text-string'
+const STYLE_TEXT_SET_TEXT = 'text-set-text'
 const STYLE_TOGGLE = 'toggle'
 const STYLE_TOGGLE_TRANSITION = 'toggle-transition'
 const STYLE_TOGGLE_TRANSITION_TARGET_GRAPHIC =
@@ -251,9 +254,8 @@ async function loadCssRules(currentFolder, filename) {
   try {
     file = await currentFolder.getEntry(filename)
   } catch (e) {
-    // console.log("cssフォルダ以下にもあるかチェック")
-    file = await currentFolder.getEntry('css/' + filename)
-    if (!file) return null
+    // console.log(`${currentFolder.nativePath}/${filename}が読み込めません`)
+    return null
   }
   const contents = await file.read()
   let parsed = parseCss(contents)
@@ -270,7 +272,7 @@ async function loadCssRules(currentFolder, filename) {
       }
     }
   }
-  console.log(`- ${file.name} loaded.`)
+  // console.log(`${file.name} loaded.`)
   return parsed
 }
 
@@ -2931,7 +2933,7 @@ async function addImage(
   let renditionScale = globalScale
 
   // console.log('9スライス以下の画像を出力するのに、ソース画像と同サイズが渡すことができるか調べる')
-  if (!optionImageNoExport && node.isContainer && node.rotation === 0) {
+  if (!globalFlagImageNoExport && node.isContainer && node.rotation === 0) {
     // 回転している場合はできない
     node.children.some(child => {
       // source という名前で且つ、ImageFillを持ったノードを探す
@@ -2960,7 +2962,7 @@ async function addImage(
     Object.assign(imageJson, {
       source_image: fileName,
     })
-    if (outputFolder && !optionImageNoExport) {
+    if (outputFolder && !globalFlagImageNoExport) {
       let fileExtension = '.png'
       // 画像出力登録
       // この画像サイズが、0になっていた場合出力に失敗する
@@ -4614,22 +4616,24 @@ function addMask(json, style) {
  * @param {*} outputFolder
  * @param {[]} renditions
  */
-async function nodeText(json, node, artboard, outputFolder, renditions) {
+async function createText(json, node, artboard, outputFolder, renditions) {
   let { style } = getNodeNameAndStyle(node)
+  console.log(`createText ${node.name} style:`, style.style)
 
   /** @type {scenegraph.Text} */
   let nodeText = node
 
   // コンテンツ書き換え対応
-  const styleTextContent = style.first(STYLE_TEXT_STRING)
+  const styleTextContent = style.first(STYLE_TEXT_SET_TEXT)
   if (styleTextContent) {
     /** @type {SymbolInstance} */
     const si = nodeText.parent
     // RepeatGrid内は操作できない
     // コンポーネント内は操作できない　例外としてインスタンスが生成されていないマスターは操作できる
-    if (!si.isMaster) {
-      // マスターかどうかをチェックして、例外情報（EditContext外例外）が表示されるのをできるだけ抑止している
+    if (selection.isInEditContext(nodeText)) {
       nodeText.text = styleTextContent
+    } else {
+      // globalErrorLog.push(`error: コンテンツ書き換えができない ${node.name}`)
     }
   }
 
@@ -4824,10 +4828,10 @@ async function createRoot(renditions, outputFolder, root) {
 
     // nodeの型で処理の分岐
     let constructorName = node.constructor.name
-    // console.log(`${node.name} constructorName:${constructorName}`)
+    console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'SymbolInstance':
-        if (optionSymbolInstanceAsPrefab) {
+        if (globalFlagSymbolInstanceAsPrefab) {
           if (json['type'] !== 'Root') {
             Object.assign(json, {
               symbolInstance: getUnityName(node),
@@ -4885,7 +4889,7 @@ async function createRoot(renditions, outputFolder, root) {
         await funcForEachChild()
         break
       case 'Text':
-        await nodeText(json, node, root, outputFolder, renditions)
+        await createText(json, node, root, outputFolder, renditions)
         await funcForEachChild()
         break
       default:
@@ -4962,16 +4966,37 @@ async function exportXdUnityUI(roots, outputFolder) {
     resetGlobalVariables()
 
     console.log('- load CSS')
-    globalCssRules = await loadCssRules(await fs.getPluginFolder(), 'index.css')
+    globalCssRules = await loadCssRules(
+      await fs.getPluginFolder(),
+      'default.css',
+    )
+    console.log(`  - loaded default.css (num rules:${globalCssRules.length})`)
+    if (globalAddtionalCssFolder != null) {
+      // console.log('  - load additional default.css')
+      const additionalCssRules = await loadCssRules(
+        globalAddtionalCssFolder,
+        'default.css',
+      )
+      if (additionalCssRules) {
+        console.log(`  - loaded additional default.css (num rules:${additionalCssRules.length})`)
+        globalCssRules = globalCssRules.concat(additionalCssRules)
+      }
+    }
 
     const rootName = getUnityName(root)
     const rootFilename = replaceToFileName(rootName)
 
-    const rootCssFilename = rootFilename + '.css'
     try {
-      const artboardCssRoles = await loadCssRules(outputFolder, rootCssFilename)
-      if (artboardCssRoles) {
-        globalCssRules = globalCssRules.concat(artboardCssRoles)
+      if (globalAddtionalCssFolder) {
+        // 追加CSSフォルダが設定されているのなら、アートボード専用CSSを読み込む
+        const rootCssFilename = rootFilename + '.css'
+        const artboardCssRules = await loadCssRules(
+          globalAddtionalCssFolder,
+          rootCssFilename,
+        )
+        if (artboardCssRules) {
+          globalCssRules = globalCssRules.concat(artboardCssRules)
+        }
       }
     } catch (e) {
       // console.log(`**error** failed to load: ${artboardCssFilename}`)
@@ -4983,7 +5008,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     // createRenditionsの前にすべて可視にする
     // 正常なBoundsを得るために、makeBoundsの前にやる
     // TODO: これによりvisible情報が取得できなくなった
-    // console.log('- change visible')
+    console.log('- visible all nodes')
     for (let root of roots) {
       traverseNode(root, node => {
         const { node_name: nodeName, style } = getNodeNameAndStyle(node)
@@ -5016,7 +5041,8 @@ async function exportXdUnityUI(roots, outputFolder) {
     /** @type {Folder} */
     let subFolder
     // アートボード毎にフォルダを作成する
-    if (!optionChangeContentOnly && outputFolder) {
+    if (!globalFlagChangeContentOnly && outputFolder) {
+      console.log('- create sub folder')
       let subFolderName = rootFilename
       // サブフォルダ名を取得
       const parsedName = cssParseNodeName(root.name)
@@ -5026,9 +5052,10 @@ async function exportXdUnityUI(roots, outputFolder) {
       subFolder = await createSubFolder(outputFolder, subFolderName)
     }
 
+    console.log('- create layout json')
     const layoutJson = await createRoot(renditions, subFolder, root)
 
-    if (!optionChangeContentOnly) {
+    if (!globalFlagChangeContentOnly) {
       const layoutJsonString = JSON.stringify(layoutJson, null, '  ')
       const layoutFileName = rootFilename + '.layout.json'
       if (subFolder) {
@@ -5042,7 +5069,7 @@ async function exportXdUnityUI(roots, outputFolder) {
     console.log('- done')
   }
 
-  if (renditions.length !== 0 && !optionImageNoExport) {
+  if (renditions.length !== 0 && !globalFlagImageNoExport) {
     console.log('## image export')
 
     // 一括画像ファイル出力
@@ -5230,16 +5257,17 @@ async function pluginExportXdUnityUI(selection, root) {
   checkLatestVersion().then(r => {})
 
   // エキスポートマークがついたものだけ出力するオプションは、毎回オフにする
-  optionCheckMarkedForExport = false
+  globalCheckMarkedForExport = false
 
-  let inputFolder
-  let inputScale
+  let optionOutputFolder
+  let optionOutputScale
   let errorLabel
   let exportMessage
   let checkComponentInstanceAsPrefab
   let checkImageNoExport
   let checkCheckMarkedForExport
   let checkChangeContentOnly
+  let optionExternalCssFolder
 
   const divStyle = {
     style: {
@@ -5282,7 +5310,7 @@ async function pluginExportXdUnityUI(selection, root) {
         (checkCheckMarkedForExport = h('input', {
           type: 'checkbox',
           async onclick(e) {
-            optionCheckMarkedForExport = checkCheckMarkedForExport.checked
+            globalCheckMarkedForExport = checkCheckMarkedForExport.checked
             exportMessage.value = createMessageFromExportRoot(
               getExportRoots(selection.items),
             )
@@ -5293,11 +5321,12 @@ async function pluginExportXdUnityUI(selection, root) {
       h('hr'),
       h('label', getString(strings.ExportDialogOutput)),
       h('br'),
+      // input folder
       h(
         'label',
         divStyle,
         h('span', { width: '70' }, 'Folder'),
-        (inputFolder = h('input', {
+        (optionOutputFolder = h('input', {
           width: '250',
           readonly: true,
           border: 0,
@@ -5308,8 +5337,8 @@ async function pluginExportXdUnityUI(selection, root) {
             async onclick(e) {
               let folder = await fs.getFolder()
               if (folder != null) {
-                inputFolder.value = folder.nativePath
-                outputFolder = folder
+                optionOutputFolder.value = folder.nativePath
+                globalOutputFolder = folder
               }
             },
           },
@@ -5321,7 +5350,7 @@ async function pluginExportXdUnityUI(selection, root) {
         'label',
         divStyle,
         h('span', { width: '70' }, 'Scale'),
-        (inputScale = h('input', {
+        (optionOutputScale = h('input', {
           value: '4.0',
         })),
       ),
@@ -5335,11 +5364,11 @@ async function pluginExportXdUnityUI(selection, root) {
         })),
         getString(strings.ExportDialogOptionNotExportImage),
       ),
-      /*
       h('br'),
       h('hr'),
       h('label', getString(strings.ExportDialogUnderDevelopmentOptions)),
       h('br'),
+      /*
       // Symbol instance as prefab
       h(
         'label',
@@ -5361,6 +5390,41 @@ async function pluginExportXdUnityUI(selection, root) {
       ),
       h('br'),
        */
+      h(
+        'label',
+        divStyle,
+        h('span', { width: '70' }, 'Additional CSS folder'),
+        (optionExternalCssFolder = h('input', {
+          width: '150',
+          readonly: true,
+          border: 0,
+        })),
+        h(
+          'button',
+          {
+            async onclick(e) {
+              let folder = await fs.getFolder()
+              if (folder != null) {
+                optionExternalCssFolder.value = folder.nativePath
+                globalAddtionalCssFolder = folder
+              }
+            },
+          },
+          '...',
+        ),
+        h(
+          'button',
+          {
+            uxpVariant: 'primary',
+            onclick(e) {
+              dialog.close('change values')
+            },
+          },
+          'Change Values',
+        ),
+      ),
+      h('hr'),
+      //h('br'),
       (errorLabel = h('div', divStyle, '')),
       h(
         'footer',
@@ -5381,7 +5445,7 @@ async function pluginExportXdUnityUI(selection, root) {
             onclick(e) {
               // 出力できる状態かチェック
               // スケールの値が正常か
-              let tmpScale = Number.parseFloat(inputScale.value)
+              let tmpScale = Number.parseFloat(optionOutputScale.value)
               if (Number.isNaN(tmpScale)) {
                 errorLabel.textContent = 'invalid scale value'
                 return
@@ -5389,12 +5453,12 @@ async function pluginExportXdUnityUI(selection, root) {
 
               globalScale = tmpScale
               // optionSymbolInstanceAsPrefab = checkComponentInstanceAsPrefab.checked
-              optionImageNoExport = checkImageNoExport.checked
-              optionCheckMarkedForExport = checkCheckMarkedForExport.checked
+              globalFlagImageNoExport = checkImageNoExport.checked
+              globalCheckMarkedForExport = checkCheckMarkedForExport.checked
               //optionChangeContentOnly = checkChangeContentOnly.checked
 
               // 出力フォルダは設定してあるか
-              if (!optionChangeContentOnly && outputFolder == null) {
+              if (!globalFlagChangeContentOnly && globalOutputFolder == null) {
                 errorLabel.textContent = 'invalid output folder'
                 return
               }
@@ -5410,52 +5474,87 @@ async function pluginExportXdUnityUI(selection, root) {
 
   // 出力前にセッションデータをダイアログに反映する
   // Scale
-  inputScale.value = globalScale
+  optionOutputScale.value = globalScale
   // Folder
-  inputFolder.value = ''
-  if (outputFolder != null) {
-    inputFolder.value = outputFolder.nativePath
+  optionOutputFolder.value = ''
+  if (globalOutputFolder != null) {
+    optionOutputFolder.value = globalOutputFolder.nativePath
+  }
+  if (globalAddtionalCssFolder != null) {
+    optionExternalCssFolder.value = globalAddtionalCssFolder.nativePath
   }
   // Responsive Parameter
   // checkComponentInstanceAsPrefab.checked = optionSymbolInstanceAsPrefab
-  checkImageNoExport.checked = optionImageNoExport
-  checkCheckMarkedForExport.checked = optionCheckMarkedForExport
+  checkImageNoExport.checked = globalFlagImageNoExport
+  checkCheckMarkedForExport.checked = globalCheckMarkedForExport
   // checkChangeContentOnly.checked = optionChangeContentOnly
 
   // Dialog表示
   document.body.appendChild(dialog)
   let result = await dialog.showModal()
 
-  // Dialogの結果チェック 出力しないのなら終了
-  if (result !== 'export') return
+  switch (result) {
+    case 'export':
+      globalFlagChangeContentOnly = false;
+      {
+        let exportRoots = await getExportRoots(selection.items)
 
-  let exportRoots = await getExportRoots(selection.items)
+        if (exportRoots.length === 0) {
+          await alert(getString(strings.ExportErrorNoTarget))
+          return
+        }
 
-  if (exportRoots.length === 0) {
-    await alert(getString(strings.ExportErrorNoTarget))
-    return
-  }
+        try {
+          // 出力ノードリスト
+          /**
+           * @type {SceneNode[]}
+           */
+          await exportXdUnityUI(exportRoots, globalOutputFolder)
+          const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
+          await alert(log ? log : 'Done.')
+        } catch (e) {
+          console.log(e)
+          console.log(e.stack)
+          await alert(e.message, 'error')
+        }
 
-  try {
-    // 出力ノードリスト
-    /**
-     * @type {SceneNode[]}
-     */
-    await exportXdUnityUI(exportRoots, outputFolder)
-    const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
-    await alert(log ? log : 'Done.')
-  } catch (e) {
-    console.log(e)
-    console.log(e.stack)
-    await alert(e.message, 'error')
-  }
+        console.log('## end process')
 
-  console.log('## end process')
+        // データをもとに戻すため､意図的にエラーをスローする
+        if (!globalFlagChangeContentOnly) {
+          console.log('- throw error,undo changes')
+          throw 'throw error for UNDO'
+        }
+        break
+      }
+    case 'change values':
+      globalFlagChangeContentOnly = true;
+      let exportRoots = await getExportRoots(selection.items)
 
-  // データをもとに戻すため､意図的にエラーをスローする
-  if (!optionChangeContentOnly) {
-    console.log('- throw error,undo changes')
-    throw 'throw error for UNDO'
+      if (exportRoots.length === 0) {
+        await alert(getString(strings.ExportErrorNoTarget))
+        return
+      }
+
+      try {
+        // 出力ノードリスト
+        /**
+         * @type {SceneNode[]}
+         */
+        await exportXdUnityUI(exportRoots, null)
+        const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
+        await alert(log ? log : 'Done.')
+      } catch (e) {
+        console.log(e)
+        console.log(e.stack)
+        await alert(e.message, 'error')
+      }
+
+      console.log('## end process')
+      break
+    default:
+      console.log( `unknown command: ${result}`)
+      break
   }
 }
 
@@ -5470,7 +5569,7 @@ function getExportRoots(selectionItems) {
   let exportRoots = new Set()
 
   for (let selectionItem of selectionItems) {
-    if (optionCheckMarkedForExport && !selectionItem.markedForExport) {
+    if (globalCheckMarkedForExport && !selectionItem.markedForExport) {
     } else {
       exportRoots.add(selectionItem)
     }
@@ -5956,7 +6055,7 @@ cssSelectorParser.enableSubstitutes()
  */
 async function testParse(selection, root) {
   const folder = await fs.getPluginFolder()
-  const file = await folder.getEntry('index.css')
+  const file = await folder.getEntry('default.css')
   let text = await file.read()
 
   const selector =
