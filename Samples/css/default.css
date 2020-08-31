@@ -1,0 +1,49 @@
+.lang-en text-continue { 
+  text-set-text: 'Continue';
+}
+.lang-jp text-continue {
+  text-set-text: 'コンティニュー';
+}
+.lang-fr text-continue {
+  text-set-text: 'Continuer';
+}
+.lang-de text-continue {
+  text-set-text: 'Ga Verder';
+}
+
+.lang-en text-config {
+  text-set-text: 'Config';
+}
+.lang-jp text-config {
+  text-set-text: '設定';
+}
+.lang-fr text-config {
+  text-set-text: 'Paramètres';
+}
+.lang-de text-config {
+  text-set-text: 'Instellingen';
+}
+
+.lang-en text-quit {
+  text-set-text: 'Quit';
+}
+.lang-jp text-quit {
+  text-set-text: '終了';
+}
+.lang-fr text-quit {
+  text-set-text: 'Quitter';
+}
+.lang-de text-quit {
+  text-set-text: 'Afsluiten';
+}
+
+
+
+
+.lang-en text-start {
+  text-set-text: 'Start';
+}
+
+.lang-jp text-start {
+  text-set-text: 'スタート';
+}
