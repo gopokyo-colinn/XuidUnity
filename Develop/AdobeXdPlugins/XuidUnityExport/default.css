@@ -138,7 +138,7 @@ first-childになる
   layout-group: horizontal;
   layout-group-child-control-size: width height;
   layout-group-child-force-expand: height;
-  layout-group-child-alignment: upper-center;
+  layout-group-child-alignment: middle-center;
   layout-group-spacing-x: average;
   content-size-fitter: true;
   content-size-fitter-horizontal-fit: preferred-size;
@@ -447,15 +447,21 @@ ScrollableGroup
   image: true;
 }
 
+.text,
 [typeof='Text'],
-[class$='-text'],
-.text {
+[class$='-text'] {
   text: true;
+  image-slice: false;
+  image-type: simple;
+  preserve-aspect: true;
 }
 
 .textmp,
 [class$='-textmp'] {
   textmp: true;
+  image-slice: false;
+  image-type: simple;
+  preserve-aspect: true;
 }
 
 .button {

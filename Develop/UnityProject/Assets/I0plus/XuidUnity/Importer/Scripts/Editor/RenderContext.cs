@@ -58,7 +58,8 @@ namespace I0plus.XduiUnity.Importer.Editor
                 toggleGroup = go.AddComponent<ToggleGroup>();
                 // Allow Switch Off を True にする
                 // 190711 false(デフォルト)だと DoozyUIがHideするときに､トグルONボタンを初期位置に戻してしまうため
-                toggleGroup.allowSwitchOff = true;
+                // 200901 false にする　こっちが期待した動作
+                toggleGroup.allowSwitchOff = false;
                 ToggleGroupMap[name] = go;
             }
             else
