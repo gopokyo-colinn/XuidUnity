@@ -252,11 +252,24 @@ namespace I0plus.XduiUnity.Importer.Editor
 
         public Font GetFont(string fontName)
         {
-            var font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".ttf");
-            if (font == null)
-                font = AssetDatabase.LoadAssetAtPath<Font>(Path.Combine(fontFolderAssetPath, fontName) + ".otf");
-            if (font == null) font = Resources.GetBuiltinResource<Font>(fontName + ".ttf");
-            if (font == null) Debug.LogError($"[{Importer.NAME}] font {fontName}.ttf (or .otf) is not found");
+            Font font = null;
+            
+            var ttfAssetPath = Path.Combine(fontFolderAssetPath, fontName) + ".ttf";
+            if (File.Exists(ttfAssetPath))
+            {
+                font = AssetDatabase.LoadAssetAtPath<Font>(ttfAssetPath);
+                if (font != null) return font;
+            }
+
+            var otfAssetPath = Path.Combine(fontFolderAssetPath, fontName) + ".otf";
+            if (File.Exists(otfAssetPath))
+            {
+                font = AssetDatabase.LoadAssetAtPath<Font>(otfAssetPath);
+                if (font != null) return font;
+            }
+            
+            Debug.LogError($"[{Importer.NAME}] font {fontName}.ttf (or .otf) is not found");
+            font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
             return font;
         }

@@ -84,7 +84,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                     }
                     else
                     {
-                        Debug.Log("既に廃棄されています");
+                        // Debug.Log("既に廃棄されています");
                     }
                 }
             }
