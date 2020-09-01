@@ -448,7 +448,8 @@ ScrollableGroup
 }
 
 [typeof='Text'],
-[class$='-text'] .text {
+[class$='-text'],
+.text {
   text: true;
 }
 

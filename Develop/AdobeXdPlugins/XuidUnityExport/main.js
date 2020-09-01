@@ -572,14 +572,14 @@ function cssParseNodeName(nodeName) {
     try {
       // 名前をできるだけパースできる文字列に変換する
       // そうしないと名前の後ろにつけたローカルCSSの変換ができない
-      // - ascii文字以外(2バイト文字、漢字など) _ に変換
-      // - スペースはつめる '.class1 .class2' を '.class1.class2' として、クラスのパースができるようにする
       const asciiName = name
         .replace(/[^\x01-\x7E]/g, function(s) {
           return '_'
-        })
-        .replace(/[ ]/g, '')
-      // console.log(`parseCss(${asciiNodeName})`)
+        }) // - ascii文字以外(2バイト文字、漢字など) _ に変換
+        .replace(/[^0-9a-zA-Z\-\.]/g, '_') // パース出来ない文字を _に変換する
+        .replace(/^[^a-zA-Z_\.]/, '_') // 行頭の数字を _に変換する
+        .replace(/[ ]/g, '') // - スペースはつめる '.class1 .class2' を '.class1.class2' として、クラスのパースができるようにする
+      // console.log(`parseCss(${asciiName})`)
 
       // name部分とcss-declarationsを結合パースする
       const cssString = (asciiName + css_declarations).trim()
@@ -4618,7 +4618,7 @@ function addMask(json, style) {
  */
 async function createText(json, node, artboard, outputFolder, renditions) {
   let { style } = getNodeNameAndStyle(node)
-  console.log(`createText ${node.name} style:`, style.style)
+  // console.log(`createText ${node.name} style:`, style.style)
 
   /** @type {scenegraph.Text} */
   let nodeText = node
@@ -4828,7 +4828,7 @@ async function createRoot(renditions, outputFolder, root) {
 
     // nodeの型で処理の分岐
     let constructorName = node.constructor.name
-    console.log(`${node.name} constructorName:${constructorName}`)
+    // console.log(`${node.name} constructorName:${constructorName}`)
     switch (constructorName) {
       case 'SymbolInstance':
         if (globalFlagSymbolInstanceAsPrefab) {
@@ -4978,7 +4978,9 @@ async function exportXdUnityUI(roots, outputFolder) {
         'default.css',
       )
       if (additionalCssRules) {
-        console.log(`  - loaded additional default.css (num rules:${additionalCssRules.length})`)
+        console.log(
+          `  - loaded additional default.css (num rules:${additionalCssRules.length})`,
+        )
         globalCssRules = globalCssRules.concat(additionalCssRules)
       }
     }
@@ -5495,7 +5497,7 @@ async function pluginExportXdUnityUI(selection, root) {
 
   switch (result) {
     case 'export':
-      globalFlagChangeContentOnly = false;
+      globalFlagChangeContentOnly = false
       {
         let exportRoots = await getExportRoots(selection.items)
 
@@ -5528,7 +5530,7 @@ async function pluginExportXdUnityUI(selection, root) {
         break
       }
     case 'change values':
-      globalFlagChangeContentOnly = true;
+      globalFlagChangeContentOnly = true
       let exportRoots = await getExportRoots(selection.items)
 
       if (exportRoots.length === 0) {
@@ -5553,7 +5555,7 @@ async function pluginExportXdUnityUI(selection, root) {
       console.log('## end process')
       break
     default:
-      console.log( `unknown command: ${result}`)
+      console.log(`unknown command: ${result}`)
       break
   }
 }
