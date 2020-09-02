@@ -7,10 +7,12 @@ namespace I0plus.XduiUnity.Importer.Editor
     public class InstanceElement : Element
     {
         private readonly string master;
+        private Dictionary<string, object> instanceRootJson;
 
         public InstanceElement(Dictionary<string, object> json, Element parent) : base(json, parent)
         {
             master = json.Get("master");
+            instanceRootJson = json;
         }
 
         public override void Render(ref GameObject targetObject, RenderContext renderContext, GameObject parentObject)
@@ -58,14 +60,17 @@ namespace I0plus.XduiUnity.Importer.Editor
             }
 
             var rect = ElementUtil.GetOrAddComponent<RectTransform>(targetObject);
-            /*
-            if (PrefabUtility.IsPartOfPrefabInstance(parentObject))
+            if (parentObject != null)
             {
-                Debug.Log($"parent part of prefab:{parentObject.name}");
+                /*
+                if (PrefabUtility.IsPartOfPrefabInstance(parentObject))
+                {
+                    Debug.Log($"parent part of prefab:{parentObject.name}");
+                }
+                */
+                rect.SetParent(null);
+                rect.SetParent(parentObject.transform);
             }
-            */
-            rect.SetParent(null);
-            rect.SetParent(parentObject.transform);
 
             if (renderContext.OptionAddXdGuidComponent)
             {
@@ -78,10 +83,21 @@ namespace I0plus.XduiUnity.Importer.Editor
             }
 
             targetObject.name = Name;
+            /*
             ElementUtil.SetLayer(targetObject, Layer);
             ElementUtil.SetupRectTransform(targetObject, RectTransformJson);
             if (Active != null) targetObject.SetActive(Active.Value);
             ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
+            */
+            
+            // Nested Prefab Creator
+            var prefabCreator = new PrefabCreator(null);
+            
+            // Groupに変更しないと再帰が延々と繰り返される
+            instanceRootJson["type"] = "Group";
+            
+            var subRenderContext = new RenderContext( renderContext.SpriteOutputFolderAssetPath, renderContext.FontFolderAssetPath, targetObject);
+            prefabCreator.Create(ref targetObject, subRenderContext, instanceRootJson);
         }
     }
 }

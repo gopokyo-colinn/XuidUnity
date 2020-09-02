@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MiniJSON;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -417,9 +418,18 @@ namespace I0plus.XduiUnity.Importer.Editor
                     var renderContext = new RenderContext(spriteOutputFolderAssetPath, fontAssetPath, go);
                     if (optionOverwriteImport) renderContext.OptionAddXdGuidComponent = true;
 
+                    // Load JSON
+                    var jsonText = File.ReadAllText(layoutFilePath);
+                    var json = Json.Deserialize(jsonText) as Dictionary<string, object>;
+                    //var info = json.GetDic("info");
+                    //Validation(info);
+                    var rootJson = json.GetDic("root");
+                    
                     // Create Prefab
-                    var prefabCreator = new PrefabCreator(layoutFilePath, prefabs);
-                    prefabCreator.Create(ref go, renderContext);
+                    var prefabCreator = new PrefabCreator(prefabs);
+                    prefabCreator.Create(ref go, renderContext, rootJson);
+                    
+                    // Save Prefab
                     CreateFolder(Path.GetDirectoryName(saveAssetPath));
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
                     Debug.Log($"[{Importer.NAME}] Created: <color=#7FD6FC>{Path.GetFileName(saveAssetPath)}</color>",

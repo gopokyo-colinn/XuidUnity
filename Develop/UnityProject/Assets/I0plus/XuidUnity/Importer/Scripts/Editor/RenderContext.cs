@@ -25,7 +25,13 @@ namespace I0plus.XduiUnity.Importer.Editor
     public class RenderContext
     {
         private readonly string spriteOutputFolderAssetPath;
+
+        public string SpriteOutputFolderAssetPath => spriteOutputFolderAssetPath;
+
         private readonly string fontFolderAssetPath;
+
+        public string FontFolderAssetPath => fontFolderAssetPath;
+
         private readonly GameObject rootObject;
         public Stack<GameObject> NewPrefabs { get; } = new Stack<GameObject>();
         public Dictionary<string, GameObject> ToggleGroupMap { get; } = new Dictionary<string, GameObject>();

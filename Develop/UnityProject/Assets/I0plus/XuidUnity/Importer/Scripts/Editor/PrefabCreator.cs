@@ -21,7 +21,6 @@ namespace I0plus.XduiUnity.Importer.Editor
     public sealed class PrefabCreator
     {
         private static readonly string[] Versions = {"0.6.0", "0.6.1"};
-        private readonly string assetPath;
         private readonly List<GameObject> nestedPrefabs;
 
         /// <summary>
@@ -29,29 +28,18 @@ namespace I0plus.XduiUnity.Importer.Editor
         /// <param name="spriteRootPath"></param>
         /// <param name="fontRootPath"></param>
         /// <param name="assetPath">フルパスでの指定 Unity Assetフォルダ外もよみこめる</param>
-        public PrefabCreator(string assetPath, List<GameObject> prefabs)
+        public PrefabCreator(List<GameObject> prefabs)
         {
-            this.assetPath = assetPath;
             nestedPrefabs = prefabs;
         }
 
-        public void Create(ref GameObject targetObject, RenderContext renderContext)
+        public void Create(ref GameObject targetObject, RenderContext renderContext, Dictionary<string, object> rootJson)
         {
             if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
 
-            var jsonText = File.ReadAllText(assetPath);
-            var json = Json.Deserialize(jsonText) as Dictionary<string, object>;
-            var info = json.GetDic("info");
-            Validation(info);
-
-            var rootJson = json.GetDic("root");
-
             var rootElement = ElementFactory.Generate(rootJson, null);
-
             rootElement.Render(ref targetObject, renderContext, null);
-
-            // Postprocess(rootObject);
-
+            
             if (renderContext.ToggleGroupMap.Count > 0)
             {
                 // ToggleGroupが作成された場合
