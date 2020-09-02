@@ -4510,7 +4510,7 @@ async function createImage(
  * @param funcForEachChild
  * @return {Promise<string>}
  */
-async function createPrefabInstance(json, node, root) {
+async function createPrefabInstance(json, node, root, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
 
   const masterNode = getPrefabNodeFromNode(node)
@@ -4524,6 +4524,15 @@ async function createPrefabInstance(json, node, root) {
     type: 'Instance',
     name: getUnityName(node),
     master: masterName,
+  })
+
+  // instance以下の情報もlayout.jsonに渡す
+  // addContentをここでもするかどうか検討
+  let maskNode = node.mask || node
+  await funcForEachChild(null, child => {
+    // TODO:AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある そういったものを省くかどうか検討
+    //return child !== maskNode // maskNodeはFalse 処理をしない 2020/8/24 なぜ処理をしなかったかわからなくなった・・・
+    return true
   })
 
   // 基本
@@ -4770,17 +4779,6 @@ async function createRoot(renditions, outputFolder, root) {
       return
     }
 
-    if (root != node && isPrefabInstanceNode(node)) {
-      // インスタンスノードをみつけた
-      // console.log('find layout root node.')
-      let { style } = getNodeNameAndStyle(node)
-      if (style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false) {
-        // 明確なFALSEでなければ
-        await createPrefabInstance(json, node, root)
-        return
-      }
-    }
-
     // 子Node処理関数
     /**
      * @param numChildren
@@ -4823,6 +4821,17 @@ async function createRoot(renditions, outputFolder, root) {
             pushTo.push(childJson)
           }
         }
+      }
+    }
+
+    if (root != node && isPrefabInstanceNode(node)) {
+      // インスタンスノードをみつけた
+      // console.log('find layout root node.')
+      let { style } = getNodeNameAndStyle(node)
+      if (style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false) {
+        // 明確なFALSEでなければ
+        await createPrefabInstance(json, node, root, funcForEachChild)
+        return
       }
     }
 
