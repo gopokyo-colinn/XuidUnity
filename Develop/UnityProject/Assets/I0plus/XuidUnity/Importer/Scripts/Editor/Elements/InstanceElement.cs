@@ -89,14 +89,15 @@ namespace I0plus.XduiUnity.Importer.Editor
             if (Active != null) targetObject.SetActive(Active.Value);
             ElementUtil.SetupLayoutElement(targetObject, LayoutElementJson);
             */
-            
+
             // Nested Prefab Creator
             var prefabCreator = new PrefabCreator(null);
-            
+
             // Groupに変更しないと再帰が延々と繰り返される
             instanceRootJson["type"] = "Group";
-            
-            var subRenderContext = new RenderContext( renderContext.SpriteOutputFolderAssetPath, renderContext.FontFolderAssetPath, targetObject);
+
+            var subRenderContext = new RenderContext(renderContext.SpriteOutputFolderAssetPath,
+                renderContext.FontFolderAssetPath, targetObject);
             prefabCreator.Create(ref targetObject, subRenderContext, instanceRootJson);
         }
     }
