@@ -374,6 +374,13 @@ namespace I0plus.XduiUnity.Importer.Editor
                 return saveAssetPath;
             }
 
+            string GetPrefabName(string layoutFilePath)
+            {
+                var prefabFileName = Path.GetFileName(layoutFilePath).Replace(".layout.json", "");
+                var subFolderName = EditorUtil.GetSubFolderName(layoutFilePath);
+                return subFolderName + "/" + prefabFileName;
+            }
+
             // 出力されたスライスPNGをSpriteに変換する処理を走らせるために必須
             // ここでPreprocessTextureが実行されなければいけない
             AssetDatabase.Refresh();
@@ -385,11 +392,57 @@ namespace I0plus.XduiUnity.Importer.Editor
 
             var prefabs = new List<GameObject>();
 
-            // Create Prefab
+            // .layout.jsonを全て読み込んで、コンバート順をソートする
+            // Item1: prefab name dependensyチェック用
+            // Item2: file path
+            // Item3: json data
+            var layoutJsons = new List<Tuple<string, string, Dictionary<string, object>>>();
             foreach (var layoutFilePath in importLayoutFilePaths)
             {
+                var prefabName = GetPrefabName(layoutFilePath);
+                // Load JSON
+                var jsonText = File.ReadAllText(layoutFilePath);
+                var json = Json.Deserialize(jsonText) as Dictionary<string, object>;
+                layoutJsons.Add(
+                    new Tuple<string, string, Dictionary<string, object>>(prefabName, layoutFilePath, json));
+            }
+
+            // コンバートする順番を決める
+            layoutJsons.Sort((a, b) =>
+            {
+                List<object> GetDependency(Dictionary<string, object> json)
+                {
+                    return json.GetDic("info")?.GetArray("dependency");
+                }
+                
+                int GetDependencyCount(Dictionary<string, object> json)
+                {
+                    var dr= GetDependency(json);
+                    return dr?.Count ?? 0;
+                }
+
+                bool Check(string name, Dictionary<string, object> json)
+                {
+                    var nameList = GetDependency(json);
+                    if (nameList == null) return false;
+                    return nameList.Any(o => name == o as string);
+                }
+
+                // aはbより先に処理すべきか
+                if (Check(a.Item1, b.Item3)) return -1;
+                // bはaより先に処理すべきか
+                if (Check(b.Item1, a.Item3)) return 1;
+
+                // 依存ファイル数で決着をつける
+                return GetDependencyCount(a.Item3) - GetDependencyCount(b.Item3);
+            });
+
+            // Create Prefab
+            foreach (var layoutJson in layoutJsons)
+            {
+                var layoutFilePath = layoutJson.Item2;
                 var subFolderName = EditorUtil.GetSubFolderName(layoutFilePath);
-                UpdateDisplayProgressBar($"Layout: {subFolderName}");
+                UpdateDisplayProgressBar($"Layout: {layoutJson.Item1}");
                 _progressCount += 1;
                 GameObject go = null;
                 try
@@ -424,11 +477,11 @@ namespace I0plus.XduiUnity.Importer.Editor
                     //var info = json.GetDic("info");
                     //Validation(info);
                     var rootJson = json.GetDic("root");
-                    
+
                     // Create Prefab
                     var prefabCreator = new PrefabCreator(prefabs);
                     prefabCreator.Create(ref go, renderContext, rootJson);
-                    
+
                     // Save Prefab
                     CreateFolder(Path.GetDirectoryName(saveAssetPath));
                     var savedAsset = PrefabUtility.SaveAsPrefabAsset(go, saveAssetPath);
