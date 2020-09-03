@@ -2137,7 +2137,7 @@ async function makeGlobalBoundsRectTransform(root) {
     root.viewportHeight = viewportHeight + resizePlusHeight
   }
 
-  // ここでダイアログをだすと、Artboradをひきのばしたところで、どう変化したか見ることができる
+  // ここでダイアログをだすと、Artboardをひきのばしたところで、どう変化したか見ることができる
   // await fs.getFileForSaving('txt', { types: ['txt'] })
 
   // 変更されたboundsを取得する
@@ -5226,34 +5226,6 @@ async function alert(message, title) {
   )
   document.body.appendChild(dialog)
   return dialog.showModal()
-}
-
-/**
- * Selectionから出力対象アートボードを得る
- * アートボード直下のノードが選択されているかも確認（EditContext対応）
- * @param {Selection} selection
- * @returns {SceneNode[]}
- */
-async function getExportArtboards(selection) {
-  // 選択されているものがない場合 全てが変換対象
-  // return selection.items.length > 0 ? selection.items : root.children
-  if (selection.items.length !== 1) {
-    await alert('出力アートボート直下のノードを1つ選択してください')
-    throw 'not selected immediate child.'
-  }
-  const node = selection.items[0]
-  if (node.locked) {
-    await alert('ロックされていないルート直下のノードを1つ選択してください')
-    throw 'selected locked child.'
-  }
-  const parent = node.parent
-  const parentIsArtboard = parent instanceof Artboard
-  if (!parentIsArtboard) {
-    await alert('出力アートボート直下のノードを1つ選択してください')
-    throw 'not selected immediate child.'
-  }
-
-  return [parent]
 }
 
 /**
