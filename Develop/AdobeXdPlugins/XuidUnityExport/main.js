@@ -53,6 +53,9 @@ let globalFlagSymbolInstanceAsPrefab = false
 // globalVisibleInfo[node.guid]
 let globalVisibleInfo = null
 
+// コンバートファイル依存関係
+let globalOutputFileDependency = {}
+
 /**
  * レスポンシブパラメータを保存する
  * @type {BoundsToRectTransform[]}
@@ -506,6 +509,17 @@ function getSubFolderNameFromNode(node) {
 function getLayoutFileNameFromNode(node) {
   const unityName = getUnityName(node)
   return replaceToFileName(unityName)
+}
+
+
+function getLayoutPathFromNode(node)
+{
+  const masterSubFolderName = getSubFolderNameFromNode(node)
+  const masterName =
+    (masterSubFolderName ? masterSubFolderName + '/' : '') +
+    getLayoutFileNameFromNode(node)
+
+  return masterName
 }
 
 /**
@@ -2617,10 +2631,17 @@ function getNodeNameAndStyle(node) {
  * @param root
  * @returns {{root: {name: *, type: string}, info: {version: string}}}
  */
-function makeLayoutJson(root) {
+function createInitialLayoutJson(root) {
+  const dependency = []
+  const dependNodes = globalOutputFileDependency[root.guid];
+  for (let key in dependNodes) {
+    const dependFileName = getLayoutPathFromNode(dependNodes[key]);
+    dependency.push(dependFileName)
+  }
   return {
     info: {
-      version: '0.6.1',
+      version: '0.9.8',
+      dependency,
     },
     root: {
       type: 'Root',
@@ -4512,18 +4533,13 @@ async function createImage(
  */
 async function createPrefabInstance(json, node, root, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
-
   const masterNode = getPrefabNodeFromNode(node)
-
-  const masterSubFolderName = getSubFolderNameFromNode(masterNode)
-  const masterName =
-    (masterSubFolderName ? masterSubFolderName + '/' : '') +
-    getLayoutFileNameFromNode(masterNode)
+  const masterPath = getLayoutPathFromNode(masterNode)
 
   Object.assign(json, {
     type: 'Instance',
     name: getUnityName(node),
-    master: masterName,
+    master: masterPath,
   })
 
   // instance以下の情報もlayout.jsonに渡す
@@ -4767,7 +4783,7 @@ function traverseNode(node, func) {
  * @param {SceneNode|SceneNodeClass} root
  */
 async function createRoot(renditions, outputFolder, root) {
-  let layoutJson = makeLayoutJson(root)
+  let layoutJson = createInitialLayoutJson(root)
 
   let traverse = async (nodeStack, json, depth, enableWriteToLayoutJson) => {
     let node = nodeStack[nodeStack.length - 1]
@@ -4963,7 +4979,7 @@ function getPrefabNodeFromNode(node) {
  * @param outputFolder
  * @returns {Promise<void>}
  */
-async function exportXdUnityUI(roots, outputFolder) {
+async function exportXuid(roots, outputFolder) {
   // ラスタライズする要素を入れる
   let renditions = []
 
@@ -5492,7 +5508,7 @@ async function pluginExportXdUnityUI(selection, root) {
           /**
            * @type {SceneNode[]}
            */
-          await exportXdUnityUI(exportRoots, globalOutputFolder)
+          await exportXuid(exportRoots, globalOutputFolder)
           const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
           await alert(log ? log : 'Done.')
         } catch (e) {
@@ -5524,7 +5540,7 @@ async function pluginExportXdUnityUI(selection, root) {
         /**
          * @type {SceneNode[]}
          */
-        await exportXdUnityUI(exportRoots, null)
+        await exportXuid(exportRoots, null)
         const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
         await alert(log ? log : 'Done.')
       } catch (e) {
@@ -5570,12 +5586,14 @@ function getExportRoots(selectionItems) {
 
   // 出力するノードから、必要なPrefabノードを選出し、出力リストに追加する
   for (let root of exportRoots) {
+    globalOutputFileDependency[root.guid] = {}
     traverseNode(root, node => {
       if (root === node) return
       if (isPrefabInstanceNode(node)) {
         // console.log('found prefab instance:', prefabNode.name)
         const prefabNode = getPrefabNodeFromNode(node)
         exportRoots.add(prefabNode)
+        globalOutputFileDependency[root.guid][prefabNode.guid] = prefabNode;
       }
     })
   }
