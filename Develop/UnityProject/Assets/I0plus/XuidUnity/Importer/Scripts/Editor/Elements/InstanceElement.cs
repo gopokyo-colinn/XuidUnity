@@ -40,7 +40,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                 {
                     // 読み込むPrefabが存在しなかった
                     // ダミーのPrefabを作成する
-                    Debug.LogWarning($"[{Importer.NAME}] {path} not found.　Create a temporary prefab.");
+                    Debug.LogWarning($"[{Importer.NAME}] {master}.prefab not found.　Create a temporary prefab. path:{path}");
                     var tempObject = new GameObject("temporary object");
                     tempObject.AddComponent<RectTransform>();
                     // ダミーとわかるようにmagentaイメージを置く -> non-destructiive importで、このイメージを採用してしまうためコメントアウト

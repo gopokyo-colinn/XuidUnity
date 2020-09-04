@@ -480,6 +480,7 @@ namespace I0plus.XduiUnity.Importer.Editor
                     Object.DestroyImmediate(go);
                 }
 
+                AssetDatabase.Refresh();
                 await Task.Delay(100);
             }
 
