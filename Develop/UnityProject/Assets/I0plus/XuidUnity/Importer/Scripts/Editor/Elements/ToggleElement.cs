@@ -29,7 +29,7 @@ namespace I0plus.XduiUnity.Importer.Editor
             var group = _toggleJson.Get("group");
             if (group != null)
             {
-                var toggleToRadio = targetObject.AddComponent<ToggleToRadio>();
+                var toggleToRadio = ElementUtil.GetOrAddComponent<ToggleToRadio>(targetObject);
                 toggleToRadio.GroupName = group;
             }
 
