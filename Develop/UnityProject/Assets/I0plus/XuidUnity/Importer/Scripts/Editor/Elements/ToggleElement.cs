@@ -29,9 +29,8 @@ namespace I0plus.XduiUnity.Importer.Editor
             var group = _toggleJson.Get("group");
             if (group != null)
             {
-                var toggleGroup = renderContext.GetToggleGroup(group);
-                //Debug.Log("toggleGroup:" + toggleGroup);
-                toggle.group = toggleGroup;
+                var toggleToRadio = ElementUtil.GetOrAddComponent<ToggleToRadio>(targetObject);
+                toggleToRadio.GroupName = group;
             }
 
             GameObject targetImageObject = null;

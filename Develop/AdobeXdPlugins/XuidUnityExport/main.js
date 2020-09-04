@@ -53,6 +53,9 @@ let globalFlagSymbolInstanceAsPrefab = false
 // globalVisibleInfo[node.guid]
 let globalVisibleInfo = null
 
+// コンバートファイル依存関係
+let globalOutputFileDependency = {}
+
 /**
  * レスポンシブパラメータを保存する
  * @type {BoundsToRectTransform[]}
@@ -506,6 +509,17 @@ function getSubFolderNameFromNode(node) {
 function getLayoutFileNameFromNode(node) {
   const unityName = getUnityName(node)
   return replaceToFileName(unityName)
+}
+
+
+function getLayoutPathFromNode(node)
+{
+  const masterSubFolderName = getSubFolderNameFromNode(node)
+  const masterName =
+    (masterSubFolderName ? masterSubFolderName + '/' : '') +
+    getLayoutFileNameFromNode(node)
+
+  return masterName
 }
 
 /**
@@ -2137,7 +2151,7 @@ async function makeGlobalBoundsRectTransform(root) {
     root.viewportHeight = viewportHeight + resizePlusHeight
   }
 
-  // ここでダイアログをだすと、Artboradをひきのばしたところで、どう変化したか見ることができる
+  // ここでダイアログをだすと、Artboardをひきのばしたところで、どう変化したか見ることができる
   // await fs.getFileForSaving('txt', { types: ['txt'] })
 
   // 変更されたboundsを取得する
@@ -2617,10 +2631,17 @@ function getNodeNameAndStyle(node) {
  * @param root
  * @returns {{root: {name: *, type: string}, info: {version: string}}}
  */
-function makeLayoutJson(root) {
+function createInitialLayoutJson(root) {
+  const dependency = []
+  const dependNodes = globalOutputFileDependency[root.guid];
+  for (let key in dependNodes) {
+    const dependFileName = getLayoutPathFromNode(dependNodes[key]);
+    dependency.push(dependFileName)
+  }
   return {
     info: {
-      version: '0.6.1',
+      version: '0.9.8',
+      dependency,
     },
     root: {
       type: 'Root',
@@ -4510,20 +4531,24 @@ async function createImage(
  * @param funcForEachChild
  * @return {Promise<string>}
  */
-async function createPrefabInstance(json, node, root) {
+async function createPrefabInstance(json, node, root, funcForEachChild) {
   let { style } = getNodeNameAndStyle(node)
-
   const masterNode = getPrefabNodeFromNode(node)
-
-  const masterSubFolderName = getSubFolderNameFromNode(masterNode)
-  const masterName =
-    (masterSubFolderName ? masterSubFolderName + '/' : '') +
-    getLayoutFileNameFromNode(masterNode)
+  const masterPath = getLayoutPathFromNode(masterNode)
 
   Object.assign(json, {
     type: 'Instance',
     name: getUnityName(node),
-    master: masterName,
+    master: masterPath,
+  })
+
+  // instance以下の情報もlayout.jsonに渡す
+  // addContentをここでもするかどうか検討
+  let maskNode = node.mask || node
+  await funcForEachChild(null, child => {
+    // TODO:AdobeXDの問題で　リピートグリッドの枠から外れているものもデータがくるケースがある そういったものを省くかどうか検討
+    //return child !== maskNode // maskNodeはFalse 処理をしない 2020/8/24 なぜ処理をしなかったかわからなくなった・・・
+    return true
   })
 
   // 基本
@@ -4758,7 +4783,7 @@ function traverseNode(node, func) {
  * @param {SceneNode|SceneNodeClass} root
  */
 async function createRoot(renditions, outputFolder, root) {
-  let layoutJson = makeLayoutJson(root)
+  let layoutJson = createInitialLayoutJson(root)
 
   let traverse = async (nodeStack, json, depth, enableWriteToLayoutJson) => {
     let node = nodeStack[nodeStack.length - 1]
@@ -4768,17 +4793,6 @@ async function createRoot(renditions, outputFolder, root) {
     // コメントアウトチェック
     if (style.firstAsBool(STYLE_COMMENT_OUT)) {
       return
-    }
-
-    if (root != node && isPrefabInstanceNode(node)) {
-      // インスタンスノードをみつけた
-      // console.log('find layout root node.')
-      let { style } = getNodeNameAndStyle(node)
-      if (style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false) {
-        // 明確なFALSEでなければ
-        await createPrefabInstance(json, node, root)
-        return
-      }
     }
 
     // 子Node処理関数
@@ -4823,6 +4837,17 @@ async function createRoot(renditions, outputFolder, root) {
             pushTo.push(childJson)
           }
         }
+      }
+    }
+
+    if (root != node && isPrefabInstanceNode(node)) {
+      // インスタンスノードをみつけた
+      // console.log('find layout root node.')
+      let { style } = getNodeNameAndStyle(node)
+      if (style.firstAsNullOrBool(STYLE_INSTANCE_IF_POSSIBLE) !== false) {
+        // 明確なFALSEでなければ
+        await createPrefabInstance(json, node, root, funcForEachChild)
+        return
       }
     }
 
@@ -4954,7 +4979,7 @@ function getPrefabNodeFromNode(node) {
  * @param outputFolder
  * @returns {Promise<void>}
  */
-async function exportXdUnityUI(roots, outputFolder) {
+async function exportXuid(roots, outputFolder) {
   // ラスタライズする要素を入れる
   let renditions = []
 
@@ -5217,34 +5242,6 @@ async function alert(message, title) {
   )
   document.body.appendChild(dialog)
   return dialog.showModal()
-}
-
-/**
- * Selectionから出力対象アートボードを得る
- * アートボード直下のノードが選択されているかも確認（EditContext対応）
- * @param {Selection} selection
- * @returns {SceneNode[]}
- */
-async function getExportArtboards(selection) {
-  // 選択されているものがない場合 全てが変換対象
-  // return selection.items.length > 0 ? selection.items : root.children
-  if (selection.items.length !== 1) {
-    await alert('出力アートボート直下のノードを1つ選択してください')
-    throw 'not selected immediate child.'
-  }
-  const node = selection.items[0]
-  if (node.locked) {
-    await alert('ロックされていないルート直下のノードを1つ選択してください')
-    throw 'selected locked child.'
-  }
-  const parent = node.parent
-  const parentIsArtboard = parent instanceof Artboard
-  if (!parentIsArtboard) {
-    await alert('出力アートボート直下のノードを1つ選択してください')
-    throw 'not selected immediate child.'
-  }
-
-  return [parent]
 }
 
 /**
@@ -5511,7 +5508,7 @@ async function pluginExportXdUnityUI(selection, root) {
           /**
            * @type {SceneNode[]}
            */
-          await exportXdUnityUI(exportRoots, globalOutputFolder)
+          await exportXuid(exportRoots, globalOutputFolder)
           const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
           await alert(log ? log : 'Done.')
         } catch (e) {
@@ -5543,7 +5540,7 @@ async function pluginExportXdUnityUI(selection, root) {
         /**
          * @type {SceneNode[]}
          */
-        await exportXdUnityUI(exportRoots, null)
+        await exportXuid(exportRoots, null)
         const log = [...new Set(globalErrorLog)].slice(0, 10).join('<br><br>')
         await alert(log ? log : 'Done.')
       } catch (e) {
@@ -5589,12 +5586,14 @@ function getExportRoots(selectionItems) {
 
   // 出力するノードから、必要なPrefabノードを選出し、出力リストに追加する
   for (let root of exportRoots) {
+    globalOutputFileDependency[root.guid] = {}
     traverseNode(root, node => {
       if (root === node) return
       if (isPrefabInstanceNode(node)) {
         // console.log('found prefab instance:', prefabNode.name)
         const prefabNode = getPrefabNodeFromNode(node)
         exportRoots.add(prefabNode)
+        globalOutputFileDependency[root.guid][prefabNode.guid] = prefabNode;
       }
     })
   }
