@@ -53,30 +53,6 @@ namespace I0plus.XduiUnity.Importer.Editor
         /// </summary>
         public bool OptionMoveNotUsedXdObject { get; set; } = true;
 
-        public ToggleGroup GetToggleGroup(string name)
-        {
-            ToggleGroup toggleGroup;
-            if (!ToggleGroupMap.ContainsKey(name))
-            {
-                // まだそのグループが存在しない場合は､GameObjectを作成
-                var go = new GameObject(name);
-                // AddComponent･登録する
-                toggleGroup = go.AddComponent<ToggleGroup>();
-                // Allow Switch Off を True にする
-                // 190711 false(デフォルト)だと DoozyUIがHideするときに､トグルONボタンを初期位置に戻してしまうため
-                // 200901 false にする　こっちが期待した動作
-                toggleGroup.allowSwitchOff = false;
-                ToggleGroupMap[name] = go;
-            }
-            else
-            {
-                // 存在する場合は利用する
-                toggleGroup = ToggleGroupMap[name].GetComponent<ToggleGroup>();
-            }
-
-            return toggleGroup;
-        }
-
         public RenderContext(string spriteOutputFolderAssetPath, string fontFolderAssetPath, GameObject rootObject)
         {
             this.spriteOutputFolderAssetPath = spriteOutputFolderAssetPath;
