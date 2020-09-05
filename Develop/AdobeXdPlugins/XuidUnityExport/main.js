@@ -5100,6 +5100,9 @@ async function exportXuid(roots, outputFolder) {
     console.log('- done')
   }
 
+  const exportFile = await outputFolder.createFile("xuid-export.json" ,{overwrite:true});
+  await exportFile.write("{}");
+
   if (renditions.length !== 0 && !globalFlagImageNoExport) {
     console.log('## image export')
 

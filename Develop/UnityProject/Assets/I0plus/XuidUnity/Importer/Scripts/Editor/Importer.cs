@@ -153,6 +153,13 @@ namespace I0plus.XduiUnity.Importer.Editor
             bool convertImageFlag,
             bool deleteAssetsFlag)
         {
+            if (!File.Exists(importFolderPath + "/xuid-export.json"))
+            {
+                var result = EditorUtility.DisplayDialog("Import",
+                    $"Please specify exported root folder.", "Quit", "Force import");
+                if (result) return -1;
+            }
+            
             var importedAssets = new List<string>();
 
             // ファイルのリストアップ
