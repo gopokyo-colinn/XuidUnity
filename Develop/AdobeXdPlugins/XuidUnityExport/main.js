@@ -4948,19 +4948,22 @@ function nodeToFolderName(node) {
 }
 
 async function createSubFolder(outputFolder, subFolderName) {
-  let subFolder
-  let entries = await outputFolder.getEntries()
-  subFolder = entries.find(entry => {
-    return entry.name === subFolderName
-  })
-  if (!subFolder) {
-    console.log(`- create output folder:${subFolderName}`)
-    subFolder = await outputFolder.createFolder(subFolderName)
+  let subFolderNames = subFolderName.split("/")
+  for (let subFolderName of subFolderNames) {
+    let entries = await outputFolder.getEntries()
+    let subFolder = entries.find(entry => {
+      return entry.name === subFolderName
+    })
+    if ( subFolder && subFolder.isFile) {
+      throw 'can not create output folder.'
+    }
+    if (!subFolder) {
+      console.log(`- create output folder:${subFolderName}`)
+      subFolder = await outputFolder.createFolder(subFolderName)
+    }
+    outputFolder = subFolder
   }
-  if (subFolder.isFile) {
-    throw 'can not create output folder.'
-  }
-  return subFolder
+  return outputFolder
 }
 
 let globalSymbolIdToPrefabGuid = {}
@@ -5074,7 +5077,8 @@ async function exportXuid(roots, outputFolder) {
       // サブフォルダ名を取得
       const parsedName = cssParseNodeName(root.name)
       if (parsedName.folder) {
-        subFolderName = replaceToFileName(parsedName.folder)
+        // subFolderName = replaceToFileName(parsedName.folder)
+        subFolderName = parsedName.folder
       }
       subFolder = await createSubFolder(outputFolder, subFolderName)
     }
@@ -5095,6 +5099,9 @@ async function exportXuid(roots, outputFolder) {
     }
     console.log('- done')
   }
+
+  const exportFile = await outputFolder.createFile("xuid-export.json" ,{overwrite:true});
+  await exportFile.write("{}");
 
   if (renditions.length !== 0 && !globalFlagImageNoExport) {
     console.log('## image export')
