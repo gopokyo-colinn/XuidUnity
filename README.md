@@ -11,11 +11,11 @@
 
 ## Overview
 
-Transfer AdobeXD UI Design to Unity.<br>
-UI/UX design created in AdobeXD run it in Unity right away!
-Design in AdobeXD and run it in Unity.<br>
-If you want to improve your design, design it again in AdobeXD, and to Unity.<br>
-This is the asset that makes that iteration boost!<br>
+Transfer AdobeXD UI/UX Design.<br>
+Run it in Unity right away!<br>
+Design - Run - Improve<br>
+This asset makes iteration boost!<br>
+
 AdobeXD's features can be converted.
 - ResponsiveResize
 - RepeatGrid
@@ -23,36 +23,37 @@ AdobeXD's features can be converted.
 - Stack
 - Padding
 
+
 ## Installation
 
-- Unity Install
+- Unity plugin Install
   1. https://github.com/itouh2-i0plus/XdUnityUI/releases
-  1. download XdUnityUI.unitypackage file.
-  1. import the XuidUnity.unitypackage into Unity. /Assets/I0plus/XuidUnity folder will be created.
-- Install the AdobeXD plugin
+  1. Download XdUnityUI.unitypackage file.
+  1. Import the XuidUnity.unitypackage into Unity. /Assets/I0plus/XuidUnity folder will be created.
+- AdobeXD plugin Install
   1. https://github.com/itouh2-i0plus/XdUnityUI/releases
-  1. download XuidUnityExporter.xdx file.
-  1. Double-click file and install to AdobeXD.
+  1. Download XuidUnityExporter.xdx file.
+  1. Double-click xdx file and install to AdobeXD.
 
 ## Quick Start
 
-1. open the Adobe XD sample.
+1. Open the Adobe XD sample.
     1. https://github.com/itouh2-i0plus/XdUnityUI/releases
     1. Donwload Samples.zip and unzip.
     1. Open sample.xd 
 
 2. AdobeXD export
-    1. select the artboard.
-    1. click on "Xuid Unity Export" in the plugin menu.
+    1. Select the artboard.
+    1. Click on "Xuid Unity Export" in the plugin menu.
     1. "Folder" is the destination of the output folder.
-    1. click on "Export" to start exporting. 
+    1. Click on "Export" to start exporting. 
 
 <img src="https://user-images.githubusercontent.com/20549024/76756957-0bf6cd80-67ca-11ea-9504-7ef273613a36.gif" width="640" />
 
 3. Unity conversion
     - Unity Menu > Assets > XuidUnity > Clean Import
     - Specifies the same folder as the export.
-    - The created Prefab will be placed in Assets/I0plus/XuidCreatedPrefabs.
+    - The created prefabs are placed in Assets/I0plus/XuidCreatedPrefabs.
     - The created UI images are placed in Assets/I0plus/CreatedSprites.
       - UI images are sliced.
 
@@ -62,9 +63,11 @@ AdobeXD's features can be converted.
 
 <img src="https://user-images.githubusercontent.com/20549024/76759902-f5ec0b80-67cf-11ea-9dd5-5ca556222c40.gif" width="640" />
 
-## Samples
 
 ## ChangeLog
+
+### [v0.9.6] - 2020-09-06
+- Unity: non-destructive conversion.
 
 ### [v0.9.3] - 2020-07-21
 - XD,Unity: Added option to convert components to Prefab.
