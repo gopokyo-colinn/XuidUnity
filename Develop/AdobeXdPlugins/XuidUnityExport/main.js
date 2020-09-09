@@ -511,9 +511,7 @@ function getLayoutFileNameFromNode(node) {
   return replaceToFileName(unityName)
 }
 
-
-function getLayoutPathFromNode(node)
-{
+function getLayoutPathFromNode(node) {
   const masterSubFolderName = getSubFolderNameFromNode(node)
   const masterName =
     (masterSubFolderName ? masterSubFolderName + '/' : '') +
@@ -2633,9 +2631,9 @@ function getNodeNameAndStyle(node) {
  */
 function createInitialLayoutJson(root) {
   const dependency = []
-  const dependNodes = globalOutputFileDependency[root.guid];
+  const dependNodes = globalOutputFileDependency[root.guid]
   for (let key in dependNodes) {
-    const dependFileName = getLayoutPathFromNode(dependNodes[key]);
+    const dependFileName = getLayoutPathFromNode(dependNodes[key])
     dependency.push(dependFileName)
   }
   return {
@@ -4948,13 +4946,13 @@ function nodeToFolderName(node) {
 }
 
 async function createSubFolder(outputFolder, subFolderName) {
-  let subFolderNames = subFolderName.split("/")
+  let subFolderNames = subFolderName.split('/')
   for (let subFolderName of subFolderNames) {
     let entries = await outputFolder.getEntries()
     let subFolder = entries.find(entry => {
       return entry.name === subFolderName
     })
-    if ( subFolder && subFolder.isFile) {
+    if (subFolder && subFolder.isFile) {
       throw 'can not create output folder.'
     }
     if (!subFolder) {
@@ -5100,8 +5098,10 @@ async function exportXuid(roots, outputFolder) {
     console.log('- done')
   }
 
-  const exportFile = await outputFolder.createFile("xuid-export.json" ,{overwrite:true});
-  await exportFile.write("{}");
+  const exportFile = await outputFolder.createFile('xuid-export.json', {
+    overwrite: true,
+  })
+  await exportFile.write('{}')
 
   if (renditions.length !== 0 && !globalFlagImageNoExport) {
     console.log('## image export')
@@ -5260,6 +5260,12 @@ async function alert(message, title) {
 async function pluginExportXdUnityUI(selection, root) {
   console.log('# export plugin')
 
+  // 開発者モードの判定
+  // プラグインフォルダから判定する
+  let pluginFolderPath = (await fs.getPluginFolder()).nativePath
+  pluginFolderPath = pluginFolderPath.replace(/\\/g, '/')
+  const isDeveloperMode = pluginFolderPath.endsWith('/develop/XuidUnityExport')
+
   checkLatestVersion().then(r => {})
 
   // エキスポートマークがついたものだけ出力するオプションは、毎回オフにする
@@ -5370,67 +5376,48 @@ async function pluginExportXdUnityUI(selection, root) {
         })),
         getString(strings.ExportDialogOptionNotExportImage),
       ),
-      h('br'),
-      h('hr'),
-      h('label', getString(strings.ExportDialogUnderDevelopmentOptions)),
-      h('br'),
-      /*
-      // Symbol instance as prefab
-      h(
-        'label',
-        divStyle,
-        (checkComponentInstanceAsPrefab = h('input', {
-          type: 'checkbox',
-        })),
-        getString(strings.ExportComponentInstanceAsPrefab),
-      ),
-      h('br'),
-      // CSS change content
-      h(
-        'label',
-        divStyle,
-        (checkChangeContentOnly = h('input', {
-          type: 'checkbox',
-        })),
-        getString(strings.ExportDialogOptionOnlyCssChangeContent),
-      ),
-      h('br'),
-       */
-      h(
-        'label',
-        divStyle,
-        h('span', { width: '70' }, 'Additional CSS folder'),
-        (optionExternalCssFolder = h('input', {
-          width: '150',
-          readonly: true,
-          border: 0,
-        })),
-        h(
-          'button',
-          {
-            async onclick(e) {
-              let folder = await fs.getFolder()
-              if (folder != null) {
-                optionExternalCssFolder.value = folder.nativePath
-                globalAddtionalCssFolder = folder
-              }
-            },
-          },
-          '...',
-        ),
-        h(
-          'button',
-          {
-            uxpVariant: 'primary',
-            onclick(e) {
-              dialog.close('change values')
-            },
-          },
-          'Change Values',
-        ),
-      ),
-      h('hr'),
-      //h('br'),
+      !isDeveloperMode
+        ? h('br')
+        : h(
+            'br',
+            h('hr'),
+            h('label', getString(strings.ExportDialogUnderDevelopmentOptions)),
+            h('br'),
+            h(
+              'label',
+              divStyle,
+              h('span', { width: '70' }, 'Additional CSS folder'),
+              (optionExternalCssFolder = h('input', {
+                width: '150',
+                readonly: true,
+                border: 0,
+              })),
+              h(
+                'button',
+                {
+                  async onclick(e) {
+                    let folder = await fs.getFolder()
+                    if (folder != null) {
+                      optionExternalCssFolder.value = folder.nativePath
+                      globalAddtionalCssFolder = folder
+                    }
+                  },
+                },
+                '...',
+              ),
+              h(
+                'button',
+                {
+                  uxpVariant: 'primary',
+                  onclick(e) {
+                    dialog.close('change values')
+                  },
+                },
+                'Change Values',
+              ),
+            ),
+            h('hr'),
+          ),
       (errorLabel = h('div', divStyle, '')),
       h(
         'footer',
@@ -5600,7 +5587,7 @@ function getExportRoots(selectionItems) {
         // console.log('found prefab instance:', prefabNode.name)
         const prefabNode = getPrefabNodeFromNode(node)
         exportRoots.add(prefabNode)
-        globalOutputFileDependency[root.guid][prefabNode.guid] = prefabNode;
+        globalOutputFileDependency[root.guid][prefabNode.guid] = prefabNode
       }
     })
   }
