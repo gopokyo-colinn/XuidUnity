@@ -1,0 +1,55 @@
+https://translate.google.co.jp/?#view=home&op=translate&sl=ja&tl=en
+Google翻訳したあとの置換
+VisualStudioコード用
+
+VSCodeでPrettierによるコード整形が効かないようにする
+Fire > Preferences > Settings
+Prettierで検索
+Disable languageに markdown
+
+○ HTMLの修正 スペースの削除
+([a-z]+)\s*=\s*"\s*
+$1="
+
+○ !と[の間、スペースが入ってしまう
+!\s*\[
+![
+
+○ 次の処理をやるまえに手で修正 箇条書きになっていない
+Launch AdobeXD plugin以下のところ
+
+○ -の後ろのスペースがない
+(^ *-)(\S)
+$1 $2
+
+○ ]と(の間、スペースが入ってしまう
+\] \(
+](
+
+○ 表 -にスペースがはいってしまう
+- ----
+-----
+
+○ 箇条書きが改行されない 例：1.http
+(^\s*1\.)(\S)
+$1 $2
+
+○ スラッシュ前後、スペースがある
+ / 
+/
+
+○ コード範囲の修正
+`` `
+```
+
+○ バックスラッシュとアンダーバーの間にスペースがある
+\\ _
+\_
+
+○ Theの削除
+The/Assets/I0plus/XdUnityUI
+/Assets/I0plus/XdUnityUI
+
+○ Japaneseを日本語に
+\[Japanese\]
+\[日本語\]

@@ -1,0 +1,23 @@
+https://www.deepl.com/translator
+
+- 最初 から ChangeLogまで
+
+- ChangeLog から ## 今後進む方向についてまで
+
+- 日本語に修正
+English
+日本語
+
+- 表の修正
+\|---\|\|\|\.
+|---|---|
+
+- コードのくくりの修正
+``''
+```
+
+- ### ###　二重になっている
+#### .viewport-layout-y
+
+
+

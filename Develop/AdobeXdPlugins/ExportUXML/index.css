@@ -1,0 +1,39 @@
+* {
+  layer: 'UI';
+}
+
+:root {
+  root: true;
+}
+
+.button {
+  button: true;
+}
+
+.toggle {
+  toggle: true
+}
+
+.label {
+  label: true;
+}
+
+.slider {
+  slider: true;
+}
+
+.min-max-slider {
+  min-max-slider: true;
+}
+
+.text-field {
+  text-field: true;
+}
+
+.foldout {
+  foldout: true;
+}
+
+.image {
+  image: true;
+}

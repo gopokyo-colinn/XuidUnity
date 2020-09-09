@@ -1,0 +1,29 @@
+{
+  "id": "TESTDEBUG",
+  "name": "TestDebug",
+  "description": "Debug Test",
+  "version": "0.0.1",
+  "host": {
+    "app": "XD",
+    "minVersion": "21.0"
+  },
+  "uiEntryPoints": [
+    {
+      "type": "menu",
+      "label": "Rendition children",
+      "commandId": "pluginRenditionChildren"
+    },{
+      "type": "menu",
+      "label": "Print All Properties",
+      "commandId": "pluginPrintAllProperties"
+    },{
+      "type": "menu",
+      "label": "Print Check Properties",
+      "commandId": "pluginPrintCheckProperties"
+    },{
+      "type": "menu",
+      "label": "Get Interactions",
+      "commandId": "pluginGetInteractions"
+    }
+  ]
+}
