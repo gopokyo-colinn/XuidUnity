@@ -17,9 +17,5 @@ Wiki: https://github.com/itouh2-i0plus/XuidUnity/wiki
 https://forum.unity.com/threads/xuidunity-old-name-xdunityui-adobexd-to-unity-ui.843730/
 
 
-## License
-
-MIT License
-https://github.com/itouh2-i0plus/XuidUnity/blob/master/LICENSE
-
-published by Devdog and developed by itouh2-i0plus
+## Developer
+developed by itouh2-i0plus
