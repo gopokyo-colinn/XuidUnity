@@ -2388,6 +2388,7 @@ class Style {
     switch (first) {
       case 'not-has-layout-properties-preferred-size':
         result = !hasLayoutPropertiesPreferredSize(node)
+        // console.log(`not-has-layout-properties:${result}`)
         break
       default:
         result = asBool(first)
@@ -3433,13 +3434,23 @@ function addLayoutGroupParam(layoutGroupJson, style) {
  */
 function hasLayoutPropertiesPreferredSize(node) {
   const { style } = getNodeNameAndStyle(node)
+  /*
+  console.log(`style_text: ${style.firstAsBool(STYLE_TEXT)}`)
+  console.log(`style_textmp: ${style.firstAsBool(STYLE_TEXTMP)}`)
+  console.log(`style_image: ${style.firstAsBool(STYLE_IMAGE)}`)
+  console.log(`style_image_slice: ${style.firstAsBool(STYLE_IMAGE_SLICE)}`)
+  console.log(`style_layout_group: ${style.firstAsBool(STYLE_LAYOUT_GROUP)}`)
+  console.log(`style_layout_element: ${style.firstAsBool(STYLE_LAYOUT_ELEMENT)}`)
+   */
+
   return (
     style.firstAsBool(STYLE_TEXT) ||
     style.firstAsBool(STYLE_TEXTMP) ||
     (style.firstAsBool(STYLE_IMAGE) &&
       style.firstAsNullOrBool(STYLE_IMAGE_SLICE) === false) || // Imageはスライス可とするとサイズが0になる
     style.firstAsBool(STYLE_LAYOUT_GROUP) ||
-    style.firstAsBool(STYLE_LAYOUT_ELEMENT) //TODO:LAYOUT_ELEMET PREFERREDサイズをもっているか確認せねばならない
+    // 明確な trueであるか　でのみ判定する　AsBoolだと not-has-layout-properties-preferred-sizeでもtrueになってしまう
+    style.first(STYLE_LAYOUT_ELEMENT) === 'true' //TODO:LAYOUT_ELEMET PREFERREDサイズをもっているか確認せねばならない
   )
 }
 
@@ -4670,28 +4681,6 @@ async function createText(json, node, artboard, outputFolder, renditions) {
     }
   }
 
-  // ラスタライズオプションチェック
-  // - ラスタライズオプションがTRUE
-  // - TEXT化オプションがFALSE
-  // 文字はスライスしないオプションで出力する
-  if (
-    style.firstAsBool(STYLE_IMAGE) ||
-    (!style.firstAsBool(STYLE_TEXT) && !style.firstAsBool(STYLE_TEXTMP))
-  ) {
-    const localStyle = new Style()
-    // 文字はスライスしない
-    localStyle.setFirst(STYLE_IMAGE_SLICE, 'false')
-    await createImage(
-      json,
-      node,
-      artboard,
-      outputFolder,
-      renditions,
-      localStyle,
-    )
-    return
-  }
-
   let type = 'Text'
   if (style.firstAsBool(STYLE_TEXTMP)) {
     type = 'TextMeshPro'
@@ -4865,6 +4854,13 @@ async function createRoot(renditions, outputFolder, root) {
       case 'ScrollableGroup':
       case 'Group':
       case 'RepeatGrid':
+      case 'BooleanGroup':
+      case 'Line':
+      case 'Ellipse':
+      case 'Rectangle':
+      case 'Path':
+      case 'Polygon':
+      case 'Text':
         {
           if (style.firstAsBool(STYLE_IMAGE)) {
             // console.log('groupでのSTYLE_IMAGE処理 子供のコンテンツ変更は行うが、イメージ出力はしない')
@@ -4875,6 +4871,14 @@ async function createRoot(renditions, outputFolder, root) {
             outputFolder = tempOutputFolder
             await createImage(json, node, root, outputFolder, renditions)
             return
+          }
+          if (
+            style.firstAsBool(STYLE_TEXT) ||
+            style.firstAsBool(STYLE_TEXTMP)
+          ) {
+            await createText(json, node, root, outputFolder, renditions)
+            await funcForEachChild()
+            break
           }
           if (style.firstAsBool(STYLE_BUTTON)) {
             await createButton(json, node, root, funcForEachChild)
@@ -4899,21 +4903,6 @@ async function createRoot(renditions, outputFolder, root) {
           // 通常のグループ
           await createGroup(json, node, root, funcForEachChild)
         }
-        break
-      case 'BooleanGroup':
-      // BooleanGroup以下の子供は、レスポンシブパラメータの取得ができない
-      // そのため、まとめてイメージに変換する
-      case 'Line':
-      case 'Ellipse':
-      case 'Rectangle':
-      case 'Path':
-      case 'Polygon':
-        await createImage(json, node, root, outputFolder, renditions)
-        await funcForEachChild()
-        break
-      case 'Text':
-        await createText(json, node, root, outputFolder, renditions)
-        await funcForEachChild()
         break
       default:
         console.log('**error** type:' + constructorName)
