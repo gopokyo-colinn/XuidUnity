@@ -5451,6 +5451,15 @@ async function pluginExportXdUnityUI(selection, root) {
           'Export',
         ),
       ),
+      h('br'),
+      h(
+        'a',
+        {
+          href:
+            'https://docs.google.com/document/d/1Y5kOxUkgc7bwztax4pNED8g-1XPgnoS0VwA0lb-2TpE/edit?usp=sharing',
+        },
+        'XuidUnity Document',
+      ),
     ),
   )
 
