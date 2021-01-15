@@ -1,4 +1,4 @@
-# <img src="https://user-images.githubusercontent.com/20549024/92304327-f368b280-efb7-11ea-8e75-6bbc8ede9b07.png" width=25> XuidUnity - AdobeXD to Unity UI
+# <img src="https://user-images.githubusercontent.com/20549024/92304327-f368b280-efb7-11ea-8e75-6bbc8ede9b07.png" width=25> XuidUnity - AdobeXD  _and Figma_ to Unity UI
 
 ![introduction](https://user-images.githubusercontent.com/20549024/76156453-0f40e800-613e-11ea-9923-59554aceae3c.gif)
 
